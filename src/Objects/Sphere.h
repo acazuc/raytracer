@@ -10,6 +10,7 @@ class Sphere : public Object
 		float size;
 		Sphere(float size);
 		Vec3 *collide(Ray &ray);
+		Vec3 getNormAt(Vec3 &pos);
 
 };
 

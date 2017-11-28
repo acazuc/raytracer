@@ -1,7 +1,7 @@
 #ifndef RAYTRACER_H
 # define RAYTRACER_H
 
-# define THREAD_NUMBER 1
+# define THREAD_NUMBER 8
 
 # include "Objects/Object.h"
 # include "Lights/Light.h"
@@ -22,7 +22,8 @@ class Raytracer
 		char *imgData;
 		static void runThread(Raytracer *raytracer, uint64_t start, uint64_t end);
 		void calculatePixel(uint64_t x, uint64_t y);
-		bool trace(Ray &ray, Object *&object, Vec3 &position);
+		bool trace(Ray &ray, Object *&object, Vec3 &position, Object *avoid);
+		void getDiffuseSpecularLight(Ray &ray, Object *object, Vec3 &pos, Vec3 &norm, Vec3 &diffuse, Vec3 &specular);
 
 	public:
 		Raytracer(uint32_t width, uint32_t height);

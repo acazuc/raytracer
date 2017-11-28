@@ -17,6 +17,9 @@ SRCS_NAME = Main.cpp \
 	    Objects/Sphere.cpp \
 	    Objects/Cylinder.cpp \
 	    Objects/Cone.cpp \
+	    Lights/Light.cpp \
+	    Lights/PonctualLight.cpp \
+	    Lights/DirectionalLight.cpp \
 
 SRCS = $(addprefix $(SRCS_PATH), $(SRCS_NAME))
 

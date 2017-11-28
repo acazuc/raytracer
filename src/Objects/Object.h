@@ -12,11 +12,14 @@ class Object
 		Vec4 color;
 		Vec3 pos;
 		Vec3 rot;
+		float specularFactor;
 		float transparency;
 		float reflection;
 		float refraction;
+		float specular;
+		Object();
 		virtual inline Vec3 *collide(Ray &ray) {(void)ray;return (nullptr);};
-		virtual inline Vec3 *getNormalAt(Vec3 &pos) {(void)pos;return (nullptr);};
+		virtual inline Vec3 getNormAt(Vec3 &pos) {(void)pos;return (Vec3(0, 0, 1));};
 
 };
 

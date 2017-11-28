@@ -21,3 +21,10 @@ Vec3 *Sphere::collide(Ray &ray)
 		return (nullptr);
 	return (new Vec3(ray.pos + ray.dir * t));
 }
+
+Vec3 Sphere::getNormAt(Vec3 &pos)
+{
+	Vec3 vec(pos - this->pos);
+	vec.normalize();
+	return (vec);
+}

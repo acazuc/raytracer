@@ -1,5 +1,8 @@
 #include "Main.h"
+#include "Lights/PonctualLight.h"
+#include "Objects/Cylinder.h"
 #include "Objects/Sphere.h"
+#include "Objects/Cone.h"
 #include "Raytracer.h"
 #include "Debug.h"
 #include <GLFW/glfw3.h>
@@ -53,9 +56,22 @@ int main()
 	raytracer = new Raytracer(WINDOW_WIDTH, WINDOW_HEIGHT);
 	raytracer->setFov(60);
 	Sphere *sphere = new Sphere(1);
-	sphere->pos = Vec3(0, 0, 10);
+	sphere->pos = Vec3(0, 0, 9);
 	sphere->color = Vec4(1, 1, 0, 1);
 	raytracer->addObject(sphere);
+	Cylinder *cylinder = new Cylinder(1);
+	cylinder->pos = Vec3(2, 0, 8);
+	cylinder->color = Vec4(1, 0, 0, 1);
+	raytracer->addObject(cylinder);
+	Cone *cone = new Cone(0);
+	cone->pos = Vec3(-2, 0, 12);
+	cone->color = Vec4(0, 0, 1, 1);
+	raytracer->addObject(cone);
+	PonctualLight *light = new PonctualLight();
+	light->pos = Vec3(10, 0, 0);
+	light->intensity = 1;
+	light->color = Vec3(1, 1, 1);
+	raytracer->addLight(light);
 	glGenTextures(1, &texture);
 	glBindTexture(GL_TEXTURE_2D, texture);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);

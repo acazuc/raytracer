@@ -13,11 +13,13 @@ Raytracer::~Raytracer()
 	delete[] (this->imgData);
 }
 
-bool Raytracer::trace(Ray &ray, Object *&object, Vec3 &position)
+bool Raytracer::trace(Ray &ray, Object *&object, Vec3 &position, Object *avoid)
 {
 	float nearestDistance = -1;
 	for (uint64_t i = 0; i < this->objects.size(); ++i)
 	{
+		if (this->objects[i] == avoid)
+			continue;
 		Vec3 *vec = this->objects[i]->collide(ray);
 		if (!vec)
 			continue;
@@ -31,21 +33,43 @@ bool Raytracer::trace(Ray &ray, Object *&object, Vec3 &position)
 	return (nearestDistance != -1);
 }
 
+void Raytracer::getDiffuseSpecularLight(Ray &ray, Object *object, Vec3 &pos, Vec3 &norm, Vec3 &diffuse, Vec3 &specular)
+{
+	Object *collObject = nullptr;
+	Vec3 collPosition;
+	Ray diffuseRay(pos, Vec3(0));
+	Vec3 reflect = ray.dir.reflect(norm);
+	for (uint64_t i = 0; i < this->lights.size(); ++i)
+	{
+		diffuseRay.dir = this->lights[i]->getDirectionFrom(pos);
+		if (trace(diffuseRay, collObject, collPosition, object))
+			continue;
+		Vec3 lightColorIntensity = this->lights[i]->color * this->lights[i]->intensity;
+		diffuse += lightColorIntensity * std::max(0., cos(diffuseRay.dir.angle(norm)));
+		specular += lightColorIntensity * pow(std::max(0.f, reflect.dot(diffuseRay.dir)), object->specularFactor) * object->specular;
+	}
+}
+
 void Raytracer::calculatePixel(uint64_t x, uint64_t y)
 {
 	Ray ray(Vec3(0), Vec3(0));
-	float angleX = (x - this->width / 2.) / this->width * (this->fov / 180. * M_PI);
-	float angleY = (y - this->height / 2.) / this->height * (this->fov / 180. * M_PI) / this->width * this->height;
+	float angleY = (x - this->width / 2.) / this->width * (this->fov / 180. * M_PI);
+	float angleX = (y - this->height / 2.) / this->height * (this->fov / 180. * M_PI) / this->width * this->height;
 	ray.dir.x = sin(angleY);
 	ray.dir.y = sin(angleX);
 	ray.dir.z = cos(angleX) * cos(angleY);
+	ray.dir.normalize();
 	Object *object = nullptr;
 	Vec3 position;
-	if (trace(ray, object, position))
+	if (trace(ray, object, position, nullptr))
 	{
-		this->imgData[(x + y * this->width) * 4 + 0] = object->color.r * 0xff;
-		this->imgData[(x + y * this->width) * 4 + 1] = object->color.g * 0xff;
-		this->imgData[(x + y * this->width) * 4 + 2] = object->color.b * 0xff;
+		Vec3 norm = object->getNormAt(position);
+		Vec3 diffuse(0);
+		Vec3 specular(0);
+		getDiffuseSpecularLight(ray, object, position, norm, diffuse, specular);
+		this->imgData[(x + y * this->width) * 4 + 0] = std::min(0xff, std::max(0, (int32_t)(0xff * (object->color.r * diffuse.r + specular.r))));
+		this->imgData[(x + y * this->width) * 4 + 1] = std::min(0xff, std::max(0, (int32_t)(0xff * (object->color.g * diffuse.g + specular.g))));
+		this->imgData[(x + y * this->width) * 4 + 2] = std::min(0xff, std::max(0, (int32_t)(0xff * (object->color.b * diffuse.b + specular.b))));
 		this->imgData[(x + y * this->width) * 4 + 3] = 0xff;
 		return;
 	}

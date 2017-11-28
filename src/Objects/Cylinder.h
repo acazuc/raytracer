@@ -6,6 +6,12 @@
 class Cylinder : public Object
 {
 
+	public:
+		float size;
+		Cylinder(float size);
+		Vec3 *collide(Ray &ray);
+		Vec3 getNormAt(Vec3 &pos);
+
 };
 
 #endif
