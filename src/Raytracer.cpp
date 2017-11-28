@@ -2,14 +2,19 @@
 #include <cmath>
 
 Raytracer::Raytracer(uint32_t width, uint32_t height)
-: height(height)
+: ambient(0, 0, 0)
+, height(height)
 , width(width)
 {
+	this->colorBuffer = new float[width * height * 3];
+	this->zBuffer = new float[width * height];
 	this->imgData = new char[width * height * 4];
 }
 
 Raytracer::~Raytracer()
 {
+	delete[] (this->colorBuffer);
+	delete[] (this->zBuffer);
 	delete[] (this->imgData);
 }
 
@@ -29,6 +34,7 @@ bool Raytracer::trace(Ray &ray, Object *&object, Vec3 &position, Object *avoid)
 		object = this->objects[i];
 		position = *vec;
 		nearestDistance = length;
+		delete (vec);
 	}
 	return (nearestDistance != -1);
 }
@@ -42,41 +48,57 @@ void Raytracer::getDiffuseSpecularLight(Ray &ray, Object *object, Vec3 &pos, Vec
 	for (uint64_t i = 0; i < this->lights.size(); ++i)
 	{
 		diffuseRay.dir = this->lights[i]->getDirectionFrom(pos);
+		diffuseRay.dir.normalize();
 		if (trace(diffuseRay, collObject, collPosition, object))
 			continue;
 		Vec3 lightColorIntensity = this->lights[i]->color * this->lights[i]->intensity;
-		diffuse += lightColorIntensity * std::max(0., cos(diffuseRay.dir.angle(norm)));
+		diffuse += lightColorIntensity * std::max(0.f, diffuseRay.dir.dot(norm));
 		specular += lightColorIntensity * pow(std::max(0.f, reflect.dot(diffuseRay.dir)), object->specularFactor) * object->specular;
 	}
 }
 
+Vec3 Raytracer::getReflectionColor(Ray &ray, Object *object, Vec3 &pos, Vec3 &norm, int recursion)
+{
+	if (recursion > 100)
+		return (Vec3(0, 0, 0));
+	Ray newRay;
+	newRay.pos = pos;
+	newRay.dir = ray.dir.reflect(norm);
+	return (getRayColor(newRay, object, recursion));
+}
+
+Vec3 Raytracer::getRayColor(Ray &ray, Object *avoid, int recursion)
+{
+
+	Object *object = nullptr;
+	Vec3 pos;
+	if (!trace(ray, object, pos, avoid))
+		return (Vec3(0, 0, 0));
+	Vec3 norm = object->getNormAt(ray, pos);
+	Vec3 diffuse(0);
+	Vec3 specular(0);
+	getDiffuseSpecularLight(ray, object, pos, norm, diffuse, specular);
+	Vec3 col = Vec3(object->color) * (diffuse + this->ambient) + specular;
+	if (object->reflection > 0)
+		col = col * (1 - object->reflection) + getReflectionColor(ray, object, pos, norm, recursion + 1) * object->color * object->reflection;
+	return (col);
+}
+
 void Raytracer::calculatePixel(uint64_t x, uint64_t y)
 {
-	Ray ray(Vec3(0), Vec3(0));
+	Ray ray(Vec3(0), Vec3(0, 0, 1));
 	float angleY = (x - this->width / 2.) / this->width * (this->fov / 180. * M_PI);
 	float angleX = (y - this->height / 2.) / this->height * (this->fov / 180. * M_PI) / this->width * this->height;
-	ray.dir.x = sin(angleY);
-	ray.dir.y = sin(angleX);
-	ray.dir.z = cos(angleX) * cos(angleY);
+	ray.dir.rotate(Vec3(angleX, angleY, 0));
 	ray.dir.normalize();
-	Object *object = nullptr;
-	Vec3 position;
-	if (trace(ray, object, position, nullptr))
-	{
-		Vec3 norm = object->getNormAt(position);
-		Vec3 diffuse(0);
-		Vec3 specular(0);
-		getDiffuseSpecularLight(ray, object, position, norm, diffuse, specular);
-		this->imgData[(x + y * this->width) * 4 + 0] = std::min(0xff, std::max(0, (int32_t)(0xff * (object->color.r * diffuse.r + specular.r))));
-		this->imgData[(x + y * this->width) * 4 + 1] = std::min(0xff, std::max(0, (int32_t)(0xff * (object->color.g * diffuse.g + specular.g))));
-		this->imgData[(x + y * this->width) * 4 + 2] = std::min(0xff, std::max(0, (int32_t)(0xff * (object->color.b * diffuse.b + specular.b))));
-		this->imgData[(x + y * this->width) * 4 + 3] = 0xff;
-		return;
-	}
-	this->imgData[(x + y * this->width) * 4 + 0] = 0;
-	this->imgData[(x + y * this->width) * 4 + 1] = 0;
-	this->imgData[(x + y * this->width) * 4 + 2] = 0;
-	this->imgData[(x + y * this->width) * 4 + 3] = 0xff;
+	Vec3 col = getRayColor(ray, nullptr, 0);
+	float gamma = 1. / 2.2;
+	col.x = pow(col.x, gamma);
+	col.y = pow(col.y, gamma);
+	col.z = pow(col.z, gamma);
+	this->colorBuffer[(x + y * this->width) * 3 + 0] = std::min(1.f, std::max(0.f, col.r));
+	this->colorBuffer[(x + y * this->width) * 3 + 1] = std::min(1.f, std::max(0.f, col.g));
+	this->colorBuffer[(x + y * this->width) * 3 + 2] = std::min(1.f, std::max(0.f, col.b));
 }
 
 void Raytracer::runThread(Raytracer *raytracer, uint64_t start, uint64_t end)
@@ -99,6 +121,13 @@ void Raytracer::render()
 	for (uint8_t i = 0; i < THREAD_NUMBER; ++i)
 	{
 		this->threads[i]->join();
+	}
+	for (uint64_t i = 0; i < this->width * this->height; ++i)
+	{
+		this->imgData[i * 4 + 0] = this->colorBuffer[i * 3 + 0] * 0xff;
+		this->imgData[i * 4 + 1] = this->colorBuffer[i * 3 + 1] * 0xff;
+		this->imgData[i * 4 + 2] = this->colorBuffer[i * 3 + 2] * 0xff;
+		this->imgData[i * 4 + 3] = 0xff;
 	}
 }
 

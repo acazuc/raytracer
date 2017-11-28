@@ -1,14 +1,12 @@
-#ifndef SPHERE_H
-# define SPHERE_H
+#ifndef PLANE_H
+# define PLANE_H
 
 # include "./Object.h"
 
-class Sphere : public Object
+class Plane : public Object
 {
 
 	public:
-		float size;
-		Sphere(float size);
 		Vec3 *collide(Ray &ray);
 		Vec3 getNormAt(Ray &ray, Vec3 &pos);
 

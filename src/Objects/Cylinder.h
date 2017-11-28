@@ -10,7 +10,7 @@ class Cylinder : public Object
 		float size;
 		Cylinder(float size);
 		Vec3 *collide(Ray &ray);
-		Vec3 getNormAt(Vec3 &pos);
+		Vec3 getNormAt(Ray &ray, Vec3 &pos);
 
 };
 

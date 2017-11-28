@@ -1,7 +1,7 @@
 #include "Object.h"
 
 Object::Object()
-: specularFactor(5)
+: specularFactor(500)
 , specular(1)
 {
 	//Empty

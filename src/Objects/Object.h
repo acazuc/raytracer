@@ -19,7 +19,7 @@ class Object
 		float specular;
 		Object();
 		virtual inline Vec3 *collide(Ray &ray) {(void)ray;return (nullptr);};
-		virtual inline Vec3 getNormAt(Vec3 &pos) {(void)pos;return (Vec3(0, 0, 1));};
+		virtual inline Vec3 getNormAt(Ray &ray, Vec3 &pos) {(void)ray;(void)pos;return (Vec3(0, 0, 1));};
 
 };
 

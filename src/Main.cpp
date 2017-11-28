@@ -1,12 +1,15 @@
 #include "Main.h"
+#include "Lights/DirectionalLight.h"
 #include "Lights/PonctualLight.h"
 #include "Objects/Cylinder.h"
 #include "Objects/Sphere.h"
+#include "Objects/Plane.h"
 #include "Objects/Cone.h"
 #include "Raytracer.h"
 #include "Debug.h"
 #include <GLFW/glfw3.h>
 #include <cstring>
+#include <cmath>
 
 static Raytracer *raytracer;
 static GLFWwindow *window = NULL;
@@ -55,23 +58,36 @@ int main()
 	createWindow();
 	raytracer = new Raytracer(WINDOW_WIDTH, WINDOW_HEIGHT);
 	raytracer->setFov(60);
+	raytracer->setAmbient(Vec3(.1, .1, .1));
 	Sphere *sphere = new Sphere(1);
-	sphere->pos = Vec3(0, 0, 9);
+	sphere->pos = Vec3(0, 0, 10);
+	sphere->rot = Vec3(M_PI, 0, 0);
 	sphere->color = Vec4(1, 1, 0, 1);
+	sphere->reflection = 0;
 	raytracer->addObject(sphere);
 	Cylinder *cylinder = new Cylinder(1);
-	cylinder->pos = Vec3(2, 0, 8);
+	cylinder->pos = Vec3(3, 0, 13);
 	cylinder->color = Vec4(1, 0, 0, 1);
 	raytracer->addObject(cylinder);
 	Cone *cone = new Cone(0);
-	cone->pos = Vec3(-2, 0, 12);
+	cone->pos = Vec3(-3, 0, 13);
+	cone->rot = Vec3(0, 0, 0);
 	cone->color = Vec4(0, 0, 1, 1);
 	raytracer->addObject(cone);
+	Plane *plane = new Plane();
+	plane->pos = Vec3(0, -2, 0);
+	plane->color = Vec4(1, 1, 1, 0);
+	//raytracer->addObject(plane);
 	PonctualLight *light = new PonctualLight();
 	light->pos = Vec3(10, 0, 0);
 	light->intensity = 1;
 	light->color = Vec3(1, 1, 1);
 	raytracer->addLight(light);
+	DirectionalLight *dLight = new DirectionalLight();
+	dLight->dir = Vec3(-1, -1, -1);
+	dLight->intensity = .5;
+	dLight->color = Vec3(1, 1, 1);
+	raytracer->addLight(dLight);
 	glGenTextures(1, &texture);
 	glBindTexture(GL_TEXTURE_2D, texture);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);

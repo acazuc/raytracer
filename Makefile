@@ -17,6 +17,7 @@ SRCS_NAME = Main.cpp \
 	    Objects/Sphere.cpp \
 	    Objects/Cylinder.cpp \
 	    Objects/Cone.cpp \
+	    Objects/Plane.cpp \
 	    Lights/Light.cpp \
 	    Lights/PonctualLight.cpp \
 	    Lights/DirectionalLight.cpp \

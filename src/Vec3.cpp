@@ -26,6 +26,37 @@ void Vec3::normalize()
 	*this = *this / this->length();
 }
 
+void Vec3::rotate(Vec3 vec)
+{
+	rotateX(vec.x);
+	rotateY(vec.y);
+	rotateZ(vec.z);
+}
+
+void Vec3::rotateX(float angle)
+{
+	float tmpY = this->y;
+	float tmpZ = this->z;
+	this->y = tmpY * cos(angle) - tmpZ * sin(angle);
+	this->z = tmpY * sin(angle) + tmpZ * cos(angle);
+}
+
+void Vec3::rotateY(float angle)
+{
+	float tmpX = this->x;
+	float tmpZ = this->z;
+	this->x = tmpZ * sin(angle) + tmpX * cos(angle);
+	this->z = tmpZ * cos(angle) - tmpX * sin(angle);
+}
+
+void Vec3::rotateZ(float angle)
+{
+	float tmpX = this->x;
+	float tmpY = this->y;
+	this->x = tmpX * cos(angle) - tmpY * sin(angle);
+	this->y = tmpX * sin(angle) + tmpY * cos(angle);
+}
+
 Vec3 Vec3::operator - ()
 {
 	return (Vec3(-this->x, -this->y, -this->z));
