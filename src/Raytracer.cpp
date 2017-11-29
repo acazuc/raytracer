@@ -1,4 +1,5 @@
 #include "Raytracer.h"
+#include "Fxaa.h"
 #include <cmath>
 
 Raytracer::Raytracer(uint32_t width, uint32_t height)
@@ -6,7 +7,7 @@ Raytracer::Raytracer(uint32_t width, uint32_t height)
 , height(height)
 , width(width)
 {
-	this->colorBuffer = new float[width * height * 3];
+	this->colorBuffer = new Vec3[width * height];
 	this->zBuffer = new float[width * height];
 	this->imgData = new char[width * height * 4];
 }
@@ -96,9 +97,9 @@ void Raytracer::calculatePixel(uint64_t x, uint64_t y)
 	col.x = pow(col.x, gamma);
 	col.y = pow(col.y, gamma);
 	col.z = pow(col.z, gamma);
-	this->colorBuffer[(x + y * this->width) * 3 + 0] = std::min(1.f, std::max(0.f, col.r));
-	this->colorBuffer[(x + y * this->width) * 3 + 1] = std::min(1.f, std::max(0.f, col.g));
-	this->colorBuffer[(x + y * this->width) * 3 + 2] = std::min(1.f, std::max(0.f, col.b));
+	this->colorBuffer[(x + y * this->width)].r = std::min(1.f, std::max(0.f, col.r));
+	this->colorBuffer[(x + y * this->width)].g = std::min(1.f, std::max(0.f, col.g));
+	this->colorBuffer[(x + y * this->width)].b = std::min(1.f, std::max(0.f, col.b));
 }
 
 void Raytracer::runThread(Raytracer *raytracer, uint64_t start, uint64_t end)
@@ -122,11 +123,14 @@ void Raytracer::render()
 	{
 		this->threads[i]->join();
 	}
+	Vec3 *fxaa = Fxaa::fxaa(this->colorBuffer, this->width, this->height);
+	delete[] (this->colorBuffer);
+	this->colorBuffer = fxaa;
 	for (uint64_t i = 0; i < this->width * this->height; ++i)
 	{
-		this->imgData[i * 4 + 0] = this->colorBuffer[i * 3 + 0] * 0xff;
-		this->imgData[i * 4 + 1] = this->colorBuffer[i * 3 + 1] * 0xff;
-		this->imgData[i * 4 + 2] = this->colorBuffer[i * 3 + 2] * 0xff;
+		this->imgData[i * 4 + 0] = std::min((int64_t)0xff, std::max((int64_t)0, (int64_t)(this->colorBuffer[i].r * 0xff)));
+		this->imgData[i * 4 + 1] = std::min((int64_t)0xff, std::max((int64_t)0, (int64_t)(this->colorBuffer[i].g * 0xff)));
+		this->imgData[i * 4 + 2] = std::min((int64_t)0xff, std::max((int64_t)0, (int64_t)(this->colorBuffer[i].b * 0xff)));
 		this->imgData[i * 4 + 3] = 0xff;
 	}
 }

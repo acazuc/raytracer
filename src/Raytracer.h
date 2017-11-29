@@ -16,10 +16,10 @@ class Raytracer
 		std::vector<Object*> objects;
 		std::vector<Light*> lights;
 		std::thread *threads[THREAD_NUMBER];
+		Vec3 *colorBuffer;
 		Vec3 ambient;
 		uint32_t height;
 		uint32_t width;
-		float *colorBuffer;
 		float *zBuffer;
 		float fov;
 		char *imgData;

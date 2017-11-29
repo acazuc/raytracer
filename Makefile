@@ -10,9 +10,11 @@ SRCS_PATH = src/
 
 SRCS_NAME = Main.cpp \
 	    Raytracer.cpp \
+	    Vec2.cpp \
 	    Vec3.cpp \
 	    Vec4.cpp \
 	    Quadratic.cpp \
+	    Fxaa.cpp \
 	    Objects/Object.cpp \
 	    Objects/Sphere.cpp \
 	    Objects/Cylinder.cpp \
