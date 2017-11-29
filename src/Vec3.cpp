@@ -33,6 +33,13 @@ void Vec3::rotate(Vec3 vec)
 	rotateZ(vec.z);
 }
 
+void Vec3::unrotate(Vec3 vec)
+{
+	rotateZ(-vec.z);
+	rotateY(-vec.y);
+	rotateX(-vec.x);
+}
+
 void Vec3::rotateX(float angle)
 {
 	float tmpY = this->y;
@@ -55,6 +62,11 @@ void Vec3::rotateZ(float angle)
 	float tmpY = this->y;
 	this->x = tmpX * cos(angle) - tmpY * sin(angle);
 	this->y = tmpX * sin(angle) + tmpY * cos(angle);
+}
+
+float &Vec3::operator [] (int idx)
+{
+	return (reinterpret_cast<float*>(this)[idx]);
 }
 
 Vec3 Vec3::operator - ()

@@ -11,15 +11,13 @@ Cone::Cone(float size)
 Vec3 *Cone::collide(Ray &ray)
 {
 	Vec3 delta(ray.pos - this->pos);
-	delta.rotate(-this->rot);
-	delta.y = -delta.y;
+	delta.unrotate(this->rot);
 	Vec3 rdir(ray.dir);
-	rdir.rotate(-this->rot);
-	rdir.y = -rdir.y;
+	rdir.unrotate(this->rot);
 	Quadratic quadratic;
-	quadratic.a = ray.dir.dot(rdir);
-	quadratic.b = 2 * rdir.dot(delta);
-	quadratic.c = delta.dot(delta) - this->size;
+	quadratic.a = rdir.x * rdir.x - rdir.y * rdir.y + rdir.z * rdir.z;
+	quadratic.b = 2 * (rdir.x * delta.x - rdir.y * delta.y + rdir.z * delta.z);
+	quadratic.c = delta.x * delta.x - delta.y * delta.y + delta.z * delta.z - this->size;
 	quadratic.solve();
 	float t = quadratic.getMinPosT();
 	if (t < 0)
@@ -31,7 +29,7 @@ Vec3 Cone::getNormAt(Ray &ray, Vec3 &pos)
 {
 	(void)ray;
 	Vec3 vec(pos - this->pos);
-	vec.rotate(-this->rot);
+	vec.unrotate(this->rot);
 	vec.y = -vec.y;
 	vec.rotate(this->rot);
 	vec.normalize();

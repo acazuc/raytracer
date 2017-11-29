@@ -3,6 +3,7 @@
 Vec3 *Plane::collide(Ray &ray)
 {
 	Vec3 norm(0, 1, 0);
+	norm.rotate(this->rot);
 	Vec3 delta(this->pos - ray.pos);
 	float dot = norm.dot(ray.dir);
 	if (dot == 0)
@@ -17,7 +18,8 @@ Vec3 Plane::getNormAt(Ray &ray, Vec3 &pos)
 {
 	(void)pos;
 	Vec3 vec(0, 1, 0);
-	if (vec.angle(ray.dir) <= 90)
+	vec.rotate(this->rot);
+	if (vec.angle(ray.dir) >= 90)
 		vec = -vec;
 	return (vec);
 }

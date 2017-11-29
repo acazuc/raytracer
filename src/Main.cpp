@@ -58,12 +58,21 @@ int main()
 	createWindow();
 	raytracer = new Raytracer(WINDOW_WIDTH, WINDOW_HEIGHT);
 	raytracer->setFov(60);
-	raytracer->setAmbient(Vec3(.1, .1, .1));
+	raytracer->setAmbient(Vec3(.01, .01, .01));
+	raytracer->setPos(Vec3(0, 0, 0));
+	raytracer->setRot(Vec3(0, 0, 0));
+	/*for (uint64_t i = 0; i < 11 * 11; ++i)
+	{
+		Sphere *sphere = new Sphere(1);
+		sphere->pos = Vec3((i % 11) * 3, 0, 10 + (i / 11) * 3);
+		sphere->color = Vec4(1, 1, 1, 1);
+		sphere->reflection = 0;
+		raytracer->addObject(sphere);
+	}*/
 	Sphere *sphere = new Sphere(1);
 	sphere->pos = Vec3(0, 0, 10);
-	sphere->rot = Vec3(M_PI, 0, 0);
-	sphere->color = Vec4(1, 1, 0, 1);
-	sphere->reflection = 0;
+	sphere->color = Vec4(1, 1, 1, 1);
+	sphere->reflection = 1;
 	raytracer->addObject(sphere);
 	Cylinder *cylinder = new Cylinder(1);
 	cylinder->pos = Vec3(3, 0, 13);
@@ -77,17 +86,24 @@ int main()
 	Plane *plane = new Plane();
 	plane->pos = Vec3(0, -2, 0);
 	plane->color = Vec4(1, 1, 1, 0);
-	//raytracer->addObject(plane);
+	plane->specular = 0;
+	raytracer->addObject(plane);
+	plane = new Plane();
+	plane->pos = Vec3(0, 0, 20);
+	plane->rot = Vec3(-90, 0, 0);
+	plane->color = Vec4(1, 1, 1, 0);
+	plane->specular = 0;
+	raytracer->addObject(plane);
 	PonctualLight *light = new PonctualLight();
-	light->pos = Vec3(10, 0, 0);
+	light->pos = Vec3(10, -1, -10);
 	light->intensity = 1;
 	light->color = Vec3(1, 1, 1);
 	raytracer->addLight(light);
-	DirectionalLight *dLight = new DirectionalLight();
+	/*DirectionalLight *dLight = new DirectionalLight();
 	dLight->dir = Vec3(-1, -1, -1);
 	dLight->intensity = .5;
 	dLight->color = Vec3(1, 1, 1);
-	raytracer->addLight(dLight);
+	raytracer->addLight(dLight);*/
 	glGenTextures(1, &texture);
 	glBindTexture(GL_TEXTURE_2D, texture);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);

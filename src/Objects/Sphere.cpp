@@ -11,14 +11,14 @@ Sphere::Sphere(float size)
 Vec3 *Sphere::collide(Ray &ray)
 {
 	Vec3 delta(ray.pos - this->pos);
-	delta.rotate(-this->rot);
-	ray.dir.rotate(-this->rot);
+	delta.unrotate(this->rot);
+	Vec3 rdir(ray.dir);
+	rdir.unrotate(this->rot);
 	Quadratic quadratic;
-	quadratic.a = ray.dir.dot(ray.dir);
-	quadratic.b = 2 * ray.dir.dot(delta);
+	quadratic.a = rdir.dot(rdir);
+	quadratic.b = 2 * rdir.dot(delta);
 	quadratic.c = delta.dot(delta) - this->size;
 	quadratic.solve();
-	ray.dir.rotate(this->rot);
 	float t = quadratic.getMinPosT();
 	if (t < 0)
 		return (nullptr);

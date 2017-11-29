@@ -14,7 +14,7 @@ class Quadratic
 		float b;
 		float c;
 		float d;
-		Quadratic() : solutions(0) {};
+		Quadratic() : solutions(0), t1(-1), t2(-1) {};
 		void solve();
 		float getMinPosT();
 

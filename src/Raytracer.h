@@ -18,6 +18,8 @@ class Raytracer
 		std::thread *threads[THREAD_NUMBER];
 		Vec3 *colorBuffer;
 		Vec3 ambient;
+		Vec3 pos;
+		Vec3 rot;
 		uint32_t height;
 		uint32_t width;
 		float *zBuffer;
@@ -25,7 +27,7 @@ class Raytracer
 		char *imgData;
 		static void runThread(Raytracer *raytracer, uint64_t start, uint64_t end);
 		void calculatePixel(uint64_t x, uint64_t y);
-		Vec3 getRayColor(Ray &ray, Object *avoid, int recursion);
+		Vec3 getRayColor(Ray &ray, Object *avoid, int recursion, float *zIndex = NULL);
 		bool trace(Ray &ray, Object *&object, Vec3 &position, Object *avoid);
 		void getDiffuseSpecularLight(Ray &ray, Object *object, Vec3 &pos, Vec3 &norm, Vec3 &diffuse, Vec3 &specular);
 		Vec3 getReflectionColor(Ray &ray, Object *object, Vec3 &pos, Vec3 &norm, int recursion);
@@ -37,6 +39,8 @@ class Raytracer
 		void addObject(Object *object);
 		void addLight(Light *light);
 		void setAmbient(Vec3 ambient) {this->ambient = ambient;};
+		void setPos(Vec3 pos) {this->pos = pos;};
+		void setRot(Vec3 rot) {this->rot = rot;};
 		void setFov(float fov) {this->fov = fov;};
 		inline char *getImgData() {return (this->imgData);};
 

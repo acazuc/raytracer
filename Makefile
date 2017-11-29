@@ -14,7 +14,6 @@ SRCS_NAME = Main.cpp \
 	    Vec3.cpp \
 	    Vec4.cpp \
 	    Quadratic.cpp \
-	    Fxaa.cpp \
 	    Objects/Object.cpp \
 	    Objects/Sphere.cpp \
 	    Objects/Cylinder.cpp \
@@ -23,6 +22,9 @@ SRCS_NAME = Main.cpp \
 	    Lights/Light.cpp \
 	    Lights/PonctualLight.cpp \
 	    Lights/DirectionalLight.cpp \
+	    Filters/Fxaa.cpp \
+	    Filters/Sobel.cpp \
+	    Filters/Cel.cpp \
 
 SRCS = $(addprefix $(SRCS_PATH), $(SRCS_NAME))
 
@@ -59,6 +61,7 @@ odir:
 	@mkdir -p $(OBJS_PATH)
 	@mkdir -p $(OBJS_PATH)Objects
 	@mkdir -p $(OBJS_PATH)Lights
+	@mkdir -p $(OBJS_PATH)Filters
 
 clean:
 	@echo " - Cleaning objs"

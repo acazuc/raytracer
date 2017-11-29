@@ -1,5 +1,8 @@
 #include "Raytracer.h"
-#include "Fxaa.h"
+#include "Debug.h"
+#include "Filters/Sobel.h"
+#include "Filters/Fxaa.h"
+#include "Filters/Cel.h"
 #include <cmath>
 
 Raytracer::Raytracer(uint32_t width, uint32_t height)
@@ -29,7 +32,7 @@ bool Raytracer::trace(Ray &ray, Object *&object, Vec3 &position, Object *avoid)
 		Vec3 *vec = this->objects[i]->collide(ray);
 		if (!vec)
 			continue;
-		float length = vec->length();
+		float length = Vec3(*vec - ray.pos).length();
 		if (nearestDistance != -1 && length > nearestDistance)
 			continue;
 		object = this->objects[i];
@@ -40,18 +43,37 @@ bool Raytracer::trace(Ray &ray, Object *&object, Vec3 &position, Object *avoid)
 	return (nearestDistance != -1);
 }
 
+static bool is_behind(Vec3 &collision, Vec3 &dir, Vec3 &org)
+{
+	if (dir.x < 0 && collision.x - org.x < dir.x)
+		return (true);
+	if (dir.x > 0 && collision.x - org.x > dir.x)
+		return (true);
+	if (dir.y < 0 && collision.y - org.y < dir.y)
+		return (true);
+	if (dir.y > 0 && collision.y - org.y > dir.y)
+		return (true);
+	if (dir.z < 0 && collision.z - org.z < dir.z)
+		return (true);
+	if (dir.z > 0 && collision.z - org.z > dir.z)
+		return (true);
+	return (false);
+}
+
 void Raytracer::getDiffuseSpecularLight(Ray &ray, Object *object, Vec3 &pos, Vec3 &norm, Vec3 &diffuse, Vec3 &specular)
 {
 	Object *collObject = nullptr;
-	Vec3 collPosition;
+	Vec3 collPosition(0);
 	Ray diffuseRay(pos, Vec3(0));
 	Vec3 reflect = ray.dir.reflect(norm);
 	for (uint64_t i = 0; i < this->lights.size(); ++i)
 	{
 		diffuseRay.dir = this->lights[i]->getDirectionFrom(pos);
-		diffuseRay.dir.normalize();
 		if (trace(diffuseRay, collObject, collPosition, object))
 			continue;
+		if (!is_behind(collPosition, diffuseRay.dir, diffuseRay.pos))
+			continue;
+		diffuseRay.dir.normalize();
 		Vec3 lightColorIntensity = this->lights[i]->color * this->lights[i]->intensity;
 		diffuse += lightColorIntensity * std::max(0.f, diffuseRay.dir.dot(norm));
 		specular += lightColorIntensity * pow(std::max(0.f, reflect.dot(diffuseRay.dir)), object->specularFactor) * object->specular;
@@ -68,13 +90,15 @@ Vec3 Raytracer::getReflectionColor(Ray &ray, Object *object, Vec3 &pos, Vec3 &no
 	return (getRayColor(newRay, object, recursion));
 }
 
-Vec3 Raytracer::getRayColor(Ray &ray, Object *avoid, int recursion)
+Vec3 Raytracer::getRayColor(Ray &ray, Object *avoid, int recursion, float *zIndex)
 {
 
 	Object *object = nullptr;
-	Vec3 pos;
+	Vec3 pos(0);
 	if (!trace(ray, object, pos, avoid))
 		return (Vec3(0, 0, 0));
+	if (zIndex)
+		*zIndex = (pos - ray.pos).length();
 	Vec3 norm = object->getNormAt(ray, pos);
 	Vec3 diffuse(0);
 	Vec3 specular(0);
@@ -87,16 +111,18 @@ Vec3 Raytracer::getRayColor(Ray &ray, Object *avoid, int recursion)
 
 void Raytracer::calculatePixel(uint64_t x, uint64_t y)
 {
-	Ray ray(Vec3(0), Vec3(0, 0, 1));
+	Ray ray(this->pos, Vec3(0, 0, 1));
 	float angleY = (x - this->width / 2.) / this->width * (this->fov / 180. * M_PI);
 	float angleX = (y - this->height / 2.) / this->height * (this->fov / 180. * M_PI) / this->width * this->height;
-	ray.dir.rotate(Vec3(angleX, angleY, 0));
+	ray.dir.rotate(Vec3(angleX, angleY, 0) + this->rot);
 	ray.dir.normalize();
-	Vec3 col = getRayColor(ray, nullptr, 0);
+	float zIndex = 0;
+	Vec3 col = getRayColor(ray, nullptr, 0, &zIndex);
 	float gamma = 1. / 2.2;
 	col.x = pow(col.x, gamma);
 	col.y = pow(col.y, gamma);
 	col.z = pow(col.z, gamma);
+	this->zBuffer[(x + y * this->width)] = zIndex;
 	this->colorBuffer[(x + y * this->width)].r = std::min(1.f, std::max(0.f, col.r));
 	this->colorBuffer[(x + y * this->width)].g = std::min(1.f, std::max(0.f, col.g));
 	this->colorBuffer[(x + y * this->width)].b = std::min(1.f, std::max(0.f, col.b));
@@ -123,6 +149,12 @@ void Raytracer::render()
 	{
 		this->threads[i]->join();
 	}
+	/*Vec3 *cel = Cel::cel(this->colorBuffer, 25, this->width, this->height);
+	delete[] (this->colorBuffer);
+	this->colorBuffer = cel;*/
+	/*Vec3 *sobel = Sobel::sobel(this->colorBuffer, this->zBuffer, this->width, this->height);
+	delete[] (this->colorBuffer);
+	this->colorBuffer = sobel;*/
 	Vec3 *fxaa = Fxaa::fxaa(this->colorBuffer, this->width, this->height);
 	delete[] (this->colorBuffer);
 	this->colorBuffer = fxaa;

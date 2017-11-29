@@ -12,7 +12,7 @@ class Vec4
 		Vec4(float x, float y, float z, float w) : x(x), y(y), z(z), w(w) {};
 		Vec4(float xyz, float w) : x(xyz), y(xyz), z(xyz), w(w) {};
 		Vec4(float xyzw) : x(xyzw), y(xyzw), z(xyzw), w(xyzw) {};
-		Vec4() {};
+		Vec4() : x(0), y(0), z(0), w(0) {};
 		Vec4 operator + (float val);
 		Vec4 operator - (float val);
 		Vec4 operator * (float val);
