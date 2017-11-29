@@ -13,7 +13,6 @@ class Object
 		Vec3 pos;
 		Vec3 rot;
 		float specularFactor;
-		float transparency;
 		float reflection;
 		float refraction;
 		float specular;

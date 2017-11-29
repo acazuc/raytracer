@@ -43,21 +43,22 @@ bool Raytracer::trace(Ray &ray, Object *&object, Vec3 &position, Object *avoid)
 	return (nearestDistance != -1);
 }
 
-static bool is_behind(Vec3 &collision, Vec3 &dir, Vec3 &org)
+Vec3 Raytracer::getDiffuseSpecularTransparencyLight(Light *light, Object *object, Vec3 &pos)
 {
-	if (dir.x < 0 && collision.x - org.x < dir.x)
-		return (true);
-	if (dir.x > 0 && collision.x - org.x > dir.x)
-		return (true);
-	if (dir.y < 0 && collision.y - org.y < dir.y)
-		return (true);
-	if (dir.y > 0 && collision.y - org.y > dir.y)
-		return (true);
-	if (dir.z < 0 && collision.z - org.z < dir.z)
-		return (true);
-	if (dir.z > 0 && collision.z - org.z > dir.z)
-		return (true);
-	return (false);
+	Vec3 result(Vec3(object->color));
+	Ray newRay(pos, Vec3(0));
+	newRay.dir = light->getDirectionFrom(pos);
+	Object *newObject = nullptr;
+	Vec3 newPos(0);
+	if (!trace(newRay, newObject, newPos, object))
+		goto end;
+	if ((newPos - pos).length() > newRay.dir.length())
+		goto end;
+	if (newObject->color.a >= 1)
+		goto end;
+	result *= getDiffuseSpecularTransparencyLight(light, newObject, newPos);
+end:
+	return (result);
 }
 
 void Raytracer::getDiffuseSpecularLight(Ray &ray, Object *object, Vec3 &pos, Vec3 &norm, Vec3 &diffuse, Vec3 &specular)
@@ -69,12 +70,19 @@ void Raytracer::getDiffuseSpecularLight(Ray &ray, Object *object, Vec3 &pos, Vec
 	for (uint64_t i = 0; i < this->lights.size(); ++i)
 	{
 		diffuseRay.dir = this->lights[i]->getDirectionFrom(pos);
-		if (trace(diffuseRay, collObject, collPosition, object))
-			continue;
-		if (!is_behind(collPosition, diffuseRay.dir, diffuseRay.pos))
-			continue;
-		diffuseRay.dir.normalize();
+		Vec3 tmp = diffuseRay.dir;
 		Vec3 lightColorIntensity = this->lights[i]->color * this->lights[i]->intensity;
+		if (trace(diffuseRay, collObject, collPosition, object))
+		{
+			if ((collPosition - pos).length() > tmp.length())
+				goto next;
+			if (collObject->color.a < 1)
+				lightColorIntensity *= getDiffuseSpecularTransparencyLight(this->lights[i], collObject, collPosition);
+			else
+				continue;
+		}
+next:
+		diffuseRay.dir.normalize();
 		diffuse += lightColorIntensity * std::max(0.f, diffuseRay.dir.dot(norm));
 		specular += lightColorIntensity * pow(std::max(0.f, reflect.dot(diffuseRay.dir)), object->specularFactor) * object->specular;
 	}
@@ -87,6 +95,17 @@ Vec3 Raytracer::getReflectionColor(Ray &ray, Object *object, Vec3 &pos, Vec3 &no
 	Ray newRay;
 	newRay.pos = pos;
 	newRay.dir = ray.dir.reflect(norm);
+	return (getRayColor(newRay, object, recursion));
+}
+
+Vec3 Raytracer::getTransparencyColor(Ray &ray, Object *object, Vec3 &pos, Vec3 &norm, int recursion)
+{
+	Ray newRay;
+	newRay.pos = pos;
+	float refFactor = 1 / object->refraction;
+	float costhetai = cos(ray.dir.angle(norm));
+	float sin2thetat = refFactor * refFactor * (costhetai * costhetai - 1);
+	newRay.dir = ray.dir * refFactor + norm * (refFactor * costhetai + sqrt(1 + sin2thetat));
 	return (getRayColor(newRay, object, recursion));
 }
 
@@ -103,7 +122,13 @@ Vec3 Raytracer::getRayColor(Ray &ray, Object *avoid, int recursion, float *zInde
 	Vec3 diffuse(0);
 	Vec3 specular(0);
 	getDiffuseSpecularLight(ray, object, pos, norm, diffuse, specular);
-	Vec3 col = Vec3(object->color) * (diffuse + this->ambient) + specular;
+	Vec3 col = Vec3(object->color) * (diffuse + this->ambient);
+	if (object->color.a < 1)
+	{
+		col *= object->color.a;
+		col += getTransparencyColor(ray, object, pos, norm, recursion) * (1 - object->color.a) * Vec3(object->color);
+	}
+	col += specular;
 	if (object->reflection > 0)
 		col = col * (1 - object->reflection) + getReflectionColor(ray, object, pos, norm, recursion + 1) * object->color * object->reflection;
 	return (col);

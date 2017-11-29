@@ -42,6 +42,8 @@ void Vec3::unrotate(Vec3 vec)
 
 void Vec3::rotateX(float angle)
 {
+	if (!angle)
+		return;
 	float tmpY = this->y;
 	float tmpZ = this->z;
 	this->y = tmpY * cos(angle) - tmpZ * sin(angle);
@@ -50,6 +52,8 @@ void Vec3::rotateX(float angle)
 
 void Vec3::rotateY(float angle)
 {
+	if (!angle)
+		return;
 	float tmpX = this->x;
 	float tmpZ = this->z;
 	this->x = tmpZ * sin(angle) + tmpX * cos(angle);
@@ -58,6 +62,8 @@ void Vec3::rotateY(float angle)
 
 void Vec3::rotateZ(float angle)
 {
+	if (!angle)
+		return;
 	float tmpX = this->x;
 	float tmpY = this->y;
 	this->x = tmpX * cos(angle) - tmpY * sin(angle);
