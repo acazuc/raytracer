@@ -5,6 +5,7 @@
 #include "Filters/Fisheye.h"
 #include "Filters/Sobel.h"
 #include "Filters/Fxaa.h"
+#include "Filters/Blur.h"
 #include "Filters/Cel.h"
 #include "Debug.h"
 #include <cmath>
@@ -181,12 +182,15 @@ void Raytracer::render()
 	/*Vec3 *cel = Cel::cel(this->colorBuffer, 20, this->width, this->height);
 	delete[] (this->colorBuffer);
 	this->colorBuffer = cel;*/
-	Vec3 *sobel = Sobel::sobel(this->colorBuffer, this->zBuffer, this->width, this->height);
+	/*Vec3 *sobel = Sobel::sobel(this->colorBuffer, this->zBuffer, this->width, this->height);
 	delete[] (this->colorBuffer);
-	this->colorBuffer = sobel;
+	this->colorBuffer = sobel;*/
 	/*Vec3 *fisheye = Fisheye::fisheye(this->colorBuffer, this->width, this->height);
 	delete[] (this->colorBuffer);
 	this->colorBuffer = fisheye;*/
+	Vec3 *blur = Blur::blur(this->colorBuffer, 5, this->width, this->height);
+	delete[] (this->colorBuffer);
+	this->colorBuffer = blur;
 	Vec3 *fxaa = Fxaa::fxaa(this->colorBuffer, this->width, this->height);
 	delete[] (this->colorBuffer);
 	this->colorBuffer = fxaa;

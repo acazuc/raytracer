@@ -26,6 +26,7 @@ SRCS_NAME = Main.cpp \
 	    Filters/Sobel.cpp \
 	    Filters/Cel.cpp \
 	    Filters/Fisheye.cpp \
+	    Filters/Blur.cpp \
 	    Filters/Color/GreyShade.cpp \
 	    Filters/Color/Negative.cpp \
 	    Filters/Color/Sepia.cpp \
