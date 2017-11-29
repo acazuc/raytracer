@@ -1,8 +1,12 @@
 #include "Raytracer.h"
-#include "Debug.h"
+#include "Filters/Color/GreyShade.h"
+#include "Filters/Color/Negative.h"
+#include "Filters/Color/Sepia.h"
+#include "Filters/Fisheye.h"
 #include "Filters/Sobel.h"
 #include "Filters/Fxaa.h"
 #include "Filters/Cel.h"
+#include "Debug.h"
 #include <cmath>
 
 Raytracer::Raytracer(uint32_t width, uint32_t height)
@@ -174,15 +178,27 @@ void Raytracer::render()
 	{
 		this->threads[i]->join();
 	}
-	/*Vec3 *cel = Cel::cel(this->colorBuffer, 25, this->width, this->height);
+	/*Vec3 *cel = Cel::cel(this->colorBuffer, 20, this->width, this->height);
 	delete[] (this->colorBuffer);
 	this->colorBuffer = cel;*/
-	/*Vec3 *sobel = Sobel::sobel(this->colorBuffer, this->zBuffer, this->width, this->height);
+	Vec3 *sobel = Sobel::sobel(this->colorBuffer, this->zBuffer, this->width, this->height);
 	delete[] (this->colorBuffer);
-	this->colorBuffer = sobel;*/
+	this->colorBuffer = sobel;
+	/*Vec3 *fisheye = Fisheye::fisheye(this->colorBuffer, this->width, this->height);
+	delete[] (this->colorBuffer);
+	this->colorBuffer = fisheye;*/
 	Vec3 *fxaa = Fxaa::fxaa(this->colorBuffer, this->width, this->height);
 	delete[] (this->colorBuffer);
 	this->colorBuffer = fxaa;
+	/*Vec3 *greyShade = GreyShade::greyShade(this->colorBuffer, this->width, this->height);
+	delete[] (this->colorBuffer);
+	this->colorBuffer = greyShade;*/
+	/*Vec3 *negative = Negative::negative(this->colorBuffer, this->width, this->height);
+	delete[] (this->colorBuffer);
+	this->colorBuffer = negative;*/
+	/*Vec3 *sepia = Sepia::sepia(this->colorBuffer, this->width, this->height);
+	delete[] (this->colorBuffer);
+	this->colorBuffer = sepia;*/
 	for (uint64_t i = 0; i < this->width * this->height; ++i)
 	{
 		this->imgData[i * 4 + 0] = std::min((int64_t)0xff, std::max((int64_t)0, (int64_t)(this->colorBuffer[i].r * 0xff)));

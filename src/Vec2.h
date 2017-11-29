@@ -10,6 +10,10 @@ class Vec2
 		Vec2(float x, float y) : x(x), y(y) {};
 		Vec2(float xy) : x(xy), y(xy) {};
 		Vec2() : x(0), y(0) {};
+		float dot(Vec2 vec);
+		float angle(Vec2 vec);
+		float length();
+		void normalize();
 		Vec2 operator + (float val);
 		Vec2 operator - (float val);
 		Vec2 operator * (float val);
@@ -18,6 +22,14 @@ class Vec2
 		Vec2 operator - (Vec2 vec);
 		Vec2 operator * (Vec2 vec);
 		Vec2 operator / (Vec2 vec);
+		Vec2 operator += (float val);
+		Vec2 operator -= (float val);
+		Vec2 operator *= (float val);
+		Vec2 operator /= (float val);
+		Vec2 operator += (Vec2 vec);
+		Vec2 operator -= (Vec2 vec);
+		Vec2 operator *= (Vec2 vec);
+		Vec2 operator /= (Vec2 vec);
 
 };
 

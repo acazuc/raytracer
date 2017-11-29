@@ -9,14 +9,14 @@ Vec3 Sobel::getPixelAt(Vec3 *img, uint64_t x, uint64_t y, uint64_t width, uint64
 {
 	x = std::min(width - 1, std::max((uint64_t)0, x));
 	y = std::min(height - 1, std::max((uint64_t)0, y));
-	return (img[(int64_t)(x + y * width)]);
+	return (img[x + y * width]);
 }
 
 float Sobel::getZIndexAt(float *zBuffer, uint64_t x, uint64_t y, uint64_t width, uint64_t height)
 {
 	x = std::min(width - 1, std::max((uint64_t)0, x));
 	y = std::min(height - 1, std::max((uint64_t)0, y));
-	return (zBuffer[(int64_t)(x + y * width)]);
+	return (zBuffer[x + y * width]);
 }
 
 Vec3 Sobel::process(Vec3 *img, float *zBuffer, Vec2 &pos, uint64_t width, uint64_t height)

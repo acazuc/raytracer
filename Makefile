@@ -25,6 +25,10 @@ SRCS_NAME = Main.cpp \
 	    Filters/Fxaa.cpp \
 	    Filters/Sobel.cpp \
 	    Filters/Cel.cpp \
+	    Filters/Fisheye.cpp \
+	    Filters/Color/GreyShade.cpp \
+	    Filters/Color/Negative.cpp \
+	    Filters/Color/Sepia.cpp \
 
 SRCS = $(addprefix $(SRCS_PATH), $(SRCS_NAME))
 
@@ -62,6 +66,7 @@ odir:
 	@mkdir -p $(OBJS_PATH)Objects
 	@mkdir -p $(OBJS_PATH)Lights
 	@mkdir -p $(OBJS_PATH)Filters
+	@mkdir -p $(OBJS_PATH)Filters/Color
 
 clean:
 	@echo " - Cleaning objs"

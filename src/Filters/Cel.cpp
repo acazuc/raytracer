@@ -5,7 +5,7 @@ Vec3 Cel::getPixelAt(Vec3 *img, uint64_t x, uint64_t y, uint64_t width, uint64_t
 {
 	x = std::min(width - 1, std::max((uint64_t)0, x));
 	y = std::min(height - 1, std::max((uint64_t)0, y));
-	return (img[(int64_t)(x + y * width)]);
+	return (img[x + y * width]);
 }
 
 Vec3 *Cel::cel(Vec3 *img, uint8_t cels, uint64_t width, uint64_t height)
