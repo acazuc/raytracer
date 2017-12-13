@@ -1,7 +1,7 @@
 #ifndef FISHEYE_H
 # define FISHEYE_H
 
-# include "Vec3.h"
+# include "Vec/Vec3.h"
 # include <cstdint>
 
 class Fisheye

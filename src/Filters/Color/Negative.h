@@ -1,7 +1,7 @@
 #ifndef NEGATIVE_H
 # define NEGATIVE_H
 
-# include "Vec3.h"
+# include "Vec/Vec3.h"
 # include <cstdint>
 
 class Negative

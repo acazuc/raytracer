@@ -10,15 +10,15 @@ SRCS_PATH = src/
 
 SRCS_NAME = Main.cpp \
 	    Raytracer.cpp \
-	    Vec2.cpp \
-	    Vec3.cpp \
-	    Vec4.cpp \
 	    Quadratic.cpp \
+	    Image.cpp \
+	    PNG.cpp \
 	    Objects/Object.cpp \
 	    Objects/Sphere.cpp \
 	    Objects/Cylinder.cpp \
 	    Objects/Cone.cpp \
 	    Objects/Plane.cpp \
+	    Objects/Triangle.cpp \
 	    Lights/Light.cpp \
 	    Lights/PonctualLight.cpp \
 	    Lights/DirectionalLight.cpp \
@@ -30,6 +30,10 @@ SRCS_NAME = Main.cpp \
 	    Filters/Color/GreyShade.cpp \
 	    Filters/Color/Negative.cpp \
 	    Filters/Color/Sepia.cpp \
+	    Utils/System.cpp \
+	    Vec/Vec2.cpp \
+	    Vec/Vec3.cpp \
+	    Vec/Vec4.cpp \
 
 SRCS = $(addprefix $(SRCS_PATH), $(SRCS_NAME))
 
@@ -40,6 +44,8 @@ OBJS_NAME = $(SRCS_NAME:.cpp=.o)
 OBJS = $(addprefix $(OBJS_PATH), $(OBJS_NAME))
 
 LIBRARY = -lglfw
+LIBRARY+= -lpng
+LIBRARY+= -lz
 
 FRAMEWORK = -lGL
 FRAMEWORK+= -lX11
@@ -68,6 +74,8 @@ odir:
 	@mkdir -p $(OBJS_PATH)Lights
 	@mkdir -p $(OBJS_PATH)Filters
 	@mkdir -p $(OBJS_PATH)Filters/Color
+	@mkdir -p $(OBJS_PATH)Utils
+	@mkdir -p $(OBJS_PATH)Vec
 
 clean:
 	@echo " - Cleaning objs"

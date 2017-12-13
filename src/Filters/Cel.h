@@ -1,7 +1,7 @@
 #ifndef CEL_H
 # define CEL_H
 
-# include "Vec3.h"
+# include "Vec/Vec3.h"
 # include <cstdint>
 
 class Cel

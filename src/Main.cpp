@@ -2,11 +2,13 @@
 #include "Lights/DirectionalLight.h"
 #include "Lights/PonctualLight.h"
 #include "Objects/Cylinder.h"
+#include "Objects/Triangle.h"
 #include "Objects/Sphere.h"
 #include "Objects/Plane.h"
 #include "Objects/Cone.h"
 #include "Raytracer.h"
 #include "Debug.h"
+#include "PNG.h"
 #include <GLFW/glfw3.h>
 #include <cstring>
 #include <cmath>
@@ -19,8 +21,8 @@ static void createWindow()
 {
 	if (!(window = glfwCreateWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "Raytracer", NULL, NULL)))
 		ERROR("Window: can't create window");
-	glfwSwapInterval(1);
 	glfwMakeContextCurrent(window);
+	glfwSwapInterval(1);
 	glEnable(GL_TEXTURE_2D);
 	glEnable(GL_BLEND);
 	glViewport(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT);
@@ -58,7 +60,7 @@ int main()
 	createWindow();
 	raytracer = new Raytracer(WINDOW_WIDTH, WINDOW_HEIGHT);
 	raytracer->setFov(60);
-	raytracer->setAmbient(Vec3(.01, .01, .01));
+	raytracer->setAmbient(Vec3(.00, .00, .00));
 	raytracer->setPos(Vec3(0, 0, 0));
 	raytracer->setRot(Vec3(0, 0, 0));
 	/*for (uint64_t i = 0; i < 11 * 11; ++i)
@@ -69,11 +71,14 @@ int main()
 		sphere->reflection = 0;
 		raytracer->addObject(sphere);
 	}*/
+	Image earth;
+	PNG::read(std::string("earth.png"), earth.data, earth.width, earth.height);
 	Sphere *sphere = new Sphere(1);
+	sphere->texture = &earth;
 	sphere->pos = Vec3(0, -1.5, 8);
 	sphere->color = Vec4(1, 1, 1, 1);
 	sphere->reflection = 0;
-	sphere->refraction = 0;
+	sphere->refraction = 1;
 	raytracer->addObject(sphere);
 	Cylinder *cylinder = new Cylinder(1);
 	cylinder->pos = Vec3(3, 0, 13);
@@ -82,7 +87,7 @@ int main()
 	Cone *cone = new Cone(0);
 	cone->pos = Vec3(-3, 0, 13);
 	cone->rot = Vec3(0, 0, 0);
-	cone->color = Vec4(1, 1, 1, 1);
+	cone->color = Vec4(0, 1, 1, 1);
 	raytracer->addObject(cone);
 	Plane *plane = new Plane();
 	plane->pos = Vec3(0, -2, 0);
@@ -95,6 +100,14 @@ int main()
 	plane->color = Vec4(1, 1, 1, 1);
 	plane->specular = 0;
 	raytracer->addObject(plane);
+	/*Triangle *triangle = new Triangle();
+	triangle->pos = Vec3(-1, 1, 6);
+	triangle->rot = Vec3(0, 0, 0);
+	triangle->pos2 = Vec3(0, -1, 6);
+	triangle->pos3 = Vec3(1, 1, 6);
+	triangle->color = Vec4(1, 1, 0, 1);
+	triangle->specular = .5;
+	raytracer->addObject(triangle);*/
 	PonctualLight *light = new PonctualLight();
 	light->pos = Vec3(10, -1, -10);
 	light->intensity = 1;
@@ -102,7 +115,7 @@ int main()
 	raytracer->addLight(light);
 	/*DirectionalLight *dLight = new DirectionalLight();
 	dLight->dir = Vec3(-1, -1, -1);
-	dLight->intensity = .5;
+	dLight->intensity = .1;
 	dLight->color = Vec3(1, 1, 1);
 	raytracer->addLight(dLight);*/
 	glGenTextures(1, &texture);

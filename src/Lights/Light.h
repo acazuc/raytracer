@@ -1,7 +1,7 @@
 #ifndef LIGHT_H
 # define LIGHT_H
 
-# include "Vec3.h"
+# include "Vec/Vec3.h"
 
 class Light
 {

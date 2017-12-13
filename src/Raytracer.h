@@ -32,7 +32,7 @@ class Raytracer
 		void getDiffuseSpecularLight(Ray &ray, Object *object, Vec3 &pos, Vec3 &norm, Vec3 &diffuse, Vec3 &specular);
 		Vec3 getReflectionColor(Ray &ray, Object *object, Vec3 &pos, Vec3 &norm, int recursion);
 		Vec3 getTransparencyColor(Ray &ray, Object *object, Vec3 &pos, Vec3 &norm, int recursion);
-		Vec3 getDiffuseSpecularTransparencyLight(Light *light, Object *object, Vec3 &pos);
+		Vec3 getDiffuseSpecularTransparencyLight(Light *light, Object *object, Ray &ray, Vec3 &pos);
 
 	public:
 		Raytracer(uint32_t width, uint32_t height);

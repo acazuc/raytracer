@@ -31,8 +31,8 @@ Vec3 Fxaa::process(Vec3 *img, Vec2 &pos, uint64_t width, uint64_t height)
 	Vec2 dir(-((lumaNW + lumaNE) - (lumaSW + lumaSE)), ((lumaNW + lumaSW) - (lumaNE + lumaSE)));
 	float dirReduce = std::max((lumaNW + lumaNE + lumaSW + lumaSE) * (.25f * FXAA_REDUCE_MUL), FXAA_REDUCE_MIN);
 	float rcpDirMin = 1. / (std::min(std::abs(dir.x), std::abs(dir.y)) + dirReduce);
-	dir.x = std::min(FXAA_SPAN_MAX, std::max(-FXAA_SPAN_MAX, dir.x * rcpDirMin));
-	dir.y = std::min(FXAA_SPAN_MAX, std::max(-FXAA_SPAN_MAX, dir.y * rcpDirMin));
+	dir *= rcpDirMin;
+	dir.clamp(-FXAA_SPAN_MAX, FXAA_SPAN_MAX);
 	Vec3 a1 = getPixelAt(img, (int64_t)std::round(pos.x + dir.x * (1. / 3. - .5)), (int64_t)std::round(pos.y + dir.y * (1. / 3. - .5)), width, height);
 	Vec3 a2 = getPixelAt(img, (int64_t)std::round(pos.x + dir.x * (2. / 3. - .5)), (int64_t)std::round(pos.y + dir.y * (2. / 3. - .5)), width, height);
 	Vec3 rgbA(a1 + a2);

@@ -6,8 +6,10 @@
 #include "Filters/Sobel.h"
 #include "Filters/Fxaa.h"
 #include "Filters/Blur.h"
+#include "Utils/System.h"
 #include "Filters/Cel.h"
 #include "Debug.h"
+#include <cstring>
 #include <cmath>
 
 Raytracer::Raytracer(uint32_t width, uint32_t height)
@@ -48,9 +50,19 @@ bool Raytracer::trace(Ray &ray, Object *&object, Vec3 &position, Object *avoid)
 	return (nearestDistance != -1);
 }
 
-Vec3 Raytracer::getDiffuseSpecularTransparencyLight(Light *light, Object *object, Vec3 &pos)
+Vec3 Raytracer::getDiffuseSpecularTransparencyLight(Light *light, Object *object, Ray &ray, Vec3 &pos)
 {
-	Vec3 result(Vec3(object->color));
+	float opacity = object->color.a;
+	Vec3 result(object->color.xyz());
+	if (object->texture)
+	{
+		Vec4 data = object->texture->getDataAt(object->getUVAt(ray, pos));
+		result *= Vec3(data.r, data.g, data.b);
+		opacity *= data.a;
+	}
+	if (opacity >= 1)
+		return (result);
+	result *= 1 - opacity;
 	Ray newRay(pos, Vec3(0));
 	newRay.dir = light->getDirectionFrom(pos);
 	Object *newObject = nullptr;
@@ -59,9 +71,7 @@ Vec3 Raytracer::getDiffuseSpecularTransparencyLight(Light *light, Object *object
 		goto end;
 	if ((newPos - pos).length() > newRay.dir.length())
 		goto end;
-	if (newObject->color.a >= 1)
-		goto end;
-	result *= getDiffuseSpecularTransparencyLight(light, newObject, newPos);
+	result *= getDiffuseSpecularTransparencyLight(light, newObject, newRay, newPos);
 end:
 	return (result);
 }
@@ -72,6 +82,7 @@ void Raytracer::getDiffuseSpecularLight(Ray &ray, Object *object, Vec3 &pos, Vec
 	Vec3 collPosition(0);
 	Ray diffuseRay(pos, Vec3(0));
 	Vec3 reflect = ray.dir.reflect(norm);
+	float opacity;
 	for (uint64_t i = 0; i < this->lights.size(); ++i)
 	{
 		diffuseRay.dir = this->lights[i]->getDirectionFrom(pos);
@@ -81,8 +92,11 @@ void Raytracer::getDiffuseSpecularLight(Ray &ray, Object *object, Vec3 &pos, Vec
 		{
 			if ((collPosition - pos).length() > tmp.length())
 				goto next;
-			if (collObject->color.a < 1)
-				lightColorIntensity *= getDiffuseSpecularTransparencyLight(this->lights[i], collObject, collPosition);
+			opacity = collObject->color.a;
+			if (collObject->texture)
+				opacity *= collObject->texture->getDataAt(collObject->getUVAt(diffuseRay, collPosition)).a;
+			if (opacity < 1)
+				lightColorIntensity *= getDiffuseSpecularTransparencyLight(this->lights[i], collObject, diffuseRay, collPosition);
 			else
 				continue;
 		}
@@ -127,15 +141,18 @@ Vec3 Raytracer::getRayColor(Ray &ray, Object *avoid, int recursion, float *zInde
 	Vec3 diffuse(0);
 	Vec3 specular(0);
 	getDiffuseSpecularLight(ray, object, pos, norm, diffuse, specular);
-	Vec3 col = Vec3(object->color) * (diffuse + this->ambient);
-	if (object->color.a < 1)
-	{
-		col *= object->color.a;
-		col += getTransparencyColor(ray, object, pos, norm, recursion) * (1 - object->color.a) * Vec3(object->color);
-	}
+	Vec4 texColor(1);
+	if (object->texture)
+		texColor = object->texture->getDataAt(object->getUVAt(ray, pos));
+	diffuse *= Vec3(texColor.r, texColor.g, texColor.b);
+	Vec3 col = diffuse + this->ambient;
+	float transparency = object->color.a * texColor.a;
+	if (transparency < 1)
+		col = col * transparency + getTransparencyColor(ray, object, pos, norm, recursion) * (1 - transparency);
+	col *= object->color.xyz();
 	col += specular;
 	if (object->reflection > 0)
-		col = col * (1 - object->reflection) + getReflectionColor(ray, object, pos, norm, recursion + 1) * object->color * object->reflection;
+		col = col * (1 - object->reflection) + getReflectionColor(ray, object, pos, norm, recursion + 1) * object->color.xyz() * object->reflection;
 	return (col);
 }
 
@@ -168,7 +185,10 @@ void Raytracer::runThread(Raytracer *raytracer, uint64_t start, uint64_t end)
 
 void Raytracer::render()
 {
+	uint64_t started;
+	uint64_t ended;
 	uint64_t total = this->width * this->height;
+	started = System::nanotime();
 	for (uint8_t i = 0; i < THREAD_NUMBER; ++i)
 	{
 		uint64_t start = total * i / THREAD_NUMBER;
@@ -179,6 +199,8 @@ void Raytracer::render()
 	{
 		this->threads[i]->join();
 	}
+	ended = System::nanotime();
+	LOG("Draw: " << (ended - started) / 1000000. << " ms");
 	/*Vec3 *cel = Cel::cel(this->colorBuffer, 20, this->width, this->height);
 	delete[] (this->colorBuffer);
 	this->colorBuffer = cel;*/
@@ -188,12 +210,12 @@ void Raytracer::render()
 	/*Vec3 *fisheye = Fisheye::fisheye(this->colorBuffer, this->width, this->height);
 	delete[] (this->colorBuffer);
 	this->colorBuffer = fisheye;*/
-	Vec3 *blur = Blur::blur(this->colorBuffer, 5, this->width, this->height);
-	delete[] (this->colorBuffer);
-	this->colorBuffer = blur;
 	Vec3 *fxaa = Fxaa::fxaa(this->colorBuffer, this->width, this->height);
 	delete[] (this->colorBuffer);
 	this->colorBuffer = fxaa;
+	/*Vec3 *blur = Blur::blur(this->colorBuffer, 0, this->width, this->height);
+	delete[] (this->colorBuffer);
+	this->colorBuffer = blur;*/
 	/*Vec3 *greyShade = GreyShade::greyShade(this->colorBuffer, this->width, this->height);
 	delete[] (this->colorBuffer);
 	this->colorBuffer = greyShade;*/

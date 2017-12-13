@@ -1,6 +1,7 @@
 #include "Cone.h"
 #include "Quadratic.h"
 #include "Debug.h"
+#include <cmath>
 
 Cone::Cone(float size)
 : size(size)
@@ -23,6 +24,17 @@ Vec3 *Cone::collide(Ray &ray)
 	if (t < 0)
 		return (nullptr);
 	return (new Vec3(ray.pos + ray.dir * t));
+}
+
+Vec2 Cone::getUVAt(Ray &ray, Vec3 &pos)
+{
+	(void)ray;
+	Vec3 norm(pos - this->pos);
+	norm.unrotate(this->rot);
+	norm.y = -norm.y;
+	norm.normalize();
+	Vec2 uv(std::asin(norm.x) / M_PI + .5, pos.y);
+	return (uv);
 }
 
 Vec3 Cone::getNormAt(Ray &ray, Vec3 &pos)

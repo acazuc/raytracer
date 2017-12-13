@@ -1,6 +1,7 @@
 #include "Sphere.h"
 #include "Quadratic.h"
 #include "Debug.h"
+#include <cmath>
 
 Sphere::Sphere(float size)
 : size(size)
@@ -23,6 +24,16 @@ Vec3 *Sphere::collide(Ray &ray)
 	if (t < 0)
 		return (nullptr);
 	return (new Vec3(ray.pos + ray.dir * t));
+}
+
+Vec2 Sphere::getUVAt(Ray &ray, Vec3 &pos)
+{
+	(void)ray;
+	Vec3 norm(pos - this->pos);
+	norm.unrotate(this->rot);
+	norm.normalize();
+	Vec2 uv(std::asin(norm.x) / M_PI + .5, std::asin(norm.y) / M_PI + .5);
+	return (uv);
 }
 
 Vec3 Sphere::getNormAt(Ray &ray, Vec3 &pos)

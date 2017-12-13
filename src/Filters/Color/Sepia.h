@@ -1,7 +1,7 @@
 #ifndef SEPIA_H
 # define SEPIA_H
 
-# include "Vec3.h"
+# include "Vec/Vec3.h"
 # include <cstdint>
 
 class Sepia

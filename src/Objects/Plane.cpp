@@ -1,4 +1,5 @@
 #include "Plane.h"
+#include <cmath>
 
 Vec3 *Plane::collide(Ray &ray)
 {
@@ -14,12 +15,19 @@ Vec3 *Plane::collide(Ray &ray)
 	return (new Vec3(ray.pos + ray.dir * t));
 }
 
+Vec2 Plane::getUVAt(Ray &ray, Vec3 &pos)
+{
+	(void)ray;
+	(void)pos;
+	return (Vec2(0, 0));
+}
+
 Vec3 Plane::getNormAt(Ray &ray, Vec3 &pos)
 {
 	(void)pos;
 	Vec3 vec(0, 1, 0);
 	vec.rotate(this->rot);
-	if (vec.angle(ray.dir) >= 90)
+	if (vec.angle(ray.dir) <= M_PI / 2)
 		vec = -vec;
 	return (vec);
 }

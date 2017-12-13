@@ -1,7 +1,7 @@
 #ifndef BLUR_H
 # define BLUR_H
 
-# include "Vec3.h"
+# include "Vec/Vec3.h"
 # include <cstdint>
 
 class Blur
