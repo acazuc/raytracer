@@ -9,28 +9,29 @@ Sphere::Sphere(float size)
 	//Empty
 }
 
-Vec3 *Sphere::collide(Ray &ray)
+bool Sphere::collide(Ray &ray, Vec3 &pos)
 {
 	Vec3 delta(ray.pos - this->pos);
-	delta.unrotate(this->rot);
+	delta = this->unrotMat * delta;
 	Vec3 rdir(ray.dir);
-	rdir.unrotate(this->rot);
+	rdir = this->unrotMat * rdir;
 	Quadratic quadratic;
 	quadratic.a = rdir.dot(rdir);
 	quadratic.b = 2 * rdir.dot(delta);
-	quadratic.c = delta.dot(delta) - this->size;
+	quadratic.c = delta.dot(delta) - this->size / 2;
 	quadratic.solve();
 	float t = quadratic.getMinPosT();
 	if (t < 0)
-		return (nullptr);
-	return (new Vec3(ray.pos + ray.dir * t));
+		return (false);
+	pos = ray.pos + ray.dir * t;
+	return (true);
 }
 
 Vec2 Sphere::getUVAt(Ray &ray, Vec3 &pos)
 {
 	(void)ray;
 	Vec3 norm(pos - this->pos);
-	norm.unrotate(this->rot);
+	norm = this->unrotMat * norm;
 	norm.normalize();
 	Vec2 uv(.5 + atan2(norm.z, norm.x) / (2 * M_PI), .5 - asin(norm.y) / M_PI);
 	return (uv);
@@ -40,9 +41,9 @@ Vec3 Sphere::getNormAt(Ray &ray, Vec3 &pos)
 {
 	(void)ray;
 	Vec3 vec(pos - this->pos);
-	if (this->bumpTexture)
+	if (this->N_map)
 	{
-		Vec4 bump = this->bumpTexture->getDataAt(getUVAt(ray, pos));
+		Vec4 bump = this->N_map->getDataAt(getUVAt(ray, pos));
 		Vec3 T(-vec.y, vec.x);
 		T.normalize();
 		//Vec3 P(vec.x, 0, vec.z);
@@ -51,5 +52,7 @@ Vec3 Sphere::getNormAt(Ray &ray, Vec3 &pos)
 		vec = T * bump.r + B * bump.g + vec * bump.b;
 	}
 	vec.normalize();
+	if (vec.dot(ray.dir) / (vec.length() * ray.dir.length()) > 0)
+		vec = -vec;
 	return (vec);
 }

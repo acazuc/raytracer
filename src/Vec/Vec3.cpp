@@ -51,8 +51,10 @@ void Vec3::rotateX(float angle)
 		return;
 	float tmpY = this->y;
 	float tmpZ = this->z;
-	this->y = tmpY * cos(angle) - tmpZ * sin(angle);
-	this->z = tmpY * sin(angle) + tmpZ * cos(angle);
+	float ca = cos(angle);
+	float sa = sin(angle);
+	this->y = tmpY * ca - tmpZ * sa;
+	this->z = tmpY * sa + tmpZ * ca;
 }
 
 void Vec3::rotateY(float angle)
@@ -61,8 +63,10 @@ void Vec3::rotateY(float angle)
 		return;
 	float tmpX = this->x;
 	float tmpZ = this->z;
-	this->x = tmpZ * sin(angle) + tmpX * cos(angle);
-	this->z = tmpZ * cos(angle) - tmpX * sin(angle);
+	float ca = cos(angle);
+	float sa = sin(angle);
+	this->x = tmpZ * sa + tmpX * ca;
+	this->z = tmpZ * ca - tmpX * sa;
 }
 
 void Vec3::rotateZ(float angle)
@@ -71,8 +75,10 @@ void Vec3::rotateZ(float angle)
 		return;
 	float tmpX = this->x;
 	float tmpY = this->y;
-	this->x = tmpX * cos(angle) - tmpY * sin(angle);
-	this->y = tmpX * sin(angle) + tmpY * cos(angle);
+	float ca = cos(angle);
+	float sa = sin(angle);
+	this->x = tmpX * ca - tmpY * sa;
+	this->y = tmpX * sa + tmpY * ca;
 }
 
 float &Vec3::operator [] (int idx)
@@ -127,64 +133,40 @@ Vec3 Vec3::operator / (Vec3 vec)
 
 Vec3 Vec3::operator += (float val)
 {
-	this->x += val;
-	this->y += val;
-	this->z += val;
-	return (*this);
+	return (*this = *this + val);
 }
 
 Vec3 Vec3::operator -= (float val)
 {
-	this->x -= val;
-	this->y -= val;
-	this->z -= val;
-	return (*this);
+	return (*this = *this - val);
 }
 
 Vec3 Vec3::operator *= (float val)
 {
-	this->x *= val;
-	this->y *= val;
-	this->z *= val;
-	return (*this);
+	return (*this = *this * val);
 }
 
 Vec3 Vec3::operator /= (float val)
 {
-	this->x /= val;
-	this->y /= val;
-	this->z /= val;
-	return (*this);
+	return (*this = *this / val);
 }
 
 Vec3 Vec3::operator += (Vec3 vec)
 {
-	this->x += vec.x;
-	this->y += vec.y;
-	this->z += vec.z;
-	return (*this);
+	return (*this = *this + vec);
 }
 
 Vec3 Vec3::operator -= (Vec3 vec)
 {
-	this->x -= vec.x;
-	this->y -= vec.y;
-	this->z -= vec.z;
-	return (*this);
+	return (*this = *this - vec);
 }
 
 Vec3 Vec3::operator *= (Vec3 vec)
 {
-	this->x *= vec.x;
-	this->y *= vec.y;
-	this->z *= vec.z;
-	return (*this);
+	return (*this = *this * vec);
 }
 
 Vec3 Vec3::operator /= (Vec3 vec)
 {
-	this->x /= vec.x;
-	this->y /= vec.y;
-	this->z /= vec.z;
-	return (*this);
+	return (*this = *this / vec);
 }

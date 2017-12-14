@@ -35,6 +35,9 @@ SRCS_NAME = Main.cpp \
 	    Vec/Vec2.cpp \
 	    Vec/Vec3.cpp \
 	    Vec/Vec4.cpp \
+	    Mat/Mat2.cpp \
+	    Mat/Mat3.cpp \
+	    Mat/Mat4.cpp \
 
 SRCS = $(addprefix $(SRCS_PATH), $(SRCS_NAME))
 
@@ -77,6 +80,7 @@ odir:
 	@mkdir -p $(OBJS_PATH)Filters/Color
 	@mkdir -p $(OBJS_PATH)Utils
 	@mkdir -p $(OBJS_PATH)Vec
+	@mkdir -p $(OBJS_PATH)Mat
 
 clean:
 	@echo " - Cleaning objs"

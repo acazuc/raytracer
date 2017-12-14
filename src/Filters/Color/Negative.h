@@ -1,14 +1,14 @@
 #ifndef NEGATIVE_H
 # define NEGATIVE_H
 
-# include "Vec/Vec3.h"
+# include "Vec/Vec4.h"
 # include <cstdint>
 
 class Negative
 {
 
 	public:
-		static Vec3 *negative(Vec3 *img, uint64_t width, uint64_t height);
+		static Vec4 *negative(Vec4 *img, uint64_t width, uint64_t height);
 
 };
 

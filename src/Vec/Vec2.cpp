@@ -40,6 +40,11 @@ void Vec2::clamp(float min, float max)
 	this->min(max);
 }
 
+float &Vec2::operator [] (int idx)
+{
+	return (reinterpret_cast<float*>(this)[idx]);
+}
+
 Vec2 Vec2::operator + (float val)
 {
 	return (Vec2(this->x + val, this->y + val));
@@ -82,56 +87,40 @@ Vec2 Vec2::operator / (Vec2 vec)
 
 Vec2 Vec2::operator += (float val)
 {
-	this->x += val;
-	this->y += val;
-	return (*this);
+	return (*this = *this + val);
 }
 
 Vec2 Vec2::operator -= (float val)
 {
-	this->x -= val;
-	this->y -= val;
-	return (*this);
+	return (*this = *this - val);
 }
 
 Vec2 Vec2::operator *= (float val)
 {
-	this->x *= val;
-	this->y *= val;
-	return (*this);
+	return (*this = *this * val);
 }
 
 Vec2 Vec2::operator /= (float val)
 {
-	this->x /= val;
-	this->y /= val;
-	return (*this);
+	return (*this = *this / val);
 }
 
 Vec2 Vec2::operator += (Vec2 vec)
 {
-	this->x += vec.x;
-	this->y += vec.y;
-	return (*this);
+	return (*this = *this + vec);
 }
 
 Vec2 Vec2::operator -= (Vec2 vec)
 {
-	this->x -= vec.x;
-	this->y -= vec.y;
-	return (*this);
+	return (*this = *this - vec);
 }
 
 Vec2 Vec2::operator *= (Vec2 vec)
 {
-	this->x *= vec.x;
-	this->y *= vec.y;
-	return (*this);
+	return (*this = *this * vec);
 }
 
 Vec2 Vec2::operator /= (Vec2 vec)
 {
-	this->x /= vec.x;
-	this->y /= vec.y;
-	return (*this);
+	return (*this = *this / vec);
 }

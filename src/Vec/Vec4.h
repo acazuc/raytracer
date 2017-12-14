@@ -27,6 +27,7 @@ class Vec4
 		Vec3 rgb();
 		Vec2 xy();
 		Vec2 zw();
+		float &operator [] (int idx);
 		Vec4 operator + (float val);
 		Vec4 operator - (float val);
 		Vec4 operator * (float val);

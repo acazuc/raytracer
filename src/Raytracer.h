@@ -1,8 +1,6 @@
 #ifndef RAYTRACER_H
 # define RAYTRACER_H
 
-# define THREAD_NUMBER 32
-
 # include "Objects/Object.h"
 # include "Lights/Light.h"
 # include <cstdint>
@@ -15,7 +13,7 @@ class Raytracer
 	private:
 		std::vector<Object*> objects;
 		std::vector<Light*> lights;
-		std::thread *threads[THREAD_NUMBER];
+		std::thread **threads;
 		Vec4 *colorBuffer;
 		Vec3 ambient;
 		Vec3 pos;

@@ -2,6 +2,8 @@
 #include <algorithm>
 #include <cmath>
 
+#define EPSILON 0.0001
+
 void Quadratic::solve()
 {
 	this->d = this->b * this->b - 4 * this->a * this->c;
@@ -27,9 +29,9 @@ float Quadratic::getMinPosT()
 		return (this->t1);
 	if (this->solutions == 2)
 	{
-		if (this->t1 < 0)
+		if (this->t1 < EPSILON)
 			return (this->t2);
-		if (this->t2 < 0)
+		if (this->t2 < EPSILON)
 			return (this->t1);
 		return (std::min(this->t1, this->t2));
 	}

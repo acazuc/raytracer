@@ -17,6 +17,7 @@ class Vec2
 		void min(float val);
 		void max(float val);
 		void clamp(float min, float max);
+		float &operator [] (int idx);
 		Vec2 operator + (float val);
 		Vec2 operator - (float val);
 		Vec2 operator * (float val);

@@ -41,6 +41,11 @@ Vec2 Vec4::zw()
 	return (Vec2(this->z, this->w));
 }
 
+float &Vec4::operator [] (int idx)
+{
+	return (reinterpret_cast<float*>(this)[idx]);
+}
+
 Vec4 Vec4::operator + (float val)
 {
 	return (Vec4(this->x + val, this->y + val, this->z + val, this->w + val));
@@ -83,72 +88,40 @@ Vec4 Vec4::operator / (Vec4 vec)
 
 Vec4 Vec4::operator += (float val)
 {
-	this->x += val;
-	this->y += val;
-	this->z += val;
-	this->w += val;
-	return (*this);
+	return (*this = *this + val);
 }
 
 Vec4 Vec4::operator -= (float val)
 {
-	this->x -= val;
-	this->y -= val;
-	this->z -= val;
-	this->w -= val;
-	return (*this);
+	return (*this = *this - val);
 }
 
 Vec4 Vec4::operator *= (float val)
 {
-	this->x *= val;
-	this->y *= val;
-	this->z *= val;
-	this->w *= val;
-	return (*this);
+	return (*this = *this * val);
 }
 
 Vec4 Vec4::operator /= (float val)
 {
-	this->x /= val;
-	this->y /= val;
-	this->z /= val;
-	this->w /= val;
-	return (*this);
+	return (*this = *this / val);
 }
 
 Vec4 Vec4::operator += (Vec4 vec)
 {
-	this->x += vec.x;
-	this->y += vec.y;
-	this->z += vec.z;
-	this->w += vec.w;
-	return (*this);
+	return (*this = *this + vec);
 }
 
 Vec4 Vec4::operator -= (Vec4 vec)
 {
-	this->x -= vec.x;
-	this->y -= vec.y;
-	this->z -= vec.z;
-	this->w -= vec.w;
-	return (*this);
+	return (*this = *this - vec);
 }
 
 Vec4 Vec4::operator *= (Vec4 vec)
 {
-	this->x *= vec.x;
-	this->y *= vec.y;
-	this->z *= vec.z;
-	this->w *= vec.w;
-	return (*this);
+	return (*this = *this * vec);
 }
 
 Vec4 Vec4::operator /= (Vec4 vec)
 {
-	this->x /= vec.x;
-	this->y /= vec.y;
-	this->z /= vec.z;
-	this->w /= vec.w;
-	return (*this);
+	return (*this = *this / vec);
 }
