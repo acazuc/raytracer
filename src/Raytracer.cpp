@@ -4,6 +4,7 @@
 #include "Filters/Color/Sepia.h"
 #include "Filters/Fisheye.h"
 #include "Filters/Sobel.h"
+#include "Filters/Gamma.h"
 #include "Filters/Fxaa.h"
 #include "Filters/Blur.h"
 #include "Utils/System.h"
@@ -17,7 +18,7 @@ Raytracer::Raytracer(uint32_t width, uint32_t height)
 , height(height)
 , width(width)
 {
-	this->colorBuffer = new Vec3[width * height];
+	this->colorBuffer = new Vec4[width * height];
 	this->zBuffer = new float[width * height];
 	this->imgData = new char[width * height * 4];
 }
@@ -50,19 +51,13 @@ bool Raytracer::trace(Ray &ray, Object *&object, Vec3 &position, Object *avoid)
 	return (nearestDistance != -1);
 }
 
-Vec3 Raytracer::getDiffuseSpecularTransparencyLight(Light *light, Object *object, Ray &ray, Vec3 &pos)
+Vec4 Raytracer::getDiffuseSpecularTransparencyLight(Light *light, Object *object, Ray &ray, Vec3 &pos)
 {
-	float opacity = object->color.a;
-	Vec3 result(object->color.xyz());
+	Vec4 result(object->Kd);
 	if (object->texture)
-	{
-		Vec4 data = object->texture->getDataAt(object->getUVAt(ray, pos));
-		result *= Vec3(data.r, data.g, data.b);
-		opacity *= data.a;
-	}
-	if (opacity >= 1)
+		result *= object->texture->getDataAt(object->getUVAt(ray, pos));
+	if (result.a >= 1)
 		return (result);
-	result *= 1 - opacity;
 	Ray newRay(pos, Vec3(0));
 	newRay.dir = light->getDirectionFrom(pos);
 	Object *newObject = nullptr;
@@ -76,7 +71,7 @@ end:
 	return (result);
 }
 
-void Raytracer::getDiffuseSpecularLight(Ray &ray, Object *object, Vec3 &pos, Vec3 &norm, Vec3 &diffuse, Vec3 &specular)
+void Raytracer::getDiffuseSpecularLight(Ray &ray, Object *object, Vec3 &pos, Vec3 &norm, Vec4 &diffuse, Vec4 &specular)
 {
 	Object *collObject = nullptr;
 	Vec3 collPosition(0);
@@ -87,72 +82,79 @@ void Raytracer::getDiffuseSpecularLight(Ray &ray, Object *object, Vec3 &pos, Vec
 	{
 		diffuseRay.dir = this->lights[i]->getDirectionFrom(pos);
 		Vec3 tmp = diffuseRay.dir;
-		Vec3 lightColorIntensity = this->lights[i]->color * this->lights[i]->intensity;
+		Vec4 lightColorIntensity = Vec4(this->lights[i]->color * this->lights[i]->intensity, 1);
 		if (trace(diffuseRay, collObject, collPosition, object))
 		{
 			if ((collPosition - pos).length() > tmp.length())
 				goto next;
-			opacity = collObject->color.a;
+			opacity = collObject->Kd.a;
 			if (collObject->texture)
 				opacity *= collObject->texture->getDataAt(collObject->getUVAt(diffuseRay, collPosition)).a;
-			if (opacity < 1)
-				lightColorIntensity *= getDiffuseSpecularTransparencyLight(this->lights[i], collObject, diffuseRay, collPosition);
-			else
+			if (opacity >= 1)
 				continue;
+			Vec4 result = getDiffuseSpecularTransparencyLight(this->lights[i], collObject, diffuseRay, collPosition);
+			lightColorIntensity = lightColorIntensity * (1 - result.a) * Vec4(result.rgb(), 1);
 		}
 next:
 		diffuseRay.dir.normalize();
 		diffuse += lightColorIntensity * std::max(0.f, diffuseRay.dir.dot(norm));
-		specular += lightColorIntensity * pow(std::max(0.f, reflect.dot(diffuseRay.dir)), object->specularFactor) * object->specular;
+		specular += lightColorIntensity * pow(std::max(0.f, reflect.dot(diffuseRay.dir)), object->Ns) * object->Ks;
 	}
 }
 
-Vec3 Raytracer::getReflectionColor(Ray &ray, Object *object, Vec3 &pos, Vec3 &norm, int recursion)
+Vec4 Raytracer::getReflectionColor(Ray &ray, Object *object, Vec3 &pos, Vec3 &norm, int recursion)
 {
 	if (recursion > 100)
-		return (Vec3(0, 0, 0));
+		return (Vec4(0, 0, 0));
 	Ray newRay;
 	newRay.pos = pos;
 	newRay.dir = ray.dir.reflect(norm);
 	return (getRayColor(newRay, object, recursion));
 }
 
-Vec3 Raytracer::getTransparencyColor(Ray &ray, Object *object, Vec3 &pos, Vec3 &norm, int recursion)
+Vec4 Raytracer::getTransparencyColor(Ray &ray, Object *object, Vec3 &pos, Vec3 &norm, int recursion)
 {
 	Ray newRay;
 	newRay.pos = pos;
-	float refFactor = 1 / object->refraction;
-	float costhetai = cos(ray.dir.angle(norm));
-	float sin2thetat = refFactor * refFactor * (costhetai * costhetai - 1);
-	newRay.dir = ray.dir * refFactor + norm * (refFactor * costhetai + sqrt(1 + sin2thetat));
+	if (object->Ni == 1)
+	{
+		newRay.dir = ray.dir;
+	}
+	else
+	{
+		float refFactor = 1 / object->Ni;
+		float costhetai = cos(ray.dir.angle(norm));
+		float sin2thetat = refFactor * refFactor * (costhetai * costhetai - 1);
+		newRay.dir = ray.dir * refFactor + norm * (refFactor * costhetai + sqrt(1 + sin2thetat));
+	}
 	return (getRayColor(newRay, object, recursion));
 }
 
-Vec3 Raytracer::getRayColor(Ray &ray, Object *avoid, int recursion, float *zIndex)
+Vec4 Raytracer::getRayColor(Ray &ray, Object *avoid, int recursion, float *zIndex)
 {
 
 	Object *object = nullptr;
 	Vec3 pos(0);
 	if (!trace(ray, object, pos, avoid))
-		return (Vec3(0, 0, 0));
+		return (Vec4(0));
 	if (zIndex)
 		*zIndex = (pos - ray.pos).length();
 	Vec3 norm = object->getNormAt(ray, pos);
-	Vec3 diffuse(0);
-	Vec3 specular(0);
+	Vec4 diffuse(0);
+	Vec4 specular(0);
 	getDiffuseSpecularLight(ray, object, pos, norm, diffuse, specular);
 	Vec4 texColor(1);
 	if (object->texture)
 		texColor = object->texture->getDataAt(object->getUVAt(ray, pos));
-	diffuse *= Vec3(texColor.r, texColor.g, texColor.b);
-	Vec3 col = diffuse + this->ambient;
-	float transparency = object->color.a * texColor.a;
+	Vec4 col = diffuse + Vec4(this->ambient, 0);
+	float transparency = object->Kd.a * texColor.a;
 	if (transparency < 1)
 		col = col * transparency + getTransparencyColor(ray, object, pos, norm, recursion) * (1 - transparency);
-	col *= object->color.xyz();
+	col *= object->Kd;
+	col *= texColor;
 	col += specular;
-	if (object->reflection > 0)
-		col = col * (1 - object->reflection) + getReflectionColor(ray, object, pos, norm, recursion + 1) * object->color.xyz() * object->reflection;
+	if (object->Ir > 0)
+		col = col * (1 - object->Ir) + getReflectionColor(ray, object, pos, norm, recursion + 1) * object->Kd * texColor * object->Ir;
 	return (col);
 }
 
@@ -164,15 +166,13 @@ void Raytracer::calculatePixel(uint64_t x, uint64_t y)
 	ray.dir.rotate(Vec3(angleX, angleY, 0) + this->rot);
 	ray.dir.normalize();
 	float zIndex = 0;
-	Vec3 col = getRayColor(ray, nullptr, 0, &zIndex);
-	float gamma = 1. / 2.2;
-	col.x = pow(col.x, gamma);
-	col.y = pow(col.y, gamma);
-	col.z = pow(col.z, gamma);
+	Vec4 col = getRayColor(ray, nullptr, 0, &zIndex);
 	this->zBuffer[(x + y * this->width)] = zIndex;
-	this->colorBuffer[(x + y * this->width)].r = std::min(1.f, std::max(0.f, col.r));
-	this->colorBuffer[(x + y * this->width)].g = std::min(1.f, std::max(0.f, col.g));
-	this->colorBuffer[(x + y * this->width)].b = std::min(1.f, std::max(0.f, col.b));
+	Vec4 &dst = this->colorBuffer[x + y * this->width];
+	dst.r = std::min(1.f, std::max(0.f, col.r));
+	dst.g = std::min(1.f, std::max(0.f, col.g));
+	dst.b = std::min(1.f, std::max(0.f, col.b));
+	dst.a = std::min(1.f, std::max(0.f, col.a));
 }
 
 void Raytracer::runThread(Raytracer *raytracer, uint64_t start, uint64_t end)
@@ -210,9 +210,9 @@ void Raytracer::render()
 	/*Vec3 *fisheye = Fisheye::fisheye(this->colorBuffer, this->width, this->height);
 	delete[] (this->colorBuffer);
 	this->colorBuffer = fisheye;*/
-	Vec3 *fxaa = Fxaa::fxaa(this->colorBuffer, this->width, this->height);
+	/*Vec3 *fxaa = Fxaa::fxaa(this->colorBuffer, this->width, this->height);
 	delete[] (this->colorBuffer);
-	this->colorBuffer = fxaa;
+	this->colorBuffer = fxaa;*/
 	/*Vec3 *blur = Blur::blur(this->colorBuffer, 0, this->width, this->height);
 	delete[] (this->colorBuffer);
 	this->colorBuffer = blur;*/
@@ -225,12 +225,15 @@ void Raytracer::render()
 	/*Vec3 *sepia = Sepia::sepia(this->colorBuffer, this->width, this->height);
 	delete[] (this->colorBuffer);
 	this->colorBuffer = sepia;*/
+	/*Vec3 *gamma = Gamma::gamma(this->colorBuffer, this->width, this->height, 1 / 2.2);
+	delete[] (this->colorBuffer);
+	this->colorBuffer = gamma;*/
 	for (uint64_t i = 0; i < this->width * this->height; ++i)
 	{
 		this->imgData[i * 4 + 0] = std::min((int64_t)0xff, std::max((int64_t)0, (int64_t)(this->colorBuffer[i].r * 0xff)));
 		this->imgData[i * 4 + 1] = std::min((int64_t)0xff, std::max((int64_t)0, (int64_t)(this->colorBuffer[i].g * 0xff)));
 		this->imgData[i * 4 + 2] = std::min((int64_t)0xff, std::max((int64_t)0, (int64_t)(this->colorBuffer[i].b * 0xff)));
-		this->imgData[i * 4 + 3] = 0xff;
+		this->imgData[i * 4 + 3] = std::min((int64_t)0xff, std::max((int64_t)0, (int64_t)(this->colorBuffer[i].a * 0xff)));
 	}
 }
 

@@ -72,34 +72,43 @@ int main()
 		raytracer->addObject(sphere);
 	}*/
 	Image earth;
+	earth.filtering = IMAGE_FILTERING_NEAREST;
 	PNG::read(std::string("earth.png"), earth.data, earth.width, earth.height);
+	Image bump;
+	bump.filtering = IMAGE_FILTERING_NEAREST;
+	PNG::read(std::string("normal_4.png"), bump.data, bump.width, bump.height);
 	Sphere *sphere = new Sphere(1);
+	//sphere->bumpTexture = &bump;
 	sphere->texture = &earth;
-	sphere->pos = Vec3(0, -1.5, 8);
-	sphere->color = Vec4(1, 1, 1, 1);
-	sphere->reflection = 0;
-	sphere->refraction = 1;
+	sphere->pos = Vec3(0, 0, 4);
+	sphere->rot = Vec3(M_PI / 2, 0, 0);
+	sphere->Kd = Vec4(1, 1, 1, 1);
+	sphere->Ir = 1;
+	sphere->Ni = 1;
 	raytracer->addObject(sphere);
 	Cylinder *cylinder = new Cylinder(1);
-	cylinder->pos = Vec3(3, 0, 13);
-	cylinder->color = Vec4(1, 1, 0, 1);
-	raytracer->addObject(cylinder);
+	cylinder->texture = &earth;
+	cylinder->bumpTexture = &bump;
+	cylinder->pos = Vec3(3, 0, 4);
+	cylinder->Kd = Vec4(1, 1, 1, 1);
+	//raytracer->addObject(cylinder);
 	Cone *cone = new Cone(0);
 	cone->pos = Vec3(-3, 0, 13);
 	cone->rot = Vec3(0, 0, 0);
-	cone->color = Vec4(0, 1, 1, 1);
-	raytracer->addObject(cone);
+	cone->Kd = Vec4(0, 1, 1, 1);
+	//raytracer->addObject(cone);
 	Plane *plane = new Plane();
-	plane->pos = Vec3(0, -2, 0);
-	plane->color = Vec4(1, 1, 1, 1);
-	plane->specular = 0;
+	//plane->bumpTexture = &bump;
+	//plane->texture = &earth;
+	plane->pos = Vec3(0, -1, 0);
+	plane->Kd = Vec4(1, 1, 1, 1);
 	raytracer->addObject(plane);
-	plane = new Plane();
+	/*plane = new Plane();
 	plane->pos = Vec3(0, 0, 20);
 	plane->rot = Vec3(-90, 0, 0);
 	plane->color = Vec4(1, 1, 1, 1);
 	plane->specular = 0;
-	raytracer->addObject(plane);
+	raytracer->addObject(plane);*/
 	/*Triangle *triangle = new Triangle();
 	triangle->pos = Vec3(-1, 1, 6);
 	triangle->rot = Vec3(0, 0, 0);
@@ -109,7 +118,7 @@ int main()
 	triangle->specular = .5;
 	raytracer->addObject(triangle);*/
 	PonctualLight *light = new PonctualLight();
-	light->pos = Vec3(10, -1, -10);
+	light->pos = Vec3(0, 50, -50);
 	light->intensity = 1;
 	light->color = Vec3(1, 1, 1);
 	raytracer->addLight(light);
@@ -124,10 +133,13 @@ int main()
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	glEnableClientState(GL_VERTEX_ARRAY);
 	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-	raytracer->render();
 	while (!glfwWindowShouldClose(window))
 	{
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		static float a = 0;
+		sphere->rot = Vec3(0, a, 0);
+		a += M_PI / 2 / 30;
+		raytracer->render();
 		draw();
 		glfwSwapBuffers(window);
 	}

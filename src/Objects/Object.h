@@ -13,13 +13,14 @@ class Object
 	public:
 		Image *bumpTexture;
 		Image *texture;
-		Vec4 color;
 		Vec3 pos;
 		Vec3 rot;
-		float specularFactor;
-		float reflection;
-		float refraction;
-		float specular;
+		Vec4 Ka;
+		Vec4 Kd;
+		Vec4 Ks;
+		float Ns;
+		float Ni;
+		float Ir;
 		Object();
 		virtual inline Vec3 *collide(Ray &ray) {(void)ray;return (nullptr);};
 		virtual inline Vec2 getUVAt(Ray &ray, Vec3 &pos) {(void)ray;(void)pos;return (Vec2(0, 0));};

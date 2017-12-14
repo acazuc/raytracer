@@ -33,7 +33,7 @@ Vec2 Cone::getUVAt(Ray &ray, Vec3 &pos)
 	norm.unrotate(this->rot);
 	norm.y = -norm.y;
 	norm.normalize();
-	Vec2 uv(std::asin(norm.x) / M_PI + .5, pos.y);
+	Vec2 uv(.5 + atan2(norm.z, norm.x) / (2 * M_PI), .5 + pos.y);
 	return (uv);
 }
 
@@ -44,6 +44,16 @@ Vec3 Cone::getNormAt(Ray &ray, Vec3 &pos)
 	vec.unrotate(this->rot);
 	vec.y = -vec.y;
 	vec.rotate(this->rot);
+	if (this->bumpTexture)
+	{
+		Vec4 bump = this->bumpTexture->getDataAt(getUVAt(ray, pos));
+		Vec3 tmp = (bump.rgb() - .5) * M_PI;
+		tmp.z = -tmp.x;
+		tmp.x = -tmp.y;
+		tmp.y = tmp.z;
+		tmp.z = 0;
+		vec.rotate(tmp);
+	}
 	vec.normalize();
 	return (vec);
 }

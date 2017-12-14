@@ -15,7 +15,8 @@ enum ImageWrapMode
 enum ImageFilteringMode
 {
 	IMAGE_FILTERING_NEAREST,
-	IMAGE_FILTERING_LINEAR
+	IMAGE_FILTERING_LINEAR,
+	IMAGE_FILTERING_CUBIC
 };
 
 class Image
@@ -29,6 +30,7 @@ class Image
 		uint8_t *data;
 		Image(uint32_t width, uint32_t height);
 		Image();
+		Vec4 getTexelAt(uint32_t x, uint32_t y);
 		Vec4 getDataAt(Vec2 uv);
 
 };

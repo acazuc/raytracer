@@ -32,7 +32,7 @@ Vec2 Sphere::getUVAt(Ray &ray, Vec3 &pos)
 	Vec3 norm(pos - this->pos);
 	norm.unrotate(this->rot);
 	norm.normalize();
-	Vec2 uv(std::asin(norm.x) / M_PI + .5, std::asin(norm.y) / M_PI + .5);
+	Vec2 uv(.5 + atan2(norm.z, norm.x) / (2 * M_PI), .5 - asin(norm.y) / M_PI);
 	return (uv);
 }
 
@@ -40,6 +40,16 @@ Vec3 Sphere::getNormAt(Ray &ray, Vec3 &pos)
 {
 	(void)ray;
 	Vec3 vec(pos - this->pos);
+	if (this->bumpTexture)
+	{
+		Vec4 bump = this->bumpTexture->getDataAt(getUVAt(ray, pos));
+		Vec3 T(-vec.y, vec.x);
+		T.normalize();
+		//Vec3 P(vec.x, 0, vec.z);
+		//P.normalize();
+		Vec3 B(vec.cross(T));
+		vec = T * bump.r + B * bump.g + vec * bump.b;
+	}
 	vec.normalize();
 	return (vec);
 }

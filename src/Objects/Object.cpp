@@ -3,10 +3,12 @@
 Object::Object()
 : bumpTexture(NULL)
 , texture(NULL)
-, specularFactor(100)
-, reflection(0)
-, refraction(1)
-, specular(1)
+, Ka(0)
+, Kd(1)
+, Ks(0)
+, Ns(100)
+, Ni(1)
+, Ir(0)
 {
 	//Empty
 }

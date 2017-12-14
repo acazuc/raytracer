@@ -26,6 +26,21 @@ Vec3 Vec4::xyz()
 	return (Vec3(this->x, this->y, this->z));
 }
 
+Vec3 Vec4::rgb()
+{
+	return (Vec3(this->r, this->g, this->b));
+}
+
+Vec2 Vec4::xy()
+{
+	return (Vec2(this->x, this->y));
+}
+
+Vec2 Vec4::zw()
+{
+	return (Vec2(this->z, this->w));
+}
+
 Vec4 Vec4::operator + (float val)
 {
 	return (Vec4(this->x + val, this->y + val, this->z + val, this->w + val));

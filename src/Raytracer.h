@@ -1,7 +1,7 @@
 #ifndef RAYTRACER_H
 # define RAYTRACER_H
 
-# define THREAD_NUMBER 8
+# define THREAD_NUMBER 32
 
 # include "Objects/Object.h"
 # include "Lights/Light.h"
@@ -16,7 +16,7 @@ class Raytracer
 		std::vector<Object*> objects;
 		std::vector<Light*> lights;
 		std::thread *threads[THREAD_NUMBER];
-		Vec3 *colorBuffer;
+		Vec4 *colorBuffer;
 		Vec3 ambient;
 		Vec3 pos;
 		Vec3 rot;
@@ -27,12 +27,12 @@ class Raytracer
 		char *imgData;
 		static void runThread(Raytracer *raytracer, uint64_t start, uint64_t end);
 		void calculatePixel(uint64_t x, uint64_t y);
-		Vec3 getRayColor(Ray &ray, Object *avoid, int recursion, float *zIndex = NULL);
+		Vec4 getRayColor(Ray &ray, Object *avoid, int recursion, float *zIndex = NULL);
 		bool trace(Ray &ray, Object *&object, Vec3 &position, Object *avoid);
-		void getDiffuseSpecularLight(Ray &ray, Object *object, Vec3 &pos, Vec3 &norm, Vec3 &diffuse, Vec3 &specular);
-		Vec3 getReflectionColor(Ray &ray, Object *object, Vec3 &pos, Vec3 &norm, int recursion);
-		Vec3 getTransparencyColor(Ray &ray, Object *object, Vec3 &pos, Vec3 &norm, int recursion);
-		Vec3 getDiffuseSpecularTransparencyLight(Light *light, Object *object, Ray &ray, Vec3 &pos);
+		void getDiffuseSpecularLight(Ray &ray, Object *object, Vec3 &pos, Vec3 &norm, Vec4 &diffuse, Vec4 &specular);
+		Vec4 getReflectionColor(Ray &ray, Object *object, Vec3 &pos, Vec3 &norm, int recursion);
+		Vec4 getTransparencyColor(Ray &ray, Object *object, Vec3 &pos, Vec3 &norm, int recursion);
+		Vec4 getDiffuseSpecularTransparencyLight(Light *light, Object *object, Ray &ray, Vec3 &pos);
 
 	public:
 		Raytracer(uint32_t width, uint32_t height);

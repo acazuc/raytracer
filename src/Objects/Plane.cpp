@@ -1,4 +1,5 @@
 #include "Plane.h"
+#include "Debug.h"
 #include <cmath>
 
 Vec3 *Plane::collide(Ray &ray)
@@ -18,14 +19,22 @@ Vec3 *Plane::collide(Ray &ray)
 Vec2 Plane::getUVAt(Ray &ray, Vec3 &pos)
 {
 	(void)ray;
-	(void)pos;
-	return (Vec2(0, 0));
+	Vec3 rel(pos - this->pos);
+	rel.unrotate(this->rot);
+	Vec2 uv(rel.x, rel.z);
+	return (uv);
 }
 
 Vec3 Plane::getNormAt(Ray &ray, Vec3 &pos)
 {
 	(void)pos;
 	Vec3 vec(0, 1, 0);
+	if (this->bumpTexture)
+	{
+		Vec4 bump = this->bumpTexture->getDataAt(getUVAt(ray, pos));
+		Vec3 tmp = (bump.rgb() - .5) * M_PI;
+		vec.rotate(Vec3(tmp.g, 0, tmp.r));
+	}
 	vec.rotate(this->rot);
 	if (vec.angle(ray.dir) <= M_PI / 2)
 		vec = -vec;

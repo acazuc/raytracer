@@ -24,6 +24,9 @@ class Vec4
 		float length();
 		void normalize();
 		Vec3 xyz();
+		Vec3 rgb();
+		Vec2 xy();
+		Vec2 zw();
 		Vec4 operator + (float val);
 		Vec4 operator - (float val);
 		Vec4 operator * (float val);
