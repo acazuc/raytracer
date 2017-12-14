@@ -22,7 +22,7 @@ Vec2 Plane::getUVAt(Ray &ray, Vec3 &pos)
 	(void)ray;
 	Vec3 rel(pos - this->pos);
 	rel = this->unrotMat * rel;
-	Vec2 uv(rel.x / 4, -rel.z / 4);
+	Vec2 uv(rel.x / 4, rel.z / 4);
 	return (uv);
 }
 
@@ -34,7 +34,7 @@ Vec3 Plane::getNormAt(Ray &ray, Vec3 &pos)
 	{
 		Vec4 bump = this->N_map->getDataAt(getUVAt(ray, pos));
 		Vec3 tmp = (bump.rgb() - .5) * 2;
-		vec = Vec3(-tmp.r, tmp.b, -tmp.g);
+		vec = Vec3(-tmp.r, tmp.b, tmp.g);
 		vec.normalize();
 	}
 	vec = this->rotMat * vec;

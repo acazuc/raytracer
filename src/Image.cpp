@@ -7,7 +7,7 @@ Image::Image(uint32_t width, uint32_t height)
 : filtering(IMAGE_FILTERING_NEAREST)
 , wrap(IMAGE_WRAP_REPEAT)
 {
-	this->data = new uint8_t[width * height * 4];
+	this->data = new Vec4[width * height];
 }
 
 Image::Image()
@@ -20,14 +20,21 @@ Image::Image()
 	//Empty
 }
 
+void Image::setData(uint64_t width, uint64_t height, uint8_t *data)
+{
+	this->width = width;
+	this->height = height;
+	this->data = new Vec4[this->width * this->height];
+	for (uint64_t i = 0; i < this->width * this->height; ++i)
+	{
+		uint64_t idx = i * 4;
+		this->data[i] = Vec4(data[idx] / 255., data[idx + 1] / 255., data[idx + 2] / 255., data[idx + 3] / 255.);
+	}
+}
+
 Vec4 Image::getTexelAt(uint32_t x, uint32_t y)
 {
-	uint32_t idx = (x + y * this->width) * 4;
-	uint8_t r = this->data[idx + 0];
-	uint8_t g = this->data[idx + 1];
-	uint8_t b = this->data[idx + 2];
-	uint8_t a = this->data[idx + 3];
-	return (Vec4(r / 255., g / 255., b / 255., a / 255.));
+	return (this->data[x + y * this->width]);
 }
 
 static Vec4 cubicInterpolate(Vec4 *values, float x)

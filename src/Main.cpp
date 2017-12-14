@@ -66,17 +66,26 @@ int main()
 	/*for (uint64_t i = 0; i < 11 * 11; ++i)
 	{
 		Sphere *sphere = new Sphere(1);
-		sphere->pos = Vec3((i % 11) * 3, 0, 10 + (i / 11) * 3);
-		sphere->color = Vec4(1, 1, 1, 1);
-		sphere->reflection = 0;
+		sphere->pos = Vec3((i % 11) - 5.5, (i / 11) - 5.5, 15);
+		sphere->Kd = Vec4(1, 1, 0, 1);
+		sphere->setRot(Vec3(0, 0, 0));
 		raytracer->addObject(sphere);
 	}*/
 	Image earth;
 	earth.filtering = IMAGE_FILTERING_NEAREST;
-	PNG::read(std::string("earth.png"), earth.data, earth.width, earth.height);
+	uint8_t *data;
+	uint32_t width;
+	uint32_t height;
+	if (!PNG::read(std::string("earth.png"), data, width, height))
+		ERROR("failed to read texture");
+	earth.setData(width, height, data);
+	delete[] (data);
 	Image bump;
 	bump.filtering = IMAGE_FILTERING_NEAREST;
-	PNG::read(std::string("normal_7.png"), bump.data, bump.width, bump.height);
+	if (!PNG::read(std::string("normal_7.png"), data, width, height))
+		ERROR("failed to read bump map");
+	bump.setData(width, height, data);
+	delete[] (data);
 	Sphere *sphere = new Sphere(1);
 	//sphere->N_map = &bump;
 	sphere->Kd_map = &earth;
