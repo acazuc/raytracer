@@ -9,6 +9,7 @@
 #include "Filters/Blur.h"
 #include "Utils/System.h"
 #include "Filters/Cel.h"
+#include "Filters/Fog.h"
 #include "Consts.h"
 #include "Debug.h"
 #include <cstring>
@@ -36,21 +37,23 @@ Raytracer::~Raytracer()
 
 bool Raytracer::trace(Ray &ray, Object *&object, Vec3 &pos, Object *avoid)
 {
-	float nearestDistance = -1;
+	float nearestDistance = INFINITY;
 	float t;
 	for (uint64_t i = 0; i < this->objects.size(); ++i)
 	{
 		if (!this->objects[i]->collide(ray, t))
 			continue;
-		if (nearestDistance != -1 && t > nearestDistance)
+		if (t >= nearestDistance)
 			continue;
 		if (this->objects[i] == avoid && t < EPSILON)
 			continue;
 		object = this->objects[i];
-		pos = ray.pos + ray.dir * t;
 		nearestDistance = t;
 	}
-	return (nearestDistance != -1);
+	if (nearestDistance == -1)
+		return (false);
+	pos = ray.pos + ray.dir * nearestDistance;
+	return (true);
 }
 
 Vec4 Raytracer::getDiffuseSpecularTransparencyLight(Light *light, Object *object, Ray &ray, Vec3 &pos)
@@ -250,6 +253,9 @@ void Raytracer::render()
 	/*Vec4 *gamma = Gamma::gamma(this->colorBuffer, this->width, this->height, 1 / 2.2);
 	delete[] (this->colorBuffer);
 	this->colorBuffer = gamma;*/
+	/*Vec4 *fog = Fog::fog(this->colorBuffer, this->zBuffer, this->width, this->height, Vec4(1, 0, 0, 1), 0, 12, FOG_LINEAR);
+	delete[] (this->colorBuffer);
+	this->colorBuffer = fog;*/
 	for (uint64_t i = 0; i < this->width * this->height; ++i)
 	{
 		Vec4 &org = this->colorBuffer[i];

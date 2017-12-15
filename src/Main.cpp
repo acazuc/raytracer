@@ -87,13 +87,13 @@ int main()
 	bump.setData(width, height, data);
 	delete[] (data);
 	Sphere *sphere = new Sphere(1);
+	sphere->Kd_map = &earth;
 	//sphere->N_map = &bump;
-	//sphere->Kd_map = &earth;
-	sphere->pos = Vec3(0, 0, 3);
+	sphere->pos = Vec3(0, 0, 4);
 	sphere->setRot(Vec3(0, 0, 0));
-	sphere->Kd = Vec4(1, 1, 1, 0);
+	sphere->Kd = Vec4(1, 1, 1, 1);
 	sphere->Ir = 0;
-	sphere->Ni = 1.5;
+	sphere->Ni = 1;
 	raytracer->addObject(sphere);
 	Cylinder *cylinder = new Cylinder(1);
 	//cylinder->Kd_map = &earth;

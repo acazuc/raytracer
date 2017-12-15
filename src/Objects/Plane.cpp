@@ -6,10 +6,10 @@
 bool Plane::collide(Ray &ray, float &t)
 {
 	Vec3 norm(this->rotMat * Vec3(0, 1, 0));
-	Vec3 delta(this->pos - ray.pos);
 	float dot = norm.dot(ray.dir);
 	if (dot == 0)
 		return (false);
+	Vec3 delta(this->pos - ray.pos);
 	return ((t = norm.dot(delta) / dot) > EPSILON);
 }
 

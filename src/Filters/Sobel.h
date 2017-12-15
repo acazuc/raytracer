@@ -8,7 +8,7 @@ class Sobel
 {
 
 	public:
-		static Vec4 *sobel(Vec4 *img, float *zBuffer, uint64_t width, uint64_t height);
+		static Vec4 *sobel(Vec4 *img, float *zbuffer, uint64_t width, uint64_t height);
 
 };
 

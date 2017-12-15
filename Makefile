@@ -2,7 +2,7 @@ NAME = raytracer
 
 CC = g++
 
-CFLAGS = -Wall -Wextra -Werror -Ofast -g -march=native -flto -mtune=native
+CFLAGS = -Wall -Wextra -Werror -Ofast -g -flto -mtune=native
 
 INCLUDES_PATH = include/
 
@@ -28,6 +28,7 @@ SRCS_NAME = Main.cpp \
 	    Filters/Fisheye.cpp \
 	    Filters/Blur.cpp \
 	    Filters/Gamma.cpp \
+	    Filters/Fog.cpp \
 	    Filters/Color/GreyShade.cpp \
 	    Filters/Color/Negative.cpp \
 	    Filters/Color/Sepia.cpp \

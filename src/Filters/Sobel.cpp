@@ -12,14 +12,14 @@ static Vec4 getPixelAt(Vec4 *img, uint64_t x, uint64_t y, uint64_t width, uint64
 	return (img[x + y * width]);
 }
 
-static float getZIndexAt(float *zBuffer, uint64_t x, uint64_t y, uint64_t width, uint64_t height)
+static float getZIndexAt(float *zbuffer, uint64_t x, uint64_t y, uint64_t width, uint64_t height)
 {
 	x = std::min(width - 1, std::max((uint64_t)0, x));
 	y = std::min(height - 1, std::max((uint64_t)0, y));
-	return (zBuffer[x + y * width]);
+	return (zbuffer[x + y * width]);
 }
 
-static Vec4 process(Vec4 *img, float *zBuffer, Vec2 &pos, uint64_t width, uint64_t height)
+static Vec4 process(Vec4 *img, float *zbuffer, Vec2 &pos, uint64_t width, uint64_t height)
 {
 	Vec4 diffuse = getPixelAt(img, pos.x, pos.y, width, height);
 	Vec3 data[3];
@@ -27,8 +27,8 @@ static Vec4 process(Vec4 *img, float *zBuffer, Vec2 &pos, uint64_t width, uint64
 	{
 		for (int j = 0; j < 3; ++j)
 		{
-			Vec3 sample(getZIndexAt(zBuffer, pos.x + i - 1, pos.y + j - 1, width, height) / 50);
-			data[i][j] = sample.length();
+			//Vec3 sample(getZIndexAt(zbuffer, pos.x + i - 1, pos.y + j - 1, width, height) / 50);
+			data[i][j] = getZIndexAt(zbuffer, pos.x + i - 1, pos.y + j - 1, width, height);//sample.length();
 		}
 	}
 	float gx = sx[0].dot(data[0]) + sx[1].dot(data[1]) + sx[2].dot(data[2]);
@@ -37,7 +37,7 @@ static Vec4 process(Vec4 *img, float *zBuffer, Vec2 &pos, uint64_t width, uint64
 	return (Vec4(diffuse.rgb() - Vec3(g), diffuse.a));
 }
 
-Vec4 *Sobel::sobel(Vec4 *img, float *zBuffer, uint64_t width, uint64_t height)
+Vec4 *Sobel::sobel(Vec4 *img, float *zbuffer, uint64_t width, uint64_t height)
 {
 	Vec4 *newImg = new Vec4[width * height];
 	for (uint64_t x = 0; x < width; ++x)
@@ -45,7 +45,7 @@ Vec4 *Sobel::sobel(Vec4 *img, float *zBuffer, uint64_t width, uint64_t height)
 		for (uint64_t y = 0; y < height; ++y)
 		{
 			Vec2 pos(x, y);
-			newImg[x + y * width] = process(img, zBuffer, pos, width, height);
+			newImg[x + y * width] = process(img, zbuffer, pos, width, height);
 		}
 	}
 	return (newImg);
