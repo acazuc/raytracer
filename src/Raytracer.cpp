@@ -9,6 +9,7 @@
 #include "Filters/Blur.h"
 #include "Utils/System.h"
 #include "Filters/Cel.h"
+#include "Consts.h"
 #include "Debug.h"
 #include <cstring>
 #include <cmath>
@@ -36,19 +37,18 @@ Raytracer::~Raytracer()
 bool Raytracer::trace(Ray &ray, Object *&object, Vec3 &position, Object *avoid)
 {
 	float nearestDistance = -1;
-	Vec3 vec;
+	float t;
 	for (uint64_t i = 0; i < this->objects.size(); ++i)
 	{
-		if (!this->objects[i]->collide(ray, vec))
+		if (!this->objects[i]->collide(ray, t))
 			continue;
-		float length = (vec - ray.pos).length();
-		if (nearestDistance != -1 && length > nearestDistance)
+		if (nearestDistance != -1 && t > nearestDistance)
 			continue;
-		if (this->objects[i] == avoid && length < 0.0001)
+		if (this->objects[i] == avoid && t < EPSILON)
 			continue;
 		object = this->objects[i];
-		position = vec;
-		nearestDistance = length;
+		position = ray.pos + ray.dir * t;
+		nearestDistance = t;
 	}
 	return (nearestDistance != -1);
 }
@@ -62,6 +62,7 @@ Vec4 Raytracer::getDiffuseSpecularTransparencyLight(Light *light, Object *object
 		return (result);
 	Ray newRay(pos, Vec3(0));
 	newRay.dir = light->getDirectionFrom(pos);
+	newRay.dir.normalize();
 	Object *newObject = nullptr;
 	Vec3 newPos(0);
 	if (!trace(newRay, newObject, newPos, object))
@@ -84,6 +85,7 @@ void Raytracer::getDiffuseSpecularLight(Ray &ray, Object *object, Vec3 &pos, Vec
 	for (uint64_t i = 0; i < this->lights.size(); ++i)
 	{
 		diffuseRay.dir = this->lights[i]->getDirectionFrom(pos);
+		diffuseRay.dir.normalize();
 		Vec3 tmp = diffuseRay.dir;
 		Vec4 lightColorIntensity = Vec4(this->lights[i]->color * this->lights[i]->intensity, 1);
 		if (trace(diffuseRay, collObject, collPosition, object))
@@ -99,7 +101,6 @@ void Raytracer::getDiffuseSpecularLight(Ray &ray, Object *object, Vec3 &pos, Vec
 			lightColorIntensity = lightColorIntensity * (1 - result.a) * Vec4(result.rgb(), 1);
 		}
 next:
-		diffuseRay.dir.normalize();
 		diffuse += lightColorIntensity * std::max(0.f, diffuseRay.dir.dot(norm));
 		specular += lightColorIntensity * pow(std::max(0.f, reflect.dot(diffuseRay.dir)), object->Ns) * object->Ks;
 	}
@@ -112,6 +113,7 @@ Vec4 Raytracer::getReflectionColor(Ray &ray, Object *object, Vec3 &pos, Vec3 &no
 	Ray newRay;
 	newRay.pos = pos;
 	newRay.dir = ray.dir.reflect(norm);
+	newRay.dir.normalize();
 	return (getRayColor(newRay, object, recursion));
 }
 
@@ -130,6 +132,7 @@ Vec4 Raytracer::getTransparencyColor(Ray &ray, Object *object, Vec3 &pos, Vec3 &
 		float sin2thetat = refFactor * refFactor * (costhetai * costhetai - 1);
 		newRay.dir = ray.dir * refFactor + norm * (refFactor * costhetai + sqrt(1 + sin2thetat));
 	}
+	newRay.dir.normalize();
 	return (getRayColor(newRay, object, recursion));
 }
 

@@ -25,7 +25,7 @@ class Object
 		float Ir;
 		Object();
 		void setRot(Vec3 vec);
-		virtual inline bool collide(Ray &ray, Vec3 &pos) {(void)ray;(void)pos;return (false);};
+		virtual inline bool collide(Ray &ray, float &t) {(void)ray;(void)t;return (false);};
 		virtual inline Vec2 getUVAt(Ray &ray, Vec3 &pos) {(void)ray;(void)pos;return (Vec2(0, 0));};
 		virtual inline Vec3 getNormAt(Ray &ray, Vec3 &pos) {(void)ray;(void)pos;return (Vec3(0, 0, 1));};
 

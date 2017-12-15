@@ -7,7 +7,7 @@ class Plane : public Object
 {
 
 	public:
-		bool collide(Ray &ray, Vec3 &pos);
+		bool collide(Ray &ray, float &t);
 		Vec2 getUVAt(Ray &ray, Vec3 &pos);
 		Vec3 getNormAt(Ray &ray, Vec3 &pos);
 

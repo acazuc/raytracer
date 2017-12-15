@@ -91,10 +91,10 @@ int main()
 	sphere->Kd_map = &earth;
 	sphere->pos = Vec3(0, 0, 4);
 	sphere->setRot(Vec3(0, 0, 0));
-	sphere->Kd = Vec4(1, 1, 1, 1);
+	sphere->Kd = Vec4(1, 1, 1, 0);
 	sphere->Ir = 0;
 	sphere->Ni = 1;
-	//raytracer->addObject(sphere);
+	raytracer->addObject(sphere);
 	Cylinder *cylinder = new Cylinder(1);
 	//cylinder->Kd_map = &earth;
 	cylinder->N_map = &bump;

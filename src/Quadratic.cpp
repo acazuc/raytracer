@@ -1,8 +1,7 @@
 #include "Quadratic.h"
+#include "Consts.h"
 #include <algorithm>
 #include <cmath>
-
-#define EPSILON 0.0001
 
 void Quadratic::solve()
 {
