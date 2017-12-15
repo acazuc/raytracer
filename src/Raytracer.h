@@ -26,10 +26,10 @@ class Raytracer
 		static void runThread(Raytracer *raytracer, uint64_t start, uint64_t end);
 		void calculatePixel(uint64_t x, uint64_t y);
 		Vec4 getRayColor(Ray &ray, Object *avoid, int recursion, float *zIndex = NULL);
-		bool trace(Ray &ray, Object *&object, Vec3 &position, Object *avoid);
+		bool trace(Ray &ray, Object *&object, Vec3 &pos, Object *avoid);
 		void getDiffuseSpecularLight(Ray &ray, Object *object, Vec3 &pos, Vec3 &norm, Vec4 &diffuse, Vec4 &specular);
 		Vec4 getReflectionColor(Ray &ray, Object *object, Vec3 &pos, Vec3 &norm, int recursion);
-		Vec4 getTransparencyColor(Ray &ray, Object *object, Vec3 &pos, Vec3 &norm, int recursion);
+		Vec4 getTransparencyColor(Ray &ray, Object *object, Vec3 &pos, Vec3 &norm, bool normRev, int recursion);
 		Vec4 getDiffuseSpecularTransparencyLight(Light *light, Object *object, Ray &ray, Vec3 &pos);
 
 	public:

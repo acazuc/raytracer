@@ -35,20 +35,17 @@ Vec2 Cylinder::getUVAt(Ray &ray, Vec3 &pos)
 
 Vec3 Cylinder::getNormAt(Ray &ray, Vec3 &pos)
 {
-	(void)ray;
-	Vec3 vec(this->unrotMat * (pos - this->pos));
-	vec.y = 0;
+	Vec3 norm(this->unrotMat * (pos - this->pos));
+	norm.y = 0;
 	if (this->N_map)
 	{
 		Vec4 bump = this->N_map->getDataAt(getUVAt(ray, pos));
 		bump = (bump - .5) * 2;
 		Vec3 T(0, 1, 0);
-		Vec3 B(-vec.cross(T));
-		vec = B * bump.r + T * bump.g + vec * -bump.b;
+		Vec3 B(-norm.cross(T));
+		norm = B * bump.r + T * bump.g + norm * -bump.b;
 	}
-	vec = this->rotMat * vec;
-	vec.normalize();
-	if (vec.dot(ray.dir) > 0)
-		vec = -vec;
-	return (vec);
+	norm = this->rotMat * norm;
+	norm.normalize();
+	return (norm);
 }

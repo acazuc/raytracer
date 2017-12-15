@@ -38,11 +38,9 @@ Vec2 Cone::getUVAt(Ray &ray, Vec3 &pos)
 Vec3 Cone::getNormAt(Ray &ray, Vec3 &pos)
 {
 	(void)ray;
-	Vec3 vec(this->unrotMat * (pos - this->pos));
-	vec.y = -vec.y;
-	vec = this->rotMat * vec;
-	vec.normalize();
-	if (vec.dot(ray.dir) > 0)
-		vec = -vec;
-	return (vec);
+	Vec3 norm(this->unrotMat * (pos - this->pos));
+	norm.y = -norm.y;
+	norm = this->rotMat * norm;
+	norm.normalize();
+	return (norm);
 }

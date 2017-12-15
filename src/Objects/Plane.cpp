@@ -23,17 +23,14 @@ Vec2 Plane::getUVAt(Ray &ray, Vec3 &pos)
 
 Vec3 Plane::getNormAt(Ray &ray, Vec3 &pos)
 {
-	(void)pos;
-	Vec3 vec(0, 1, 0);
+	Vec3 norm(0, 1, 0);
 	if (this->N_map)
 	{
 		Vec4 bump = this->N_map->getDataAt(getUVAt(ray, pos));
 		Vec3 tmp = (bump.rgb() - .5) * 2;
-		vec = Vec3(-tmp.r, tmp.b, tmp.g);
-		vec.normalize();
+		norm = Vec3(-tmp.r, tmp.b, tmp.g);
+		norm.normalize();
 	}
-	vec = this->rotMat * vec;
-	if (vec.dot(ray.dir) > 0)
-		vec = -vec;
-	return (vec);
+	norm = this->rotMat * norm;
+	return (norm);
 }

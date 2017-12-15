@@ -88,12 +88,12 @@ int main()
 	delete[] (data);
 	Sphere *sphere = new Sphere(1);
 	//sphere->N_map = &bump;
-	sphere->Kd_map = &earth;
-	sphere->pos = Vec3(0, 0, 4);
+	//sphere->Kd_map = &earth;
+	sphere->pos = Vec3(0, 0, 3);
 	sphere->setRot(Vec3(0, 0, 0));
 	sphere->Kd = Vec4(1, 1, 1, 0);
 	sphere->Ir = 0;
-	sphere->Ni = 1;
+	sphere->Ni = 1.5;
 	raytracer->addObject(sphere);
 	Cylinder *cylinder = new Cylinder(1);
 	//cylinder->Kd_map = &earth;
@@ -111,7 +111,7 @@ int main()
 	plane->Kd = Vec4(1, 1, 1, 1);
 	//raytracer->addObject(plane);
 	plane = new Plane();
-	//plane->Kd_map = &earth;
+	plane->Kd_map = &earth;
 	plane->N_map = &bump;
 	plane->pos = Vec3(0, 0, 10);
 	plane->setRot(Vec3(-M_PI / 2, 0, 0));
@@ -126,7 +126,7 @@ int main()
 	triangle->specular = .5;
 	raytracer->addObject(triangle);*/
 	PonctualLight *light = new PonctualLight();
-	light->pos = Vec3(0, 0, 0);
+	light->pos = Vec3(10, 0, 0);
 	light->intensity = 1;
 	light->color = Vec3(1, 1, 1);
 	raytracer->addLight(light);
@@ -145,8 +145,8 @@ int main()
 	{
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		static float a = 0;
-		sphere->setRot(Vec3(a, 0, 0));
-		a += M_PI / 2 / 30;
+		light->pos = Vec3(cos(a) * 20, sin(a) * 20, 0);
+		a += M_PI / 2 / 10;
 		raytracer->render();
 		draw();
 		glfwSwapBuffers(window);

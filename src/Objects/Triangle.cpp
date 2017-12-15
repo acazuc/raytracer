@@ -32,12 +32,11 @@ Vec2 Triangle::getUVAt(Ray &ray, Vec3 &pos)
 
 Vec3 Triangle::getNormAt(Ray &ray, Vec3 &pos)
 {
+	(void)ray;
 	(void)pos;
 	Vec3 u(this->pos2 - this->pos);
 	Vec3 v(this->pos3 - this->pos);
-	Vec3 vec(this->rotMat * u.cross(v));
-	vec.normalize();
-	if (vec.dot(ray.dir) > 0)
-		vec = -vec;
-	return (vec);
+	Vec3 norm(this->rotMat * u.cross(v));
+	norm.normalize();
+	return (norm);
 }

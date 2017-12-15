@@ -34,7 +34,7 @@ void Image::setData(uint64_t width, uint64_t height, uint8_t *data)
 
 Vec4 Image::getTexelAt(uint32_t x, uint32_t y)
 {
-	return (this->data[x + y * this->width]);
+	return (this->data[std::min(this->width - 1, std::max(0u, x)) + std::min(this->height - 1, std::max(0u, y)) * this->width]);
 }
 
 static Vec4 cubicInterpolate(Vec4 *values, float x)

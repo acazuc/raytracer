@@ -32,18 +32,15 @@ Vec2 Sphere::getUVAt(Ray &ray, Vec3 &pos)
 
 Vec3 Sphere::getNormAt(Ray &ray, Vec3 &pos)
 {
-	(void)ray;
-	Vec3 vec(pos - this->pos);
+	Vec3 norm(pos - this->pos);
 	if (this->N_map)
 	{
 		Vec4 bump = this->N_map->getDataAt(getUVAt(ray, pos));
 		bump = (bump - .5) * 2;
 		Vec3 T(0, 1, 0);
-		Vec3 B(-vec.cross(T));
-		vec = T * bump.r + B * bump.g + vec * -bump.b;
+		Vec3 B(-norm.cross(T));
+		norm = T * bump.r + B * bump.g + norm * -bump.b;
 	}
-	vec.normalize();
-	if (vec.dot(ray.dir) > 0)
-		vec = -vec;
-	return (vec);
+	norm.normalize();
+	return (norm);
 }
