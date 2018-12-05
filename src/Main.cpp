@@ -59,7 +59,7 @@ int main()
 		ERROR("Can't init glfw");
 	createWindow();
 	raytracer = new Raytracer(WINDOW_WIDTH, WINDOW_HEIGHT);
-	raytracer->setFov(60);
+	raytracer->setFov(30);
 	raytracer->setAmbient(Vec3(0, 0, 0));
 	raytracer->setPos(Vec3(0, 0, 0));
 	raytracer->setRot(Vec3(0, 0, 0));
@@ -81,42 +81,48 @@ int main()
 	earth.setData(width, height, data);
 	delete[] (data);
 	Image bump;
-	bump.filtering = IMAGE_FILTERING_NEAREST;
+	bump.filtering = IMAGE_FILTERING_CUBIC;
 	if (!PNG::read(std::string("normal_7.png"), data, width, height))
 		ERROR("failed to read bump map");
 	bump.setData(width, height, data);
 	delete[] (data);
+
 	Sphere *sphere = new Sphere(1);
-	sphere->Kd_map = &earth;
+	//sphere->Kd_map = &earth;
 	//sphere->N_map = &bump;
-	sphere->pos = Vec3(0, 0, 4);
+	sphere->pos = Vec3(0, 0, 10);
 	sphere->setRot(Vec3(0, 0, 0));
-	sphere->Kd = Vec4(1, 1, 1, 1);
+	sphere->Kd = Vec4(1, 1, 1, 0);
 	sphere->Ir = 0;
 	sphere->Ni = 1;
 	raytracer->addObject(sphere);
+
 	Cylinder *cylinder = new Cylinder(1);
 	//cylinder->Kd_map = &earth;
-	cylinder->N_map = &bump;
-	cylinder->pos = Vec3(0, 0, 10);
-	cylinder->Kd = Vec4(1, 1, 1, 1);
+	//cylinder->N_map = &bump;
+	cylinder->pos = Vec3(0, 0, 5);
+	cylinder->Kd = Vec4(1, 1, 0, 1);
 	//raytracer->addObject(cylinder);
+
 	Cone *cone = new Cone(0);
 	cone->pos = Vec3(0, 0, 13);
 	cone->setRot(Vec3(0, 0, 0));
 	cone->Kd = Vec4(0, 1, 1, 1);
 	//raytracer->addObject(cone);
+
 	Plane *plane = new Plane();
-	plane->pos = Vec3(0, -1, 0);
-	plane->Kd = Vec4(1, 1, 1, 1);
-	//raytracer->addObject(plane);
-	plane = new Plane();
-	plane->Kd_map = &earth;
-	plane->N_map = &bump;
 	plane->pos = Vec3(0, 0, 10);
 	plane->setRot(Vec3(-M_PI / 2, 0, 0));
 	plane->Kd = Vec4(1, 1, 1, 1);
+	plane->Kd_map = &earth;
+	//plane->N_map = &bump;
 	raytracer->addObject(plane);
+
+	plane = new Plane();
+	plane->pos = Vec3(0, 0, 10);
+	plane->setRot(Vec3(-M_PI / 2, 0, 0));
+	plane->Kd = Vec4(1, 1, 1, 1);
+	//raytracer->addObject(plane);
 	/*Triangle *triangle = new Triangle();
 	triangle->pos = Vec3(-1, 1, 6);
 	triangle->rot = Vec3(0, 0, 0);
@@ -126,10 +132,41 @@ int main()
 	triangle->specular = .5;
 	raytracer->addObject(triangle);*/
 	PonctualLight *light = new PonctualLight();
-	light->pos = Vec3(10, 0, 0);
+	light->pos = Vec3(0, 0, 0);
 	light->intensity = 1;
 	light->color = Vec3(1, 1, 1);
 	raytracer->addLight(light);
+	/*float b = 5;
+	plane = new Plane();
+	plane->pos = Vec3(0, 0, b);
+	plane->setRot(Vec3(-M_PI / 2, 0, 0));
+	plane->Kd = Vec4(1);
+	raytracer->addObject(plane);
+	light = new PonctualLight();
+	light->pos = Vec3(-1.10, 0, b - .5);
+	light->intensity = 1.5;
+	light->color = Vec3(1, 0, 0);
+	raytracer->addLight(light);
+	light = new PonctualLight();
+	light->pos = Vec3(0, 0, b - .5);
+	light->intensity = 1.5;
+	light->color = Vec3(0, 1, 0);
+	raytracer->addLight(light);
+	light = new PonctualLight();
+	light->pos = Vec3(1.10, 0, b - .5);
+	light->intensity = 1.5;
+	light->color = Vec3(0, 0, 1);
+	raytracer->addLight(light);
+	sphere = new Sphere(10000);
+	sphere->pos = Vec3(0, 70.8, 1);
+	sphere->Kd = Vec4(1, 1, 1, 1);
+	sphere->Ir = .5;
+	raytracer->addObject(sphere);
+	sphere = new Sphere(10000);
+	sphere->pos = Vec3(0, -70.8, 1);
+	sphere->Kd = Vec4(1, 1, 1, 1);
+	sphere->Ir = .5;
+	raytracer->addObject(sphere);*/
 	/*DirectionalLight *dLight = new DirectionalLight();
 	dLight->dir = Vec3(-1, -1, -1);
 	dLight->intensity = .1;
@@ -145,15 +182,22 @@ int main()
 	{
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		static float a = 0;
-		light->pos = Vec3(cos(a) * 20, sin(a) * 20, 0);
-		a += M_PI / 2 / 10;
+		//light->pos = Vec3(cos(a) * 10, sin(a) * 10, 4);
+		sphere->setRot(Vec3(0, a, 0));
+		sphere->Ni = 2 + 1 * cos(a);
+		//light->pos.z = cos(a * 3) * 10;
+		//raytracer->setRot(Vec3(a, 0, 0));
+		a += M_PI / 2 / 20;
+		//a++;
 		raytracer->render();
+		//PNG::write(std::to_string(a) + ".png", (uint8_t*)raytracer->getImgData(), WINDOW_WIDTH, WINDOW_HEIGHT);
 		draw();
+		glfwPollEvents();
 		glfwSwapBuffers(window);
 	}
 	glDisableClientState(GL_VERTEX_ARRAY);
 	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
 	glDeleteTextures(1, &texture);
 	glfwTerminate();
-	return (EXIT_SUCCESS);
+	return EXIT_SUCCESS;
 }

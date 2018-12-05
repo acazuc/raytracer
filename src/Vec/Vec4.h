@@ -1,50 +1,113 @@
 #ifndef VEC4_H
 # define VEC4_H
 
-# include "Vec3.h"
-# include "Vec2.h"
+# include "./Vec3.h"
+# include "./Vec2.h"
 
-class Vec4
+template <typename T> class TVec4
 {
 
 	public:
-		union {float x, r;};
-		union {float y, g;};
-		union {float z, b;};
-		union {float w, a;};
-		Vec4(Vec2 vec1, Vec2 vec2) : x(vec1.x), y(vec1.y), z(vec2.x), w(vec2.y) {};
-		Vec4(Vec2 vec1, float z, float w) : x(vec1.x), y(vec1.y), z(z), w(w) {};
-		Vec4(Vec3 vec, float w) : x(vec.x), y(vec.y), z(vec.z), w(w) {};
-		Vec4(float x, float y, float z, float w) : x(x), y(y), z(z), w(w) {};
-		Vec4(float xyz, float w) : x(xyz), y(xyz), z(xyz), w(w) {};
-		Vec4(float xyzw) : x(xyzw), y(xyzw), z(xyzw), w(xyzw) {};
-		Vec4() : x(0), y(0), z(0), w(0) {};
-		float dot(Vec4 vec);
-		float angle(Vec4 vec);
-		float length();
-		void normalize();
-		Vec3 xyz();
-		Vec3 rgb();
-		Vec2 xy();
-		Vec2 zw();
-		float &operator [] (int idx);
-		Vec4 operator + (float val);
-		Vec4 operator - (float val);
-		Vec4 operator * (float val);
-		Vec4 operator / (float val);
-		Vec4 operator + (Vec4 vec);
-		Vec4 operator - (Vec4 vec);
-		Vec4 operator * (Vec4 vec);
-		Vec4 operator / (Vec4 vec);
-		Vec4 operator += (float val);
-		Vec4 operator -= (float val);
-		Vec4 operator *= (float val);
-		Vec4 operator /= (float val);
-		Vec4 operator += (Vec4 vec);
-		Vec4 operator -= (Vec4 vec);
-		Vec4 operator *= (Vec4 vec);
-		Vec4 operator /= (Vec4 vec);
+		union {T x, r;};
+		union {T y, g;};
+		union {T z, b;};
+		union {T w, a;};
+		inline TVec4(TVec2<T> vec1, TVec2<T> vec2) : x(vec1.x), y(vec1.y), z(vec2.x), w(vec2.y) {};
+		inline TVec4(TVec2<T> vec, T z, T w) : x(vec.x), y(vec.y), z(z), w(w) {};
+		inline TVec4(TVec3<T> vec, T w) : x(vec.x), y(vec.y), z(vec.z), w(w) {};
+		inline TVec4(T x, T y, T z, T w) : x(x), y(y), z(z), w(w) {};
+		inline TVec4(T xyz, T w) : x(xyz), y(xyz), z(xyz), w(w) {};
+		inline TVec4(T xyzw) : x(xyzw), y(xyzw), z(xyzw), w(xyzw) {};
+		inline TVec4() {};
+		TVec3<T> xyz();
+		TVec3<T> rgb();
+		TVec2<T> xy();
+		TVec2<T> zw();
+		T &operator [] (int idx);
+		TVec4<T> operator - ();
+		TVec4<T> operator += (T val);
+		TVec4<T> operator -= (T val);
+		TVec4<T> operator *= (T val);
+		TVec4<T> operator /= (T val);
+		TVec4<T> operator += (TVec4<T> vec);
+		TVec4<T> operator -= (TVec4<T> vec);
+		TVec4<T> operator *= (TVec4<T> vec);
+		TVec4<T> operator /= (TVec4<T> vec);
+		bool operator == (TVec4<T> vec);
+		bool operator != (TVec4<T> vec);
 
 };
+
+template <typename T>
+TVec4<T> operator + (TVec4<T> vec1, TVec4<T> vec2);
+template <typename T>
+TVec4<T> operator + (TVec4<T> vec, T val);
+template <typename T>
+TVec4<T> operator + (T val, TVec4<T> vec);
+template <typename T>
+TVec4<T> operator - (TVec4<T> vec1, TVec4<T> vec2);
+template <typename T>
+TVec4<T> operator - (TVec4<T> vec, T val);
+template <typename T>
+TVec4<T> operator - (T val, TVec4<T> vec);
+template <typename T>
+TVec4<T> operator * (TVec4<T> vec1, TVec4<T> vec2);
+template <typename T>
+TVec4<T> operator * (TVec4<T> vec, T val);
+template <typename T>
+TVec4<T> operator * (T val, TVec4<T> vec);
+template <typename T>
+TVec4<T> operator / (TVec4<T> vec1, TVec4<T> vec2);
+template <typename T>
+TVec4<T> operator / (TVec4<T> vec, T val);
+template <typename T>
+TVec4<T> operator / (T val, TVec4<T> vec);
+
+template <typename T>
+TVec4<T> min(TVec4<T> vec1, TVec4<T> vec2);
+template <typename T>
+TVec4<T> min(TVec4<T> vec, T val);
+template <typename T>
+TVec4<T> min(T val, TVec4<T> vec);
+
+template <typename T>
+TVec4<T> max(TVec4<T> vec1, TVec4<T> vec2);
+template <typename T>
+TVec4<T> max(TVec4<T> vec, T val);
+template <typename T>
+TVec4<T> max(T val, TVec4<T> vec);
+
+template <typename T>
+TVec4<T> clamp(TVec4<T> vec, T min, T max);
+template <typename T>
+TVec4<T> clamp(TVec4<T> vec, TVec4<T> min, TVec4<T> max);
+
+template <typename T>
+TVec4<T> mix(TVec4<T> vec1, TVec4<T> vec2, T per);
+template <typename T>
+TVec4<T> mod(TVec4<T> vec, T val);
+template <typename T>
+TVec4<T> floor(TVec4<T> vec);
+template <typename T>
+TVec4<T> round(TVec4<T> vec);
+template <typename T>
+TVec4<T> ceil(TVec4<T> vec);
+template <typename T>
+TVec4<T> fract(TVec4<T> vec);
+
+template<typename T>
+TVec4<T> normalize(TVec4<T> vec);
+template<typename T>
+TVec4<T> reflect(TVec4<T> vec1, TVec4<T> vec2);
+template<typename T>
+T dot(TVec4<T> vec1, TVec4<T> vec2);
+template<typename T>
+T angle(TVec4<T> vec1, TVec4<T> vec2);
+template<typename T>
+T length(TVec4<T> vec);
+
+typedef TVec4<float> Vec4;
+
+# include "Vec4.cpp"
 
 #endif

@@ -1,126 +1,266 @@
+#ifndef VEC2_CPP
+# define VEC2_CPP
+
 #include "Vec2.h"
 #include <algorithm>
 #include <cmath>
 
-float Vec2::dot(Vec2 uv)
+template <typename T>
+inline T &TVec2<T>::operator [] (int idx)
 {
-	return (this->x * uv.x + this->y * uv.y);
+	return reinterpret_cast<T*>(this)[idx];
 }
 
-float Vec2::angle(Vec2 vec)
+template <typename T>
+inline TVec2<T> TVec2<T>::operator - ()
 {
-	return (acos(dot(vec) / (length() * vec.length())));
+	return TVec2<T>(-this->x, -this->y);
 }
 
-float Vec2::length()
+template <typename T>
+inline TVec2<T> TVec2<T>::operator += (T val)
 {
-	return (sqrt(dot(*this)));
+	return *this = *this + val;
 }
 
-void Vec2::normalize()
+template <typename T>
+inline TVec2<T> TVec2<T>::operator -= (T val)
 {
-	*this = *this / this->length();
+	return *this = *this - val;
 }
 
-void Vec2::min(float val)
+template <typename T>
+inline TVec2<T> TVec2<T>::operator *= (T val)
 {
-	this->x = std::min(val, this->x);
-	this->y = std::min(val, this->y);
+	return *this = *this * val;
 }
 
-void Vec2::max(float val)
+template <typename T>
+inline TVec2<T> TVec2<T>::operator /= (T val)
 {
-	this->x = std::max(val, this->x);
-	this->y = std::max(val, this->y);
+	return *this = *this / val;
 }
 
-void Vec2::clamp(float min, float max)
+template <typename T>
+inline TVec2<T> TVec2<T>::operator += (TVec2<T> vec)
 {
-	this->max(min);
-	this->min(max);
+	return *this = *this + vec;
 }
 
-float &Vec2::operator [] (int idx)
+template <typename T>
+inline TVec2<T> TVec2<T>::operator -= (TVec2<T> vec)
 {
-	return (reinterpret_cast<float*>(this)[idx]);
+	return *this = *this - vec;
 }
 
-Vec2 Vec2::operator + (float val)
+template <typename T>
+inline TVec2<T> TVec2<T>::operator *= (TVec2<T> vec)
 {
-	return (Vec2(this->x + val, this->y + val));
+	return *this = *this * vec;
 }
 
-Vec2 Vec2::operator - (float val)
+template <typename T>
+inline TVec2<T> TVec2<T>::operator /= (TVec2<T> vec)
 {
-	return (Vec2(this->x - val, this->y - val));
+	return *this = *this / vec;
 }
 
-Vec2 Vec2::operator * (float val)
+template <typename T>
+inline bool TVec2<T>::operator == (TVec2<T> vec)
 {
-	return (Vec2(this->x * val, this->y * val));
+	return this->x == vec.x && this->y == vec.y;
 }
 
-Vec2 Vec2::operator / (float val)
+template <typename T>
+inline bool TVec2<T>::operator != (TVec2<T> vec)
 {
-	return (Vec2(this->x / val, this->y / val));
+	return !(*this == vec);
 }
 
-Vec2 Vec2::operator + (Vec2 vec)
+template <typename T>
+inline TVec2<T> operator + (TVec2<T> vec1, TVec2<T> vec2)
 {
-	return (Vec2(this->x + vec.x, this->y + vec.y));
+	return TVec2<T>(vec1.x + vec2.x, vec1.y + vec2.y);
 }
 
-Vec2 Vec2::operator - (Vec2 vec)
+template <typename T>
+inline TVec2<T> operator + (TVec2<T> vec, T val)
 {
-	return (Vec2(this->x - vec.x, this->y - vec.y));
+	return TVec2<T>(vec.x + val, vec.y + val);
 }
 
-Vec2 Vec2::operator * (Vec2 vec)
+template <typename T>
+inline TVec2<T> operator + (T val, TVec2<T> vec)
 {
-	return (Vec2(this->x * vec.x, this->y * vec.y));
+	return TVec2<T>(val + vec.x, val + vec.y);
 }
 
-Vec2 Vec2::operator / (Vec2 vec)
+template <typename T>
+inline TVec2<T> operator - (TVec2<T> vec1, TVec2<T> vec2)
 {
-	return (Vec2(this->x / vec.x, this->y / vec.y));
+	return TVec2<T>(vec1.x - vec2.x, vec1.y - vec2.y);
 }
 
-Vec2 Vec2::operator += (float val)
+template <typename T>
+inline TVec2<T> operator - (TVec2<T> vec, T val)
 {
-	return (*this = *this + val);
+	return TVec2<T>(vec.x - val, vec.y - val);
 }
 
-Vec2 Vec2::operator -= (float val)
+template <typename T>
+inline TVec2<T> operator - (T val, TVec2<T> vec)
 {
-	return (*this = *this - val);
+	return TVec2<T>(val - vec.x, val - vec.y);
 }
 
-Vec2 Vec2::operator *= (float val)
+template <typename T>
+inline TVec2<T> operator * (TVec2<T> vec1, TVec2<T> vec2)
 {
-	return (*this = *this * val);
+	return TVec2<T>(vec1.x * vec2.x, vec1.y * vec2.y);
 }
 
-Vec2 Vec2::operator /= (float val)
+template <typename T>
+inline TVec2<T> operator * (TVec2<T> vec, T val)
 {
-	return (*this = *this / val);
+	return TVec2<T>(vec.x * val, vec.y * val);
 }
 
-Vec2 Vec2::operator += (Vec2 vec)
+template <typename T>
+inline TVec2<T> operator * (T val, TVec2<T> vec)
 {
-	return (*this = *this + vec);
+	return TVec2<T>(val * vec.x, val * vec.y);
 }
 
-Vec2 Vec2::operator -= (Vec2 vec)
+template <typename T>
+inline TVec2<T> operator / (TVec2<T> vec1, TVec2<T> vec2)
 {
-	return (*this = *this - vec);
+	return TVec2<T>(vec1.x / vec2.x, vec1.y / vec2.y);
 }
 
-Vec2 Vec2::operator *= (Vec2 vec)
+template <typename T>
+inline TVec2<T> operator / (TVec2<T> vec, T val)
 {
-	return (*this = *this * vec);
+	return TVec2<T>(vec.x / val, vec.y / val);
 }
 
-Vec2 Vec2::operator /= (Vec2 vec)
+template <typename T>
+inline TVec2<T> operator / (T val, TVec2<T> vec)
 {
-	return (*this = *this / vec);
+	return TVec2<T>(val / vec.x, val / vec.y);
 }
+
+template <typename T>
+inline TVec2<T> min(TVec2<T> vec1, TVec2<T> vec2)
+{
+	return TVec2<T>(std::min(vec1.x, vec2.x), std::min(vec1.y, vec2.y));
+}
+
+template <typename T>
+inline TVec2<T> min(TVec2<T> vec, T val)
+{
+	return TVec2<T>(std::min(val, vec.x), std::min(val, vec.y));
+}
+
+template <typename T>
+inline TVec2<T> min(T val, TVec2<T> vec)
+{
+	return TVec2<T>(std::min(val, vec.x), std::min(val, vec.y));
+}
+
+template <typename T>
+inline TVec2<T> max(TVec2<T> vec1, TVec2<T> vec2)
+{
+	return TVec2<T>(std::max(vec1.x, vec2.x), std::max(vec1.y, vec2.y));
+}
+
+template <typename T>
+inline TVec2<T> max(TVec2<T> vec, T val)
+{
+	return TVec2<T>(std::max(val, vec.x), std::max(val, vec.y));
+}
+
+template <typename T>
+inline TVec2<T> max(T val, TVec2<T> vec)
+{
+	return TVec2<T>(std::max(val, vec.x), std::max(val, vec.y));
+}
+
+template <typename T>
+inline TVec2<T> clamp(TVec2<T> vec, T vmin, T vmax)
+{
+	return max(min(vec, vmax), vmin);
+}
+
+template <typename T>
+inline TVec2<T> clamp(TVec2<T> vec, TVec2<T> vmin, TVec2<T> vmax)
+{
+	return max(min(vec, vmax), vmin);
+}
+
+template <typename T>
+inline TVec2<T> mix(TVec2<T> vec1, TVec2<T> vec2, T a)
+{
+	return vec1 * (1 - a) + vec2 * a;
+}
+
+template <typename T>
+inline TVec2<T> mod(TVec2<T> vec, T val)
+{
+	return TVec2<T>(std::fmod(vec.x, val), std::fmod(vec.y, val));
+}
+
+template <typename T>
+inline TVec2<T> floor(TVec2<T> vec)
+{
+	return TVec2<T>(std::floor(vec.x), std::floor(vec.y));
+}
+
+template <typename T>
+inline TVec2<T> round(TVec2<T> vec)
+{
+	return TVec2<T>(std::round(vec.x), std::round(vec.y));
+}
+
+template <typename T>
+inline TVec2<T> ceil(TVec2<T> vec)
+{
+	return TVec2<T>(std::ceil(vec.x), std::ceil(vec.y));
+}
+
+template <typename T>
+inline TVec2<T> fract(TVec2<T> vec)
+{
+	return vec - floor(vec);
+}
+
+template<typename T>
+inline TVec2<T> normalize(TVec2<T> vec)
+{
+	return vec / length(vec);
+}
+
+template<typename T>
+inline TVec2<T> reflect(TVec2<T> vec1, TVec2<T> vec2)
+{
+	return vec1 - vec2 * 2 * dot(vec1, vec2);
+}
+
+template<typename T>
+inline T dot(TVec2<T> vec1, TVec2<T> vec2)
+{
+	return vec1.x * vec2.x + vec1.y;
+}
+
+template<typename T>
+inline T angle(TVec2<T> vec1, TVec2<T> vec2)
+{
+	return acos(dot(vec1, vec2) / length(vec1) / length(vec2));
+}
+
+template<typename T>
+inline T length(TVec2<T> vec)
+{
+	return sqrt(dot(vec, vec));
+}
+
+#endif

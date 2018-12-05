@@ -45,14 +45,14 @@ bool PNG::read(std::string filename, uint8_t *&data, uint32_t &width, uint32_t &
 	png_destroy_read_struct(&png_ptr, &info_ptr, &end_info);
 	delete[] (row_pointers);
 	std::fclose(fp);
-	return (true);
+	return true;
 
 error3:
 	png_destroy_read_struct(&png_ptr, &info_ptr, &end_info);
 error2:
 	std::fclose(fp);
 error1:
-	return (false);
+	return false;
 }
 
 bool PNG::write(std::string file, uint8_t *data, uint32_t width, uint32_t height)
@@ -84,12 +84,12 @@ bool PNG::write(std::string file, uint8_t *data, uint32_t width, uint32_t height
 		goto error3;
 	png_write_end(png_ptr, NULL);
 	std::fclose(fp);
-	return (true);
+	return true;
 
 error3:
 	png_destroy_read_struct(&png_ptr, &info_ptr, (png_infopp)0);
 error2:
 	fclose(fp);
 error1:
-	return (false);
+	return false;
 }

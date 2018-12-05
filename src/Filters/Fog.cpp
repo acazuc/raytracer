@@ -6,14 +6,14 @@ static Vec4 getPixelAt(Vec4 *img, uint64_t x, uint64_t y, uint64_t width, uint64
 {
 	x = std::min(width - 1, std::max((uint64_t)0, x));
 	y = std::min(height - 1, std::max((uint64_t)0, y));
-	return (img[x + y * width]);
+	return img[x + y * width];
 }
 
 static float getZIndexAt(float *zbuffer, uint64_t x, uint64_t y, uint64_t width, uint64_t height)
 {
 	x = std::min(width - 1, std::max((uint64_t)0, x));
 	y = std::min(height - 1, std::max((uint64_t)0, y));
-	return (zbuffer[x + y * width]);
+	return zbuffer[x + y * width];
 }
 
 static Vec4 process(Vec4 *img, float *zbuffer, Vec2 &pos, uint64_t width, uint64_t height, Vec4 color, float start, float density, enum FogType type)
@@ -36,7 +36,7 @@ static Vec4 process(Vec4 *img, float *zbuffer, Vec2 &pos, uint64_t width, uint64
 			break;
 	}
 	factor = std::min(1.f, std::max(0.f, factor));
-	return (diffuse * (1 - factor) + color * factor);
+	return mix(diffuse, color, factor);
 }
 
 Vec4 *Fog::fog(Vec4 *img, float *zbuffer, uint64_t width, uint64_t height, Vec4 color, float start, float density, enum FogType type)
@@ -50,5 +50,5 @@ Vec4 *Fog::fog(Vec4 *img, float *zbuffer, uint64_t width, uint64_t height, Vec4 
 			newImg[x + y * width] = process(img, zbuffer, pos, width, height, color, start, density, type);
 		}
 	}
-	return (newImg);
+	return newImg;
 }

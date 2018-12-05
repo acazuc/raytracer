@@ -3,6 +3,6 @@
 Vec3 DirectionalLight::getDirectionFrom(Vec3 &pos)
 {
 	(void)pos;
-	Vec3 vec = -dir;
-	return (vec);
+	Vec3 vec = -this->dir;
+	return vec;
 }

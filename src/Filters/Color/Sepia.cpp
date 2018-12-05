@@ -10,11 +10,11 @@ Vec4 *Sepia::sepia(Vec4 *img, uint64_t width, uint64_t height)
 			Vec4 val = img[x + y * width];
 			Vec4 &newVal = newImg[x + y * width];
 			Vec3 vrgb = val.rgb();
-			newVal.r = vrgb.dot(Vec3(0.393, 0.769, 0.189));
-			newVal.g = vrgb.dot(Vec3(0.349, 0.686, 0.168));
-			newVal.b = vrgb.dot(Vec3(0.272, 0.534, 0.131));
+			newVal.r = dot(vrgb, Vec3(0.393, 0.769, 0.189));
+			newVal.g = dot(vrgb, Vec3(0.349, 0.686, 0.168));
+			newVal.b = dot(vrgb, Vec3(0.272, 0.534, 0.131));
 			newVal.a = val.a;
 		}
 	}
-	return (newImg);
+	return newImg;
 }

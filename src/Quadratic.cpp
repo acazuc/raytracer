@@ -25,7 +25,7 @@ void Quadratic::solve()
 float Quadratic::getMinPosT()
 {
 	if (this->solutions == 1)
-		return (this->t1);
+		return this->t1;
 	if (this->solutions == 2)
 	{
 		if (this->t1 < EPSILON)
@@ -34,5 +34,5 @@ float Quadratic::getMinPosT()
 			return (this->t1);
 		return (std::min(this->t1, this->t2));
 	}
-	return (-1);
+	return -1;
 }

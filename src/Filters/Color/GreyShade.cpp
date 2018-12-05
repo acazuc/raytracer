@@ -11,5 +11,5 @@ Vec4 *GreyShade::greyShade(Vec4 *img, uint64_t width, uint64_t height)
 			newImg[x + y * width] = Vec4((val.x + val.y + val.z) / 3, val.a);
 		}
 	}
-	return (newImg);
+	return newImg;
 }

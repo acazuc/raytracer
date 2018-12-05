@@ -3,5 +3,5 @@
 Vec3 PonctualLight::getDirectionFrom(Vec3 &pos)
 {
 	Vec3 vec(this->pos - pos);
-	return (vec);
+	return vec;
 }

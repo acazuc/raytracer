@@ -50,10 +50,10 @@ bool Raytracer::trace(Ray &ray, Object *&object, Vec3 &pos, Object *avoid)
 		object = this->objects[i];
 		nearestDistance = t;
 	}
-	if (nearestDistance == -1)
-		return (false);
+	if (nearestDistance == INFINITY)
+		return false;
 	pos = ray.pos + ray.dir * nearestDistance;
-	return (true);
+	return true;
 }
 
 Vec4 Raytracer::getDiffuseSpecularTransparencyLight(Light *light, Object *object, Ray &ray, Vec3 &pos)
@@ -62,25 +62,24 @@ Vec4 Raytracer::getDiffuseSpecularTransparencyLight(Light *light, Object *object
 	if (object->Kd_map)
 		result *= object->Kd_map->getDataAt(object->getUVAt(ray, pos));
 	if (result.a >= 1)
-		return (result);
-	Ray newRay(pos, light->getDirectionFrom(pos));
-	newRay.dir.normalize();
+		return result;
+	Ray newRay(pos, normalize(light->getDirectionFrom(pos)));
 	Object *newObject = nullptr;
 	Vec3 newPos;
 	if (!trace(newRay, newObject, newPos, object))
 		goto end;
-	if ((newPos - pos).length() > newRay.dir.length())
+	if (length(newPos - pos) > length(newRay.dir))
 		goto end;
 	result *= getDiffuseSpecularTransparencyLight(light, newObject, newRay, newPos);
 end:
-	return (result);
+	return result;
 }
 
 void Raytracer::getDiffuseSpecularLight(Ray &ray, Object *object, Vec3 &pos, Vec3 &norm, Vec4 &diffuse, Vec4 &specular)
 {
 	Object *newObject = nullptr;
 	Ray newRay(pos, Vec3());
-	Vec3 reflect = ray.dir.reflect(norm);
+	Vec3 refl(reflect(ray.dir, norm));
 	float opacity;
 	diffuse += object->Ka;
 	Vec3 newPos;
@@ -88,11 +87,12 @@ void Raytracer::getDiffuseSpecularLight(Ray &ray, Object *object, Vec3 &pos, Vec
 	{
 		newRay.dir = this->lights[i]->getDirectionFrom(pos);
 		Vec3 tmp(newRay.dir);
-		newRay.dir.normalize();
+		newRay.dir = normalize(newRay.dir);
+		float tmpLength = length(tmp);
 		Vec4 lightColorIntensity = Vec4(this->lights[i]->color * this->lights[i]->intensity, 1);
 		if (trace(newRay, newObject, newPos, object))
 		{
-			if ((newPos - pos).length() > tmp.length())
+			if (length(newPos - pos) > tmpLength)
 				goto next;
 			opacity = newObject->Kd.a;
 			if (newObject->Kd_map)
@@ -103,21 +103,21 @@ void Raytracer::getDiffuseSpecularLight(Ray &ray, Object *object, Vec3 &pos, Vec
 			lightColorIntensity = lightColorIntensity * (1 - result.a) * Vec4(result.rgb(), 1);
 		}
 next:
-		diffuse += lightColorIntensity * std::max(0.f, newRay.dir.dot(norm));
-		specular += lightColorIntensity * pow(std::max(0.f, reflect.dot(newRay.dir)), object->Ns) * object->Ks;
+		diffuse += lightColorIntensity * std::max(0.f, dot(newRay.dir, norm));
+		specular += lightColorIntensity * float(pow(std::max(0.f, dot(refl, newRay.dir)), object->Ns));
 	}
+	specular *= object->Ks;
 }
 
 Vec4 Raytracer::getReflectionColor(Ray &ray, Object *object, Vec3 &pos, Vec3 &norm, int recursion)
 {
-	if (recursion > 1)
-		return (Vec4(0, 0, 0));
+	if (recursion > 100)
+		return Vec4(0);
 	Ray newRay;
 	newRay.pos = pos;
-	newRay.dir = ray.dir.reflect(norm);
-	newRay.dir.normalize();
+	newRay.dir = normalize(reflect(ray.dir, norm));
 	newRay.Ni = ray.Ni;
-	return (getRayColor(newRay, object, recursion + 1));
+	return getRayColor(newRay, object, recursion + 1);
 }
 
 Vec4 Raytracer::getTransparencyColor(Ray &ray, Object *object, Vec3 &pos, Vec3 &norm, bool normRev, int recursion)
@@ -126,7 +126,7 @@ Vec4 Raytracer::getTransparencyColor(Ray &ray, Object *object, Vec3 &pos, Vec3 &
 	newRay.pos = pos;
 	float nextNi = object->Ni;
 	if (normRev)
-		nextNi = 1;//object->Ni;
+		nextNi = 1;
 	newRay.Ni = nextNi;
 	if (ray.Ni == nextNi)
 	{
@@ -135,13 +135,13 @@ Vec4 Raytracer::getTransparencyColor(Ray &ray, Object *object, Vec3 &pos, Vec3 &
 	else
 	{
 		float factor = ray.Ni / nextNi;
-		float costhetai = -ray.dir.dot(norm);
+		float costhetai = -dot(ray.dir, norm);
 		float sin2thetat = factor * factor * (1 - costhetai * costhetai);
 		sin2thetat = std::min(1.f, sin2thetat);
-		newRay.dir = ray.dir * factor + norm * (factor * costhetai - sqrt(1 - sin2thetat));
+		newRay.dir = ray.dir * factor + norm * float(factor * costhetai - sqrt(1 - sin2thetat));
 	}
-	newRay.dir.normalize();
-	return (getRayColor(newRay, object, recursion));
+	newRay.dir = normalize(newRay.dir);;
+	return getRayColor(newRay, object, recursion);
 }
 
 Vec4 Raytracer::getRayColor(Ray &ray, Object *avoid, int recursion, float *zIndex)
@@ -149,12 +149,12 @@ Vec4 Raytracer::getRayColor(Ray &ray, Object *avoid, int recursion, float *zInde
 	Object *object = nullptr;
 	Vec3 pos;
 	if (!trace(ray, object, pos, avoid))
-		return (Vec4(0));
+		return Vec4(0);
 	if (zIndex)
-		*zIndex = (pos - ray.pos).length();
-	Vec3 norm = object->getNormAt(ray, pos);
+		*zIndex = length(pos - ray.pos);
 	bool normRev = false;
-	if (norm.dot(ray.dir) > 0)
+	Vec3 norm = normalize(object->getNormAt(ray, pos));
+	if (dot(norm, ray.dir) > 0)
 	{
 		norm = -norm;
 		normRev = true;
@@ -174,7 +174,7 @@ Vec4 Raytracer::getRayColor(Ray &ray, Object *avoid, int recursion, float *zInde
 	col += specular;
 	if (object->Ir > 0)
 		col = col * (1 - object->Ir) + getReflectionColor(ray, object, pos, norm, recursion + 1) * object->Kd * texColor * object->Ir;
-	return (col);
+	return col;
 }
 
 void Raytracer::calculatePixel(uint64_t x, uint64_t y)
@@ -186,9 +186,7 @@ void Raytracer::calculatePixel(uint64_t x, uint64_t y)
 		ratio = 1 / ratio;
 	float rx = (2 * (x + 0.5) / this->width - 1) * tan(this->fov / 2 * M_PI / 180) * ratio;
 	float ry = (1 - 2 * (y + 0.5) / this->height) * tan(this->fov / 2 * M_PI / 180);
-	ray.dir = Vec3(rx, ry, 1);
-	ray.dir.rotate(this->rot);
-	ray.dir.normalize();
+	ray.dir = normalize(this->rotMat * Vec3(rx, ry, 1));
 	float zIndex = 0;
 	Vec4 col = getRayColor(ray, nullptr, 0, &zIndex);
 	this->zBuffer[(x + y * this->width)] = zIndex;
@@ -238,7 +236,7 @@ void Raytracer::render()
 	/*Vec4 *fxaa = Fxaa::fxaa(this->colorBuffer, this->width, this->height);
 	delete[] (this->colorBuffer);
 	this->colorBuffer = fxaa;*/
-	/*Vec4 *blur = Blur::blur(this->colorBuffer, 5, this->width, this->height);
+	/*Vec4 *blur = Blur::blur(this->colorBuffer, 10, this->width, this->height);
 	delete[] (this->colorBuffer);
 	this->colorBuffer = blur;*/
 	/*Vec4 *greyShade = GreyShade::greyShade(this->colorBuffer, this->width, this->height);
@@ -253,7 +251,7 @@ void Raytracer::render()
 	/*Vec4 *gamma = Gamma::gamma(this->colorBuffer, this->width, this->height, 1 / 2.2);
 	delete[] (this->colorBuffer);
 	this->colorBuffer = gamma;*/
-	/*Vec4 *fog = Fog::fog(this->colorBuffer, this->zBuffer, this->width, this->height, Vec4(1, 0, 0, 1), 0, 12, FOG_LINEAR);
+	/*Vec4 *fog = Fog::fog(this->colorBuffer, this->zBuffer, this->width, this->height, Vec4(1, 0, 0, 1), 0, 20, FOG_LINEAR);
 	delete[] (this->colorBuffer);
 	this->colorBuffer = fog;*/
 	for (uint64_t i = 0; i < this->width * this->height; ++i)
@@ -274,4 +272,20 @@ void Raytracer::addObject(Object *object)
 void Raytracer::addLight(Light *light)
 {
 	this->lights.push_back(light);
+}
+
+void Raytracer::setRot(Vec3 vec)
+{
+	//this->rot = vec;
+	Mat3 rot(1);
+	rot = Mat3::rotateZ(rot, vec.z);
+	rot = Mat3::rotateY(rot, vec.y);
+	rot = Mat3::rotateX(rot, vec.x);
+	this->rotMat = rot;
+	Mat3 unrot(1);
+	unrot = Mat3::rotateX(unrot, -vec.x);
+	unrot = Mat3::rotateY(unrot, -vec.y);
+	unrot = Mat3::rotateZ(unrot, -vec.z);
+	this->unrotMat = unrot;
+
 }

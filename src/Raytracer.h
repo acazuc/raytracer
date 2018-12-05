@@ -15,9 +15,10 @@ class Raytracer
 		std::vector<Light*> lights;
 		std::thread **threads;
 		Vec4 *colorBuffer;
+		Mat3 unrotMat;
 		Vec3 ambient;
+		Mat3 rotMat;
 		Vec3 pos;
-		Vec3 rot;
 		uint32_t height;
 		uint32_t width;
 		float *zBuffer;
@@ -40,7 +41,7 @@ class Raytracer
 		void addLight(Light *light);
 		void setAmbient(Vec3 ambient) {this->ambient = ambient;};
 		void setPos(Vec3 pos) {this->pos = pos;};
-		void setRot(Vec3 rot) {this->rot = rot;};
+		void setRot(Vec3 rot);
 		void setFov(float fov) {this->fov = fov;};
 		inline char *getImgData() {return (this->imgData);};
 

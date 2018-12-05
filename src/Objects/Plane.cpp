@@ -2,23 +2,21 @@
 #include "Consts.h"
 #include <cmath>
 
-
 bool Plane::collide(Ray &ray, float &t)
 {
 	Vec3 norm(this->rotMat * Vec3(0, 1, 0));
-	float dot = norm.dot(ray.dir);
-	if (dot == 0)
-		return (false);
+	float d = dot(norm, ray.dir);
+	if (d == 0)
+		return false;
 	Vec3 delta(this->pos - ray.pos);
-	return ((t = norm.dot(delta) / dot) > EPSILON);
+	return (t = dot(norm, delta) / d) >= EPSILON;
 }
 
 Vec2 Plane::getUVAt(Ray &ray, Vec3 &pos)
 {
 	(void)ray;
 	Vec3 rel(this->unrotMat * (pos - this->pos));
-	Vec2 uv(rel.x / 4, rel.z / 4);
-	return (uv);
+	return Vec2(rel.x / 4, rel.z / 4);
 }
 
 Vec3 Plane::getNormAt(Ray &ray, Vec3 &pos)
@@ -27,10 +25,8 @@ Vec3 Plane::getNormAt(Ray &ray, Vec3 &pos)
 	if (this->N_map)
 	{
 		Vec4 bump = this->N_map->getDataAt(getUVAt(ray, pos));
-		Vec3 tmp = (bump.rgb() - .5) * 2;
-		norm = Vec3(-tmp.r, tmp.b, tmp.g);
-		norm.normalize();
+		Vec3 tmp = (bump.rgb() - .5f) * 2.f;
+		norm = normalize(Vec3(-tmp.r, tmp.b, tmp.g));
 	}
-	norm = this->rotMat * norm;
-	return (norm);
+	return this->rotMat * norm;
 }

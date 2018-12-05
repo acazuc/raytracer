@@ -2,7 +2,7 @@ NAME = raytracer
 
 CC = g++
 
-CFLAGS = -Wall -Wextra -Werror -Ofast -g -flto -mtune=native
+CFLAGS = -Wall -Wextra -Werror -Ofast -g -flto -march=native -finline
 
 INCLUDES_PATH = include/
 
@@ -33,12 +33,6 @@ SRCS_NAME = Main.cpp \
 	    Filters/Color/Negative.cpp \
 	    Filters/Color/Sepia.cpp \
 	    Utils/System.cpp \
-	    Vec/Vec2.cpp \
-	    Vec/Vec3.cpp \
-	    Vec/Vec4.cpp \
-	    Mat/Mat2.cpp \
-	    Mat/Mat3.cpp \
-	    Mat/Mat4.cpp \
 
 SRCS = $(addprefix $(SRCS_PATH), $(SRCS_NAME))
 

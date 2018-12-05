@@ -5,7 +5,7 @@ static Vec4 getPixelAt(Vec4 *img, uint64_t x, uint64_t y, uint64_t width, uint64
 {
 	x = std::min(width - 1, std::max((uint64_t)0, x));
 	y = std::min(height - 1, std::max((uint64_t)0, y));
-	return (img[x + y * width]);
+	return img[x + y * width];
 }
 
 Vec4 *Cel::cel(Vec4 *img, uint8_t cels, uint64_t width, uint64_t height)
@@ -23,5 +23,5 @@ Vec4 *Cel::cel(Vec4 *img, uint8_t cels, uint64_t width, uint64_t height)
 			newImg[idx].a = val.a;
 		}
 	}
-	return (newImg);
+	return newImg;
 }

@@ -5,7 +5,7 @@ static Vec4 getPixelAt(Vec4 *img, uint64_t x, uint64_t y, uint64_t width, uint64
 {
 	x = std::min(width - 1, std::max((uint64_t)0, x));
 	y = std::min(height - 1, std::max((uint64_t)0, y));
-	return (img[x + y * width]);
+	return img[x + y * width];
 }
 
 static Vec4 process(Vec4 *img, uint64_t offset, uint64_t x, uint64_t y, uint64_t width, uint64_t height)
@@ -20,7 +20,7 @@ static Vec4 process(Vec4 *img, uint64_t offset, uint64_t x, uint64_t y, uint64_t
 			count++;
 		}
 	}
-	return (total / count);
+	return total / (float)count;
 }
 
 Vec4 *Blur::blur(Vec4 *img, uint64_t offset, uint64_t width, uint64_t height)
@@ -33,5 +33,5 @@ Vec4 *Blur::blur(Vec4 *img, uint64_t offset, uint64_t width, uint64_t height)
 			newImg[x + y * width] = process(img, offset, x, y, width, height);
 		}
 	}
-	return (newImg);
+	return newImg;
 }

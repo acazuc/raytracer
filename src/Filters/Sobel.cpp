@@ -9,14 +9,14 @@ static Vec4 getPixelAt(Vec4 *img, uint64_t x, uint64_t y, uint64_t width, uint64
 {
 	x = std::min(width - 1, std::max((uint64_t)0, x));
 	y = std::min(height - 1, std::max((uint64_t)0, y));
-	return (img[x + y * width]);
+	return img[x + y * width];
 }
 
 static float getZIndexAt(float *zbuffer, uint64_t x, uint64_t y, uint64_t width, uint64_t height)
 {
 	x = std::min(width - 1, std::max((uint64_t)0, x));
 	y = std::min(height - 1, std::max((uint64_t)0, y));
-	return (zbuffer[x + y * width]);
+	return zbuffer[x + y * width];
 }
 
 static Vec4 process(Vec4 *img, float *zbuffer, Vec2 &pos, uint64_t width, uint64_t height)
@@ -31,10 +31,10 @@ static Vec4 process(Vec4 *img, float *zbuffer, Vec2 &pos, uint64_t width, uint64
 			data[i][j] = getZIndexAt(zbuffer, pos.x + i - 1, pos.y + j - 1, width, height);//sample.length();
 		}
 	}
-	float gx = sx[0].dot(data[0]) + sx[1].dot(data[1]) + sx[2].dot(data[2]);
-	float gy = sy[0].dot(data[0]) + sy[1].dot(data[1]) + sy[2].dot(data[2]);
+	float gx = dot(sx[0], data[0]) + dot(sx[1], data[1]) + dot(sx[2], data[2]);
+	float gy = dot(sy[0], data[0]) + dot(sx[1], data[1]) + dot(sx[2], data[2]);
 	float g = sqrt(gx * gx + gy * gy);
-	return (Vec4(diffuse.rgb() - Vec3(g), diffuse.a));
+	return Vec4(diffuse.rgb() - Vec3(g), diffuse.a);
 }
 
 Vec4 *Sobel::sobel(Vec4 *img, float *zbuffer, uint64_t width, uint64_t height)
@@ -48,5 +48,5 @@ Vec4 *Sobel::sobel(Vec4 *img, float *zbuffer, uint64_t width, uint64_t height)
 			newImg[x + y * width] = process(img, zbuffer, pos, width, height);
 		}
 	}
-	return (newImg);
+	return newImg;
 }

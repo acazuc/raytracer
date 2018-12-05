@@ -1,49 +1,106 @@
 #ifndef VEC3_H
 # define VEC3_H
 
-# include "Vec2.h"
+# include "./Vec2.h"
 
-class Vec3
+template <typename T> class TVec3
 {
 
 	public:
-		union {float x, r;};
-		union {float y, g;};
-		union {float z, b;};
-		Vec3(Vec2 vec, float z) : x(vec.x), y(vec.y), z(z) {};
-		Vec3(float x, float y, float z) : x(x), y(y), z(z) {};
-		Vec3(float xyz) : x(xyz), y(xyz), z(xyz) {};
-		Vec3() : x(0), y(0), z(0) {};
-		Vec3 reflect(Vec3 vec);
-		Vec3 cross(Vec3 vec);
-		float dot(Vec3 vec);
-		float angle(Vec3 vec);
-		float length();
-		void normalize();
-		void rotate(Vec3 vec);
-		void unrotate(Vec3 vec);
-		void rotateX(float angle);
-		void rotateY(float angle);
-		void rotateZ(float angle);
-		float &operator [] (int idx);
-		Vec3 operator - ();
-		Vec3 operator + (float val);
-		Vec3 operator - (float val);
-		Vec3 operator * (float val);
-		Vec3 operator / (float val);
-		Vec3 operator + (Vec3 vec);
-		Vec3 operator - (Vec3 vec);
-		Vec3 operator * (Vec3 vec);
-		Vec3 operator / (Vec3 vec);
-		Vec3 operator += (float val);
-		Vec3 operator -= (float val);
-		Vec3 operator *= (float val);
-		Vec3 operator /= (float val);
-		Vec3 operator += (Vec3 vec);
-		Vec3 operator -= (Vec3 vec);
-		Vec3 operator *= (Vec3 vec);
-		Vec3 operator /= (Vec3 vec);
+		union {T x, r;};
+		union {T y, g;};
+		union {T z, b;};
+		inline TVec3<T>(TVec2<T> vec, T z) : x(vec.x), y(vec.y), z(z) {};
+		inline TVec3<T>(T x, T y, T z) : x(x), y(y), z(z) {};
+		inline TVec3<T>(T xyz) : x(xyz), y(xyz), z(xyz) {};
+		inline TVec3<T>() {};
+		T &operator [] (int idx);
+		TVec3<T> operator - ();
+		TVec3<T> operator += (T val);
+		TVec3<T> operator -= (T val);
+		TVec3<T> operator *= (T val);
+		TVec3<T> operator /= (T val);
+		TVec3<T> operator += (TVec3<T> vec);
+		TVec3<T> operator -= (TVec3<T> vec);
+		TVec3<T> operator *= (TVec3<T> vec);
+		TVec3<T> operator /= (TVec3<T> vec);
+		bool operator == (TVec3<T> vec);
+		bool operator != (TVec3<T> vec);
 
 };
+
+template <typename T>
+TVec3<T> operator + (TVec3<T> vec1, TVec3<T> vec2);
+template <typename T>
+TVec3<T> operator + (TVec3<T> vec, T val);
+template <typename T>
+TVec3<T> operator + (T val, TVec3<T> vec);
+template <typename T>
+TVec3<T> operator - (TVec3<T> vec1, TVec3<T> vec2);
+template <typename T>
+TVec3<T> operator - (TVec3<T> vec, T val);
+template <typename T>
+TVec3<T> operator - (T val, TVec3<T> vec);
+template <typename T>
+TVec3<T> operator * (TVec3<T> vec1, TVec3<T> vec2);
+template <typename T>
+TVec3<T> operator * (TVec3<T> vec, T val);
+template <typename T>
+TVec3<T> operator * (T val, TVec3<T> vec);
+template <typename T>
+TVec3<T> operator / (TVec3<T> vec1, TVec3<T> vec2);
+template <typename T>
+TVec3<T> operator / (TVec3<T> vec, T val);
+template <typename T>
+TVec3<T> operator / (T val, TVec3<T> vec);
+
+template <typename T>
+TVec3<T> min(TVec3<T> vec1, TVec3<T> vec2);
+template <typename T>
+TVec3<T> min(TVec3<T> vec, T val);
+template <typename T>
+TVec3<T> min(T val, TVec3<T> vec);
+
+template <typename T>
+TVec3<T> max(TVec3<T> vec1, TVec3<T> vec2);
+template <typename T>
+TVec3<T> max(TVec3<T> vec, T val);
+template <typename T>
+TVec3<T> max(T val, TVec3<T> vec);
+
+template <typename T>
+TVec3<T> clamp(TVec3<T> vec, T min, T max);
+template <typename T>
+TVec3<T> clamp(TVec3<T> vec, TVec3<T> min, TVec3<T> max);
+
+template <typename T>
+TVec3<T> mix(TVec3<T> vec1, TVec3<T> vec2, T per);
+template <typename T>
+TVec3<T> mod(TVec3<T> vec, T val);
+template <typename T>
+TVec3<T> floor(TVec3<T> vec);
+template <typename T>
+TVec3<T> round(TVec3<T> vec);
+template <typename T>
+TVec3<T> ceil(TVec3<T> vec);
+template <typename T>
+TVec3<T> fract(TVec3<T> vec);
+
+template<typename T>
+TVec3<T> normalize(TVec3<T> vec);
+template<typename T>
+TVec3<T> reflect(TVec3<T> vec1, TVec3<T> vec2);
+template<typename T>
+T dot(TVec3<T> vec1, TVec3<T> vec2);
+template<typename T>
+T angle(TVec3<T> vec1, TVec3<T> vec2);
+template<typename T>
+T length(TVec3<T> vec);
+template<typename T>
+TVec3<T> cross(TVec3<T> vec1, TVec3<T> vec2);
+
+typedef TVec3<float> Vec3;
+
+# include "Vec3.cpp"
 
 #endif
