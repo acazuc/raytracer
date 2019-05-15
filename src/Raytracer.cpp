@@ -13,6 +13,7 @@
 #include "Consts.h"
 #include "Debug.h"
 #include <cstring>
+#include <random>
 #include <cmath>
 
 #define THREAD_NUMBER 8
@@ -39,7 +40,7 @@ bool Raytracer::trace(Ray &ray, Object *&object, Vec3 &pos, Object *avoid)
 {
 	float nearestDistance = INFINITY;
 	float t;
-	for (uint64_t i = 0; i < this->objects.size(); ++i)
+	for (size_t i = 0; i < this->objects.size(); ++i)
 	{
 		if (!this->objects[i]->collide(ray, t))
 			continue;
@@ -54,6 +55,66 @@ bool Raytracer::trace(Ray &ray, Object *&object, Vec3 &pos, Object *avoid)
 		return false;
 	pos = ray.pos + ray.dir * nearestDistance;
 	return true;
+}
+
+#define GI_SAMPLES 50
+#define GI_FACTOR 3
+
+Vec3 Raytracer::getGlobalIllumination(Vec3 &pos, Vec3 &norm, Object *object)
+{
+	Vec3 result(0);
+	if (true)
+		return result;
+	std::minstd_rand rnd(rand());
+	float max = rnd.max();
+	for (size_t i = 0; i < GI_SAMPLES; ++i)
+	{
+		Vec3 dir(normalize(Vec3(rnd() / max, rnd() / max, rnd() / max) - .5f));
+		float d = dot(dir, norm);
+		if (d < 0)
+		{
+			--i;
+			continue;
+		}
+		Ray newRay(pos, dir);
+		Object *collide = nullptr;
+		Vec3 collidePos;
+		if (!trace(newRay, collide, collidePos, object))
+			continue;
+		float len = length(pos - collidePos);
+		result += collide->Kd.rgb() * collide->Kd.a * d / (1 + len);
+	}
+	return result / static_cast<float>(GI_SAMPLES) * static_cast<float>(GI_FACTOR);
+}
+
+#define AO_SAMPLES 100
+#define AO_FACTOR 1
+
+float Raytracer::getAmbientOcclusion(Vec3 &pos, Vec3 &norm, Object *object)
+{
+	if (false)
+		return 1;
+	float result = 0;
+	std::minstd_rand rnd(rand());
+	float max = rnd.max();
+	for (size_t i = 0; i < AO_SAMPLES; ++i)
+	{
+		Vec3 dir(normalize(Vec3(rnd() / max, rnd() / max, rnd() / max) - .5f));
+		float d = dot(dir, norm);
+		if (d < 0)
+		{
+			--i;
+			continue;
+		}
+		Ray newRay(pos, dir);
+		Object *collide = nullptr;
+		Vec3 collidePos;
+		if (!trace(newRay, collide, collidePos, object))
+			continue;
+		float len = length(pos - collidePos);
+		result += 1. / (1 + len) * collide->Kd.a * (1 - collide->Ir);
+	}
+	return 1 - result / static_cast<float>(AO_SAMPLES) * AO_FACTOR;
 }
 
 Vec4 Raytracer::getDiffuseSpecularTransparencyLight(Light *light, Object *object, Ray &ray, Vec3 &pos)
@@ -107,6 +168,7 @@ next:
 		specular += lightColorIntensity * float(pow(std::max(0.f, dot(refl, newRay.dir)), object->Ns));
 	}
 	specular *= object->Ks;
+	specular += Vec4(getGlobalIllumination(pos, norm, object), 0);
 }
 
 Vec4 Raytracer::getReflectionColor(Ray &ray, Object *object, Vec3 &pos, Vec3 &norm, int recursion)
@@ -166,6 +228,7 @@ Vec4 Raytracer::getRayColor(Ray &ray, Object *avoid, int recursion, float *zInde
 	if (object->Kd_map)
 		texColor = object->Kd_map->getDataAt(object->getUVAt(ray, pos));
 	Vec4 col = diffuse + Vec4(this->ambient, 0);
+	col *= getAmbientOcclusion(pos, norm, object);
 	float transparency = object->Kd.a * texColor.a;
 	if (transparency < 1)
 		col = col * transparency + getTransparencyColor(ray, object, pos, norm, normRev, recursion) * (1 - transparency);
@@ -189,12 +252,17 @@ void Raytracer::calculatePixel(uint64_t x, uint64_t y)
 	ray.dir = normalize(this->rotMat * Vec3(rx, ry, 1));
 	float zIndex = 0;
 	Vec4 col = getRayColor(ray, nullptr, 0, &zIndex);
-	this->zBuffer[(x + y * this->width)] = zIndex;
-	Vec4 &dst = this->colorBuffer[x + y * this->width];
+	size_t idx = x + y * this->width;
+	this->zBuffer[idx] = zIndex;
+	Vec4 &dst = this->colorBuffer[idx];
 	dst.r = std::min(1.f, std::max(0.f, col.r));
 	dst.g = std::min(1.f, std::max(0.f, col.g));
 	dst.b = std::min(1.f, std::max(0.f, col.b));
 	dst.a = std::min(1.f, std::max(0.f, col.a));
+	this->imgData[idx * 4 + 0] = std::min((int64_t)0xff, std::max((int64_t)0, (int64_t)(dst.r * 0xff)));
+	this->imgData[idx * 4 + 1] = std::min((int64_t)0xff, std::max((int64_t)0, (int64_t)(dst.g * 0xff)));
+	this->imgData[idx * 4 + 2] = std::min((int64_t)0xff, std::max((int64_t)0, (int64_t)(dst.b * 0xff)));
+	this->imgData[idx * 4 + 3] = std::min((int64_t)0xff, std::max((int64_t)0, (int64_t)(dst.a * 0xff)));
 }
 
 void Raytracer::runThread(Raytracer *raytracer, uint64_t start, uint64_t end)
@@ -254,14 +322,14 @@ void Raytracer::render()
 	/*Vec4 *fog = Fog::fog(this->colorBuffer, this->zBuffer, this->width, this->height, Vec4(1, 0, 0, 1), 0, 20, FOG_LINEAR);
 	delete[] (this->colorBuffer);
 	this->colorBuffer = fog;*/
-	for (uint64_t i = 0; i < this->width * this->height; ++i)
+	/*for (uint64_t i = 0; i < this->width * this->height; ++i)
 	{
 		Vec4 &org = this->colorBuffer[i];
 		this->imgData[i * 4 + 0] = std::min((int64_t)0xff, std::max((int64_t)0, (int64_t)(org.r * 0xff)));
 		this->imgData[i * 4 + 1] = std::min((int64_t)0xff, std::max((int64_t)0, (int64_t)(org.g * 0xff)));
 		this->imgData[i * 4 + 2] = std::min((int64_t)0xff, std::max((int64_t)0, (int64_t)(org.b * 0xff)));
 		this->imgData[i * 4 + 3] = std::min((int64_t)0xff, std::max((int64_t)0, (int64_t)(org.a * 0xff)));
-	}
+	}*/
 }
 
 void Raytracer::addObject(Object *object)

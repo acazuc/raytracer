@@ -1,10 +1,10 @@
 NAME = raytracer
 
-CC = g++
+CXX = g++
 
-CFLAGS = -Wall -Wextra -Werror -Ofast -g -flto -march=native -finline
+CXXFLAGS = -Wall -Wextra -Ofast -g -flto -march=native -finline
 
-INCLUDES_PATH = include/
+INCLUDES = -I include
 
 SRCS_PATH = src/
 
@@ -60,12 +60,12 @@ FRAMEWORK+= -lpthread
 all: odir $(NAME)
 
 $(NAME): $(OBJS)
-	@echo " - Making $(NAME)"
-	@$(CC) $(CFLAGS) -o $(NAME) $^ $(LIBRARY) $(FRAMEWORK)
+	@echo "LD $(NAME)"
+	@$(CXX) $(CXXFLAGS) -o $(NAME) $^ $(LIBRARY) $(FRAMEWORK)
 
 $(OBJS_PATH)%.o: $(SRCS_PATH)%.cpp
-	@echo " - Compiling $<"
-	@$(CC) $(CFLAGS) -o $@ -c $< -I$(INCLUDES_PATH)
+	@echo "CXX $<"
+	@$(CXX) $(CXXFLAGS) -o $@ -c $< $(INCLUDES)
 
 odir:
 	@mkdir -p $(OBJS_PATH)
@@ -78,13 +78,9 @@ odir:
 	@mkdir -p $(OBJS_PATH)Mat
 
 clean:
-	@echo " - Cleaning objs"
 	@rm -f $(OBJS)
-
-fclean: clean
-	@echo " - Cleaning executable"
 	@rm -f $(NAME)
 
-re: fclean all
+re: clean all
 
-.PHONY: clean fclean re odir
+.PHONY: clean re odir

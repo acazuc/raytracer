@@ -6,7 +6,6 @@
 Cone::Cone(float size)
 : size(size)
 {
-	//Empty
 }
 
 bool Cone::collide(Ray &ray, float &t)

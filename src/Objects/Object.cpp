@@ -12,7 +12,6 @@ Object::Object()
 , Ni(1)
 , Ir(0)
 {
-	//Empty
 }
 
 void Object::setRot(Vec3 vec)

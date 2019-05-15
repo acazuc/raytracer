@@ -53,15 +53,20 @@ static void draw()
 	glDrawArrays(GL_QUADS, 0, 4);
 }
 
+static void run()
+{
+	raytracer->render();
+}
+
 int main()
 {
 	if (!glfwInit())
 		ERROR("Can't init glfw");
 	createWindow();
 	raytracer = new Raytracer(WINDOW_WIDTH, WINDOW_HEIGHT);
-	raytracer->setFov(30);
-	raytracer->setAmbient(Vec3(0, 0, 0));
-	raytracer->setPos(Vec3(0, 0, 0));
+	raytracer->setFov(60);
+	raytracer->setAmbient(Vec3(0));
+	raytracer->setPos(Vec3(0, 0, -15));
 	raytracer->setRot(Vec3(0, 0, 0));
 	/*for (uint64_t i = 0; i < 11 * 11; ++i)
 	{
@@ -87,36 +92,36 @@ int main()
 	bump.setData(width, height, data);
 	delete[] (data);
 
-	Sphere *sphere = new Sphere(1);
+	Sphere *sphere = new Sphere(2);
 	//sphere->Kd_map = &earth;
 	//sphere->N_map = &bump;
-	sphere->pos = Vec3(0, 0, 10);
+	sphere->pos = Vec3(1.5, 3, 8);
 	sphere->setRot(Vec3(0, 0, 0));
-	sphere->Kd = Vec4(1, 1, 1, 0);
-	sphere->Ir = 0;
-	sphere->Ni = 1;
-	raytracer->addObject(sphere);
+	sphere->Kd = Vec4(1, 0, 0, 1);
+	//sphere->Ir = 0;
+	//sphere->Ni = 1;
+	//raytracer->addObject(sphere);
 
-	Cylinder *cylinder = new Cylinder(1);
+	Cylinder *cylinder = new Cylinder(2);
 	//cylinder->Kd_map = &earth;
 	//cylinder->N_map = &bump;
-	cylinder->pos = Vec3(0, 0, 5);
+	cylinder->pos = Vec3(10, -1, 7);
 	cylinder->Kd = Vec4(1, 1, 0, 1);
 	//raytracer->addObject(cylinder);
 
 	Cone *cone = new Cone(0);
-	cone->pos = Vec3(0, 0, 13);
+	cone->pos = Vec3(-5, 0, 13);
 	cone->setRot(Vec3(0, 0, 0));
 	cone->Kd = Vec4(0, 1, 1, 1);
 	//raytracer->addObject(cone);
 
 	Plane *plane = new Plane();
-	plane->pos = Vec3(0, 0, 10);
+	plane->pos = Vec3(0, 0, 50);
 	plane->setRot(Vec3(-M_PI / 2, 0, 0));
 	plane->Kd = Vec4(1, 1, 1, 1);
-	plane->Kd_map = &earth;
+	//plane->Kd_map = &earth;
 	//plane->N_map = &bump;
-	raytracer->addObject(plane);
+	//raytracer->addObject(plane);
 
 	plane = new Plane();
 	plane->pos = Vec3(0, 0, 10);
@@ -132,10 +137,10 @@ int main()
 	triangle->specular = .5;
 	raytracer->addObject(triangle);*/
 	PonctualLight *light = new PonctualLight();
-	light->pos = Vec3(0, 0, 0);
-	light->intensity = 1;
+	light->pos = Vec3(-1, 0, 0);
+	light->intensity = .8;
 	light->color = Vec3(1, 1, 1);
-	raytracer->addLight(light);
+	//raytracer->addLight(light);
 	/*float b = 5;
 	plane = new Plane();
 	plane->pos = Vec3(0, 0, b);
@@ -172,6 +177,66 @@ int main()
 	dLight->intensity = .1;
 	dLight->color = Vec3(1, 1, 1);
 	raytracer->addLight(dLight);*/
+	{
+		Plane *p1 = new Plane();
+		p1->pos = Vec3(5, 0, 0);
+		p1->setRot(Vec3(M_PI / 2, M_PI / 2, 0));
+		p1->Kd = Vec4(0, 1, 0, 1);
+		raytracer->addObject(p1);
+		Plane *p2 = new Plane();
+		p2->pos = Vec3(-5, 0, 0);
+		p2->setRot(Vec3(-M_PI / 2, -M_PI / 2, 0));
+		p2->Kd = Vec4(1, 0, 0, 1);
+		raytracer->addObject(p2);
+		Plane *p3 = new Plane();
+		p3->pos = Vec3(0, 0, 5);
+		p3->setRot(Vec3(M_PI / 2, 0, 0));
+		p3->Kd = Vec4(1, 1, 1, 1);
+		p3->Ir = 1;
+		raytracer->addObject(p3);
+		Plane *p4 = new Plane();
+		p4->pos = Vec3(0, 5, 0);
+		p4->setRot(Vec3(0, 0, 0));
+		p4->Kd = Vec4(1, 1, 1, 1);
+		raytracer->addObject(p4);
+		Plane *p5 = new Plane();
+		p5->pos = Vec3(0, -5, 0);
+		p5->setRot(Vec3(0, 0, 0));
+		p5->Kd = Vec4(1, 1, 1, 1);
+		raytracer->addObject(p5);
+		Plane *p6 = new Plane();
+		p6->pos = Vec3(0, 0, -20);
+		p6->setRot(Vec3(M_PI / 2, 0, 0));
+		p6->Kd = Vec4(1, 1, 1, 1);
+		p6->Ir = .75;
+		raytracer->addObject(p6);
+		Sphere *s1 = new Sphere(1.5);
+		s1->pos = Vec3(2, -3.5, 2);
+		s1->Kd = Vec4(1, 1, 1, 1);
+		s1->Ir = 1;
+		raytracer->addObject(s1);
+		Sphere *s2 = new Sphere(1.5);
+		s2->pos = Vec3(-2, -3.5, -2);
+		s2->Kd = Vec4(0, 0, 1, 1);
+		raytracer->addObject(s2);
+		PonctualLight *l1 = new PonctualLight();
+		l1->pos = Vec3(0, 4.5, -20 + 4.166 * 1);
+		l1->intensity = 1;
+		l1->color = Vec3(1, 0, 0);
+		raytracer->addLight(l1);
+		PonctualLight *l2 = new PonctualLight();
+		l2->pos = Vec3(0, 4.5, -20 + 4.166 * 3);
+		l2->intensity = 1;
+		l2->color = Vec3(0, 1, 0);
+		raytracer->addLight(l2);
+		PonctualLight *l3 = new PonctualLight();
+		l3->pos = Vec3(0, 4.5, -20 + 4.166 * 5);
+		l3->intensity = 1;
+		l3->color = Vec3(0, 0, 1);
+		raytracer->addLight(l3);
+	}
+	std::thread *thread = new std::thread(run);
+	(void)thread;
 	glGenTextures(1, &texture);
 	glBindTexture(GL_TEXTURE_2D, texture);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
@@ -181,15 +246,15 @@ int main()
 	while (!glfwWindowShouldClose(window))
 	{
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-		static float a = 0;
+		//static float a = 0;
 		//light->pos = Vec3(cos(a) * 10, sin(a) * 10, 4);
-		sphere->setRot(Vec3(0, a, 0));
-		sphere->Ni = 2 + 1 * cos(a);
+		//sphere->setRot(Vec3(0, a, 0));
+		//sphere->Ni = 2 + 1 * cos(a);
 		//light->pos.z = cos(a * 3) * 10;
 		//raytracer->setRot(Vec3(a, 0, 0));
-		a += M_PI / 2 / 20;
+		//a += M_PI / 2 / 20;
 		//a++;
-		raytracer->render();
+		//raytracer->render();
 		//PNG::write(std::to_string(a) + ".png", (uint8_t*)raytracer->getImgData(), WINDOW_WIDTH, WINDOW_HEIGHT);
 		draw();
 		glfwPollEvents();

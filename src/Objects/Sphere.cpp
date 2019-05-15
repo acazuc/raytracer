@@ -6,7 +6,6 @@
 Sphere::Sphere(float size)
 : size(size)
 {
-	//Empty
 }
 
 bool Sphere::collide(Ray &ray, float &t)

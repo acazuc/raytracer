@@ -6,7 +6,6 @@
 Cylinder::Cylinder(float size)
 : size(size)
 {
-	//Empty
 }
 
 bool Cylinder::collide(Ray &ray, float &t)

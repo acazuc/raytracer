@@ -32,6 +32,8 @@ class Raytracer
 		Vec4 getReflectionColor(Ray &ray, Object *object, Vec3 &pos, Vec3 &norm, int recursion);
 		Vec4 getTransparencyColor(Ray &ray, Object *object, Vec3 &pos, Vec3 &norm, bool normRev, int recursion);
 		Vec4 getDiffuseSpecularTransparencyLight(Light *light, Object *object, Ray &ray, Vec3 &pos);
+		float getAmbientOcclusion(Vec3 &pos, Vec3 &norm, Object *object);
+		Vec3 getGlobalIllumination(Vec3 &pos, Vec3 &norm, Object *object);
 
 	public:
 		Raytracer(uint32_t width, uint32_t height);
