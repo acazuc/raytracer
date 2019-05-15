@@ -37,7 +37,7 @@ static void draw()
 {
 	int coords[4 * 2];
 	int vertex[4 * 2];
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, WINDOW_WIDTH, WINDOW_HEIGHT, 0, GL_RGBA, GL_UNSIGNED_BYTE, raytracer->getImgData());
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, raytracer->getWidth(), raytracer->getHeight(), 0, GL_RGBA, GL_UNSIGNED_BYTE, raytracer->getImgData());
 	std::memset(coords, 0, sizeof(coords));
 	coords[2] = 1;
 	coords[4] = 1;
@@ -64,8 +64,9 @@ int main()
 		ERROR("Can't init glfw");
 	createWindow();
 	raytracer = new Raytracer(WINDOW_WIDTH, WINDOW_HEIGHT);
+	raytracer->setFSAA(4);
 	raytracer->setFov(60);
-	raytracer->setAmbient(Vec3(0));
+	raytracer->setAmbient(Vec3(.2));
 	raytracer->setPos(Vec3(0, 0, -15));
 	raytracer->setRot(Vec3(0, 0, 0));
 	/*for (uint64_t i = 0; i < 11 * 11; ++i)
@@ -178,48 +179,54 @@ int main()
 	dLight->color = Vec3(1, 1, 1);
 	raytracer->addLight(dLight);*/
 	{
+		//Right
 		Plane *p1 = new Plane();
 		p1->pos = Vec3(5, 0, 0);
 		p1->setRot(Vec3(M_PI / 2, M_PI / 2, 0));
 		p1->Kd = Vec4(0, 1, 0, 1);
 		raytracer->addObject(p1);
+		//Left
 		Plane *p2 = new Plane();
 		p2->pos = Vec3(-5, 0, 0);
 		p2->setRot(Vec3(-M_PI / 2, -M_PI / 2, 0));
 		p2->Kd = Vec4(1, 0, 0, 1);
 		raytracer->addObject(p2);
+		//Front
 		Plane *p3 = new Plane();
 		p3->pos = Vec3(0, 0, 5);
 		p3->setRot(Vec3(M_PI / 2, 0, 0));
 		p3->Kd = Vec4(1, 1, 1, 1);
-		p3->Ir = 1;
+		//p3->Ir = 1;
 		raytracer->addObject(p3);
+		//Top
 		Plane *p4 = new Plane();
 		p4->pos = Vec3(0, 5, 0);
 		p4->setRot(Vec3(0, 0, 0));
 		p4->Kd = Vec4(1, 1, 1, 1);
 		raytracer->addObject(p4);
+		//Bot
 		Plane *p5 = new Plane();
 		p5->pos = Vec3(0, -5, 0);
 		p5->setRot(Vec3(0, 0, 0));
 		p5->Kd = Vec4(1, 1, 1, 1);
 		raytracer->addObject(p5);
+		//Behind
 		Plane *p6 = new Plane();
 		p6->pos = Vec3(0, 0, -20);
 		p6->setRot(Vec3(M_PI / 2, 0, 0));
 		p6->Kd = Vec4(1, 1, 1, 1);
-		p6->Ir = .75;
+		//p6->Ir = 1;
 		raytracer->addObject(p6);
 		Sphere *s1 = new Sphere(1.5);
-		s1->pos = Vec3(2, -3.5, 2);
+		s1->pos = Vec3(3, -3.5, 1);
 		s1->Kd = Vec4(1, 1, 1, 1);
-		s1->Ir = 1;
+		//s1->Ir = 1;
 		raytracer->addObject(s1);
 		Sphere *s2 = new Sphere(1.5);
 		s2->pos = Vec3(-2, -3.5, -2);
-		s2->Kd = Vec4(0, 0, 1, 1);
+		s2->Kd = Vec4(.2, .2, 1, 1);
 		raytracer->addObject(s2);
-		PonctualLight *l1 = new PonctualLight();
+		/*PonctualLight *l1 = new PonctualLight();
 		l1->pos = Vec3(0, 4.5, -20 + 4.166 * 1);
 		l1->intensity = 1;
 		l1->color = Vec3(1, 0, 0);
@@ -233,14 +240,19 @@ int main()
 		l3->pos = Vec3(0, 4.5, -20 + 4.166 * 5);
 		l3->intensity = 1;
 		l3->color = Vec3(0, 0, 1);
-		raytracer->addLight(l3);
+		raytracer->addLight(l3);*/
+		PonctualLight *l0 = new PonctualLight();
+		l0->pos = Vec3(0, 4.5, -7.5);
+		l0->intensity = 1;
+		l0->color = Vec3(1, 1, 1);
+		raytracer->addLight(l0);
 	}
 	std::thread *thread = new std::thread(run);
 	(void)thread;
 	glGenTextures(1, &texture);
 	glBindTexture(GL_TEXTURE_2D, texture);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glEnableClientState(GL_VERTEX_ARRAY);
 	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 	while (!glfwWindowShouldClose(window))
@@ -259,6 +271,7 @@ int main()
 		draw();
 		glfwPollEvents();
 		glfwSwapBuffers(window);
+		usleep(100000);
 	}
 	glDisableClientState(GL_VERTEX_ARRAY);
 	glDisableClientState(GL_TEXTURE_COORD_ARRAY);

@@ -23,6 +23,7 @@ Raytracer::Raytracer(uint32_t width, uint32_t height)
 , height(height)
 , width(width)
 {
+	this->fsaa = 1;
 	this->colorBuffer = new Vec4[width * height];
 	this->zBuffer = new float[width * height];
 	this->imgData = new char[width * height * 4];
@@ -57,13 +58,17 @@ bool Raytracer::trace(Ray &ray, Object *&object, Vec3 &pos, Object *avoid)
 	return true;
 }
 
-#define GI_SAMPLES 50
-#define GI_FACTOR 3
+#define GI_SAMPLES 5
+#define GI_FACTOR 1
+#define GI_ATTENUATION 5
+#define GI_ENABLED 1
 
-Vec3 Raytracer::getGlobalIllumination(Vec3 &pos, Vec3 &norm, Object *object)
+Vec3 Raytracer::getGlobalIllumination(Vec3 &pos, Vec3 &norm, Object *object, int recursion)
 {
 	Vec3 result(0);
-	if (true)
+	if (!GI_ENABLED)
+		return result;
+	if (recursion > 1)
 		return result;
 	std::minstd_rand rnd(rand());
 	float max = rnd.max();
@@ -71,7 +76,7 @@ Vec3 Raytracer::getGlobalIllumination(Vec3 &pos, Vec3 &norm, Object *object)
 	{
 		Vec3 dir(normalize(Vec3(rnd() / max, rnd() / max, rnd() / max) - .5f));
 		float d = dot(dir, norm);
-		if (d < 0)
+		if (d <= EPSILON)
 		{
 			--i;
 			continue;
@@ -81,18 +86,22 @@ Vec3 Raytracer::getGlobalIllumination(Vec3 &pos, Vec3 &norm, Object *object)
 		Vec3 collidePos;
 		if (!trace(newRay, collide, collidePos, object))
 			continue;
-		float len = length(pos - collidePos);
-		result += collide->Kd.rgb() * collide->Kd.a * d / (1 + len);
+		float len = length(pos - collidePos) / GI_ATTENUATION;
+		Vec3 color(getRayColor(newRay, object, 100 + recursion));
+		result += color * (1 - collide->Ir) * d / (1 + len);
+		//result += collide->Kd.rgb() * collide->Kd.a * (1 - collide->Ir) * d / (1 + len);
 	}
 	return result / static_cast<float>(GI_SAMPLES) * static_cast<float>(GI_FACTOR);
 }
 
-#define AO_SAMPLES 100
+#define AO_SAMPLES 5
 #define AO_FACTOR 1
+#define AO_ATTENUATION 5
+#define AO_ENABLED 1
 
 float Raytracer::getAmbientOcclusion(Vec3 &pos, Vec3 &norm, Object *object)
 {
-	if (false)
+	if (!AO_ENABLED)
 		return 1;
 	float result = 0;
 	std::minstd_rand rnd(rand());
@@ -101,7 +110,7 @@ float Raytracer::getAmbientOcclusion(Vec3 &pos, Vec3 &norm, Object *object)
 	{
 		Vec3 dir(normalize(Vec3(rnd() / max, rnd() / max, rnd() / max) - .5f));
 		float d = dot(dir, norm);
-		if (d < 0)
+		if (d <= EPSILON)
 		{
 			--i;
 			continue;
@@ -111,7 +120,7 @@ float Raytracer::getAmbientOcclusion(Vec3 &pos, Vec3 &norm, Object *object)
 		Vec3 collidePos;
 		if (!trace(newRay, collide, collidePos, object))
 			continue;
-		float len = length(pos - collidePos);
+		float len = length(pos - collidePos) / AO_ATTENUATION;
 		result += 1. / (1 + len) * collide->Kd.a * (1 - collide->Ir);
 	}
 	return 1 - result / static_cast<float>(AO_SAMPLES) * AO_FACTOR;
@@ -136,13 +145,15 @@ end:
 	return result;
 }
 
-void Raytracer::getDiffuseSpecularLight(Ray &ray, Object *object, Vec3 &pos, Vec3 &norm, Vec4 &diffuse, Vec4 &specular)
+void Raytracer::getDiffuseSpecularLight(Ray &ray, Object *object, Vec3 &pos, Vec3 &norm, Vec3 &diffuse, Vec3 &specular)
 {
+	diffuse = Vec3(0);
+	specular = Vec3(0);
 	Object *newObject = nullptr;
 	Ray newRay(pos, Vec3());
 	Vec3 refl(reflect(ray.dir, norm));
 	float opacity;
-	diffuse += object->Ka;
+	diffuse += object->Ka.rgb() * object->Ka.a;
 	Vec3 newPos;
 	for (uint64_t i = 0; i < this->lights.size(); ++i)
 	{
@@ -150,7 +161,7 @@ void Raytracer::getDiffuseSpecularLight(Ray &ray, Object *object, Vec3 &pos, Vec
 		Vec3 tmp(newRay.dir);
 		newRay.dir = normalize(newRay.dir);
 		float tmpLength = length(tmp);
-		Vec4 lightColorIntensity = Vec4(this->lights[i]->color * this->lights[i]->intensity, 1);
+		Vec3 lightColorIntensity = this->lights[i]->color * this->lights[i]->intensity;
 		if (trace(newRay, newObject, newPos, object))
 		{
 			if (length(newPos - pos) > tmpLength)
@@ -161,20 +172,17 @@ void Raytracer::getDiffuseSpecularLight(Ray &ray, Object *object, Vec3 &pos, Vec
 			if (opacity >= 1)
 				continue;
 			Vec4 result = getDiffuseSpecularTransparencyLight(this->lights[i], newObject, newRay, newPos);
-			lightColorIntensity = lightColorIntensity * (1 - result.a) * Vec4(result.rgb(), 1);
+			lightColorIntensity = lightColorIntensity * (1 - result.a) * result.rgb();
 		}
 next:
 		diffuse += lightColorIntensity * std::max(0.f, dot(newRay.dir, norm));
 		specular += lightColorIntensity * float(pow(std::max(0.f, dot(refl, newRay.dir)), object->Ns));
 	}
-	specular *= object->Ks;
-	specular += Vec4(getGlobalIllumination(pos, norm, object), 0);
+	specular *= object->Ks.rgb();
 }
 
-Vec4 Raytracer::getReflectionColor(Ray &ray, Object *object, Vec3 &pos, Vec3 &norm, int recursion)
+Vec3 Raytracer::getReflectionColor(Ray &ray, Object *object, Vec3 &pos, Vec3 &norm, int recursion)
 {
-	if (recursion > 100)
-		return Vec4(0);
 	Ray newRay;
 	newRay.pos = pos;
 	newRay.dir = normalize(reflect(ray.dir, norm));
@@ -182,7 +190,7 @@ Vec4 Raytracer::getReflectionColor(Ray &ray, Object *object, Vec3 &pos, Vec3 &no
 	return getRayColor(newRay, object, recursion + 1);
 }
 
-Vec4 Raytracer::getTransparencyColor(Ray &ray, Object *object, Vec3 &pos, Vec3 &norm, bool normRev, int recursion)
+Vec3 Raytracer::getTransparencyColor(Ray &ray, Object *object, Vec3 &pos, Vec3 &norm, bool normRev, int recursion)
 {
 	Ray newRay;
 	newRay.pos = pos;
@@ -206,12 +214,14 @@ Vec4 Raytracer::getTransparencyColor(Ray &ray, Object *object, Vec3 &pos, Vec3 &
 	return getRayColor(newRay, object, recursion);
 }
 
-Vec4 Raytracer::getRayColor(Ray &ray, Object *avoid, int recursion, float *zIndex)
+Vec3 Raytracer::getRayColor(Ray &ray, Object *avoid, int recursion, float *zIndex)
 {
+	if (recursion > 100)
+		return Vec3(0);
 	Object *object = nullptr;
 	Vec3 pos;
 	if (!trace(ray, object, pos, avoid))
-		return Vec4(0);
+		return Vec3(0);
 	if (zIndex)
 		*zIndex = length(pos - ray.pos);
 	bool normRev = false;
@@ -221,22 +231,29 @@ Vec4 Raytracer::getRayColor(Ray &ray, Object *avoid, int recursion, float *zInde
 		norm = -norm;
 		normRev = true;
 	}
-	Vec4 diffuse(0);
-	Vec4 specular(0);
+	Vec3 diffuse;
+	Vec3 specular;
 	getDiffuseSpecularLight(ray, object, pos, norm, diffuse, specular);
-	Vec4 texColor(1);
+	Vec4 texColor;
 	if (object->Kd_map)
 		texColor = object->Kd_map->getDataAt(object->getUVAt(ray, pos));
-	Vec4 col = diffuse + Vec4(this->ambient, 0);
+	else
+		texColor = Vec4(1);
+	Vec3 col = diffuse + this->ambient;
 	col *= getAmbientOcclusion(pos, norm, object);
 	float transparency = object->Kd.a * texColor.a;
 	if (transparency < 1)
-		col = col * transparency + getTransparencyColor(ray, object, pos, norm, normRev, recursion) * (1 - transparency);
-	col *= object->Kd;
-	col *= texColor;
+	{
+		Vec3 transparencyColor(getTransparencyColor(ray, object, pos, norm, normRev, recursion));
+		col = col * transparency + transparencyColor * (1 - transparency);
+		//col = transparencyColor.rgb() * (1 - transparency);
+	}
+	col *= object->Kd.rgb();
+	col *= texColor.rgb();
 	col += specular;
+	col += getGlobalIllumination(pos, norm, object, recursion);
 	if (object->Ir > 0)
-		col = col * (1 - object->Ir) + getReflectionColor(ray, object, pos, norm, recursion + 1) * object->Kd * texColor * object->Ir;
+		col = col * (1 - object->Ir) + getReflectionColor(ray, object, pos, norm, recursion + 1) * object->Kd.rgb() * texColor.rgb() * object->Ir;
 	return col;
 }
 
@@ -247,18 +264,30 @@ void Raytracer::calculatePixel(uint64_t x, uint64_t y)
 	float ratio = this->width / (float)this->height; // assuming width > height
 	if (this->width < this->height)
 		ratio = 1 / ratio;
-	float rx = (2 * (x + 0.5) / this->width - 1) * tan(this->fov / 2 * M_PI / 180) * ratio;
-	float ry = (1 - 2 * (y + 0.5) / this->height) * tan(this->fov / 2 * M_PI / 180);
-	ray.dir = normalize(this->rotMat * Vec3(rx, ry, 1));
-	float zIndex = 0;
-	Vec4 col = getRayColor(ray, nullptr, 0, &zIndex);
+	float lowestZ = INFINITY;
+	Vec3 colorSum(0);
+	for (size_t yy = 0; yy < this->fsaa; ++yy)
+	{
+		for (size_t xx = 0; xx < this->fsaa; ++xx)
+		{
+			float rx = (2 * (x + xx / static_cast<float>(this->fsaa)) / this->width - 1) * tan(this->fov / 2 * M_PI / 180) * ratio;
+			float ry = (1 - 2 * (y + yy / static_cast<float>(this->fsaa)) / this->height) * tan(this->fov / 2 * M_PI / 180);
+			ray.dir = normalize(this->rotMat * Vec3(rx, ry, 1));
+			float zIndex = 0;
+			Vec3 col = getRayColor(ray, nullptr, 0, &zIndex);
+			if (zIndex < lowestZ)
+				lowestZ = zIndex;
+			colorSum += col;
+		}
+	}
 	size_t idx = x + y * this->width;
-	this->zBuffer[idx] = zIndex;
+	this->zBuffer[idx] = lowestZ;
 	Vec4 &dst = this->colorBuffer[idx];
+	Vec3 col = colorSum / static_cast<float>(this->fsaa * this->fsaa);
 	dst.r = std::min(1.f, std::max(0.f, col.r));
 	dst.g = std::min(1.f, std::max(0.f, col.g));
 	dst.b = std::min(1.f, std::max(0.f, col.b));
-	dst.a = std::min(1.f, std::max(0.f, col.a));
+	dst.a = 1;//std::min(1.f, std::max(0.f, col.a));
 	this->imgData[idx * 4 + 0] = std::min((int64_t)0xff, std::max((int64_t)0, (int64_t)(dst.r * 0xff)));
 	this->imgData[idx * 4 + 1] = std::min((int64_t)0xff, std::max((int64_t)0, (int64_t)(dst.g * 0xff)));
 	this->imgData[idx * 4 + 2] = std::min((int64_t)0xff, std::max((int64_t)0, (int64_t)(dst.b * 0xff)));
