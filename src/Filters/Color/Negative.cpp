@@ -1,15 +1,14 @@
 #include "Negative.h"
 
-Vec4 *Negative::negative(Vec4 *img, uint64_t width, uint64_t height)
+void Negative::operator()(Vec4 *dst, Vec4 *src, float *zBuffer, size_t width, size_t height)
 {
-	Vec4 *newImg = new Vec4[width * height];
-	for (uint64_t x = 0; x < width; ++x)
+	for (size_t x = 0; x < width; ++x)
 	{
-		for (uint64_t y = 0; y < height; ++y)
+		for (size_t y = 0; y < height; ++y)
 		{
-			Vec4 val = img[x + y * width];
-			newImg[x + y * width] = Vec4(-val.rgb() + 1.f, val.a);
+			Vec4 val = src[x + y * width];
+			dst[x + y * width] = Vec4(-val.rgb() + 1.f, val.a);
 		}
 	}
-	return newImg;
+	(void)zBuffer;
 }

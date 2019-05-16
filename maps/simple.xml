@@ -1,0 +1,81 @@
+<Scene samples="2" ambientOcclusion="true" globalIllumination="false" threads="8" shading="true">
+	<Environment>
+		<Ambient r="0.2" g="0.2" b="0.2"/>
+	</Environment>
+	<Camera width="1280" height="720" fov="60">
+		<Position x="1" y="3" z="-15"/>
+		<Rotation x="0.3" y="-0.2" z="0"/>
+	</Camera>
+	<Filters>
+		<!--<Fxaa/>-->
+		<!--<Sobel/>-->
+		<!--<GreyShade/>-->
+		<!--<CelShading cels="20"/>-->
+		<!--<Negative/>-->
+		<!--<Sepia/>-->
+		<!--<Blur radius="5"/>-->
+		<!--<Fisheye aperture="178"/>-->
+	</Filters>
+	<Materials>
+		<Material name="sphere_trans" transparency="1" refraction="1.5">
+			<DiffuseColor r="1" g="1" b="1"/>
+		</Material>
+		<Material name="sphere_refl" reflection="1">
+			<DiffuseColor r="1" g="1" b="1"/>
+		</Material>
+		<Material name="plane_left">
+			<DiffuseColor r="1" g="0" b="0"/>
+		</Material>
+		<Material name="plane_right">
+			<DiffuseColor r="0" g="1" b="0"/>
+		</Material>
+		<Material name="plane_bot">
+			<NormalTexture file="normal_7.png"/>
+		</Material>
+		<Material name="cylinder_1">
+			<DiffuseColor r="0" g="0" b="1"/>
+		</Material>
+	</Materials>
+	<Objects>
+		<Sphere size="1.5" material="sphere_trans">
+			<Position x="3" y="-3.5" z="1"/>
+		</Sphere>
+		<Sphere size="1.5" material="sphere_refl">
+			<Position x="-2" y="-3.5" z="-2"/>
+		</Sphere>
+		<Cylinder size="0.5" material="cylinder_1">
+			<Position x="0" y="1" z="3.5"/>
+			<Rotation x="-0.75" y="0" z="1.57"/>
+		</Cylinder>
+		<Plane material="plane_top">
+			<Position x="0" y="5" z="0"/>
+			<Rotation x="0" y="0" z="0"/>
+		</Plane>
+		<Plane material="plane_bot">
+			<Position x="0" y="-5" z="0"/>
+			<Rotation x="0" y="0" z="0"/>
+		</Plane>
+		<Plane material="plane_left">
+			<Position x="-5" y="0" z="0"/>
+			<Rotation x="1.57" y="1.57" z="0"/>
+		</Plane>
+		<Plane material="plane_right">
+			<Position x="5" y="0" z="0"/>
+			<Rotation x="1.57" y="1.57" z="0"/>
+		</Plane>
+		<Plane material="plane_front">
+			<Position x="0" y="0" z="5"/>
+			<Rotation x="1.57" y="0" z="0"/>
+		</Plane>
+		<Plane material="plane_back">
+			<Position x="0" y="0" z="-20"/>
+			<Rotation x="1.57" y="0" z="0"/>
+		</Plane>
+	</Objects>
+	<Lights>
+		<PunctualLight power=".8">
+			<Position x="3" y="-1" z="4.5"/>
+			<Color r="1" g="1" b="1"/>
+		</PunctualLight>
+	</Lights>
+</Scene>

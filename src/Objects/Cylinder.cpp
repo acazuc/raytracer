@@ -1,18 +1,19 @@
 #include "Cylinder.h"
 #include "Quadratic.h"
 #include "Consts.h"
+#include "Ray.h"
 #include <cmath>
 
-Cylinder::Cylinder(float size)
-: size(size)
+Cylinder::Cylinder()
+: size(0)
 {
 }
 
 bool Cylinder::collide(Ray &ray, float &t)
 {
-	Vec3 delta(this->unrotMat * (ray.pos - this->pos));
+	Vec3 delta(this->invMat * (ray.pos - this->position));
 	delta.y = 0;
-	Vec3 rdir(this->unrotMat * ray.dir);
+	Vec3 rdir(this->invMat * ray.dir);
 	rdir.y = 0;
 	Quadratic quadratic;
 	quadratic.a = dot(rdir, rdir);
@@ -25,7 +26,7 @@ bool Cylinder::collide(Ray &ray, float &t)
 Vec2 Cylinder::getUVAt(Ray &ray, Vec3 &pos)
 {
 	(void)ray;
-	Vec3 norm(this->unrotMat * (pos - this->pos));
+	Vec3 norm(this->invMat * (pos - this->position));
 	norm.y = 0;
 	norm = normalize(norm);
 	return Vec2(.5f + atan2(norm.z, norm.x) / (2 * M_PI), .5f + pos.y / 4);
@@ -34,7 +35,7 @@ Vec2 Cylinder::getUVAt(Ray &ray, Vec3 &pos)
 Vec3 Cylinder::getNormAt(Ray &ray, Vec3 &pos)
 {
 	//Vec3 norm(normalize(pos - this->pos));
-	Vec3 norm(this->unrotMat * (pos - this->pos));
+	Vec3 norm(this->invMat * (pos - this->position));
 	norm.y = 0;
 	/*if (this->N_map)
 	{
@@ -45,5 +46,10 @@ Vec3 Cylinder::getNormAt(Ray &ray, Vec3 &pos)
 		norm = B * bump.r + T * bump.g + norm * bump.b;
 	}*/
 	(void)ray;
-	return normalize(this->rotMat * norm);
+	return normalize(this->mat * norm);
+}
+
+void Cylinder::setSize(float size)
+{
+	this->size = size;
 }

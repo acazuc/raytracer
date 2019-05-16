@@ -1,32 +1,55 @@
 #ifndef RAYTRACER_H
 # define RAYTRACER_H
 
-# include "Objects/Object.h"
-# include "Lights/Light.h"
+# define BATCH_SIZE 32
+
+# include "Vec/Vec4.h"
+# include "Vec/Vec3.h"
+# include "Mat/Mat3.h"
 # include <cstdint>
 # include <vector>
 # include <thread>
+# include <mutex>
+
+enum BatchState
+{
+	BATCH_NOT_DONE,
+	BATCH_CALCULATING,
+	BATCH_DONE
+};
+
+class Filter;
+class Object;
+class Light;
+class Ray;
 
 class Raytracer
 {
 
 	private:
+		std::vector<std::vector<enum BatchState>> batches;
+		std::vector<std::thread*> threads;
+		std::vector<Filter*> filters;
 		std::vector<Object*> objects;
 		std::vector<Light*> lights;
-		std::thread **threads;
+		std::mutex batchesMutex;
 		Vec4 *colorBuffer;
 		Mat3 unrotMat;
 		Vec3 ambient;
 		Mat3 rotMat;
 		Vec3 pos;
-		uint32_t height;
-		uint32_t width;
-		size_t fsaa;
+		uint8_t threadsCount;
+		uint8_t samples;
+		size_t height;
+		size_t width;
 		float *zBuffer;
 		float fov;
-		char *imgData;
-		static void runThread(Raytracer *raytracer, uint64_t start, uint64_t end);
-		void calculatePixel(uint64_t x, uint64_t y);
+		bool globalIllumination;
+		bool ambientOcclusion;
+		bool shading;
+		TVec4<uint8_t> *imgData;
+		static void runThread(Raytracer *raytracer);
+		void calculatePixel(size_t x, size_t y);
 		Vec3 getRayColor(Ray &ray, Object *avoid, int recursion, float *zIndex = nullptr);
 		bool trace(Ray &ray, Object *&object, Vec3 &pos, Object *avoid);
 		void getDiffuseSpecularLight(Ray &ray, Object *object, Vec3 &pos, Vec3 &norm, Vec3 &diffuse, Vec3 &specular);
@@ -37,19 +60,26 @@ class Raytracer
 		Vec3 getGlobalIllumination(Vec3 &pos, Vec3 &norm, Object *object, int recursion);
 
 	public:
-		Raytracer(uint32_t width, uint32_t height);
+		Raytracer(size_t width, size_t height);
 		~Raytracer();
 		void render();
+		void addFilter(Filter *filter);
 		void addObject(Object *object);
 		void addLight(Light *light);
 		void setAmbient(Vec3 ambient) {this->ambient = ambient;};
 		void setPos(Vec3 pos) {this->pos = pos;};
 		void setRot(Vec3 rot);
 		void setFov(float fov) {this->fov = fov;};
-		inline char *getImgData() {return this->imgData;};
-		inline void setFSAA(size_t fsaa) {this->fsaa = fsaa;};
-		inline uint32_t getWidth() {return this->width;};
-		inline uint32_t getHeight() {return this->height;};
+		void setSamples(uint8_t samples);
+		void setThreads(uint8_t threads);
+		void setShading(bool shading);
+		void setAmbientOcclusion(bool ambientOcclusion);
+		void setGlobalIllumination(bool globalIllumination);
+		inline TVec4<uint8_t> *getImgData() {return this->imgData;};
+		inline std::vector<std::vector<enum BatchState>> &getBatches() {return this->batches;};
+		inline std::mutex &getBatchesMutex() {return this->batchesMutex;};
+		inline size_t getWidth() {return this->width;};
+		inline size_t getHeight() {return this->height;};
 
 };
 

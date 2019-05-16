@@ -1,8 +1,7 @@
 #ifndef FOG_H
 # define FOG_H
 
-# include "Vec/Vec4.h"
-# include <cstdint>
+# include "./Filter.h"
 
 enum FogType
 {
@@ -11,11 +10,19 @@ enum FogType
 	FOG_EXP2
 };
 
-class Fog
+class Fog : public Filter
 {
 
+	private:
+		enum FogType type;
+		Vec3 color;
+		float v1;
+		float v2;
+		Vec4 process(Vec4 *img, float *zBuffer, size_t x, size_t y, size_t width, size_t height);
+
 	public:
-		static Vec4 *fog(Vec4 *img, float *zbuffer, uint64_t width, uint64_t height, Vec4 color, float start, float density, enum FogType type);
+		Fog(enum FogType type, Vec3 color, float v1, float v2);
+		void operator()(Vec4 *dst, Vec4 *src, float *zBuffer, uint64_t width, uint64_t height);
 
 };
 

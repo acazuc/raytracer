@@ -1,14 +1,17 @@
 #ifndef FISHEYE_H
 # define FISHEYE_H
 
-# include "Vec/Vec4.h"
-# include <cstdint>
+# include "./Filter.h"
 
-class Fisheye
+class Fisheye : public Filter
 {
 
+	private:
+		float aperture;
+
 	public:
-		static Vec4 *fisheye(Vec4 *img, uint64_t width, uint64_t height);
+		Fisheye(float aperture);
+		void operator()(Vec4 *dst, Vec4 *src, float *zBuffer, size_t width, size_t height);
 
 };
 

@@ -2,9 +2,10 @@ NAME = raytracer
 
 CXX = g++
 
-CXXFLAGS = -Wall -Wextra -Ofast -g -flto -march=native -finline
+CXXFLAGS = -std=gnu++17 -Wall -Wextra -Ofast -g -flto -march=native -finline
 
 INCLUDES = -I include
+INCLUDES+= -I /usr/include/libxml2
 
 SRCS_PATH = src/
 
@@ -13,6 +14,8 @@ SRCS_NAME = Main.cpp \
 	    Quadratic.cpp \
 	    Image.cpp \
 	    PNG.cpp \
+	    Parser.cpp \
+	    Material.cpp \
 	    Objects/Object.cpp \
 	    Objects/Sphere.cpp \
 	    Objects/Cylinder.cpp \
@@ -20,15 +23,16 @@ SRCS_NAME = Main.cpp \
 	    Objects/Plane.cpp \
 	    Objects/Triangle.cpp \
 	    Lights/Light.cpp \
-	    Lights/PonctualLight.cpp \
+	    Lights/PunctualLight.cpp \
 	    Lights/DirectionalLight.cpp \
+	    Filters/Filter.cpp \
 	    Filters/Fxaa.cpp \
 	    Filters/Sobel.cpp \
 	    Filters/Cel.cpp \
 	    Filters/Fisheye.cpp \
 	    Filters/Blur.cpp \
-	    Filters/Gamma.cpp \
 	    Filters/Fog.cpp \
+	    Filters/Color/Gamma.cpp \
 	    Filters/Color/GreyShade.cpp \
 	    Filters/Color/Negative.cpp \
 	    Filters/Color/Sepia.cpp \
@@ -45,6 +49,7 @@ OBJS = $(addprefix $(OBJS_PATH), $(OBJS_NAME))
 LIBRARY = -lglfw
 LIBRARY+= -lpng
 LIBRARY+= -lz
+LIBRARY+= -lxml2
 
 FRAMEWORK = -lGL
 FRAMEWORK+= -lX11

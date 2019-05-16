@@ -1,14 +1,13 @@
 #ifndef GREY_SHADE_H
 # define GREY_SHADE_H
 
-# include "Vec/Vec4.h"
-# include <cstdint>
+# include "../Filter.h"
 
-class GreyShade
+class GreyShade : public Filter
 {
 
 	public:
-		static Vec4 *greyShade(Vec4 *img, uint64_t width, uint64_t height);
+		void operator()(Vec4 *dst, Vec4 *src, float *zBuffer, size_t width, size_t height);
 
 };
 

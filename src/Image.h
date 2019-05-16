@@ -32,7 +32,7 @@ class Image
 		Image(uint32_t width, uint32_t height);
 		Image();
 		void setData(uint32_t width, uint32_t height, uint8_t *data);
-		Vec4 getTexelAt(int32_t x, int32_t y);
+		Vec4 getTexelAt(ssize_t x, ssize_t y);
 		Vec4 getDataAt(Vec2 uv);
 
 };

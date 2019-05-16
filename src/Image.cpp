@@ -30,16 +30,16 @@ void Image::setData(uint32_t width, uint32_t height, uint8_t *data)
 	}
 }
 
-Vec4 Image::getTexelAt(int32_t x, int32_t y)
+Vec4 Image::getTexelAt(ssize_t x, ssize_t y)
 {
 	switch (this->wrap)
 	{
 		case IMAGE_WRAP_CLAMP:
-			if (x >= (int32_t)this->width)
+			if (x >= ssize_t(this->width))
 				x = this->width;
 			else if (x < 0)
 				x = 0;
-			if (y >= (int32_t)this->height)
+			if (y >= ssize_t(this->height))
 				y = this->height;
 			else if (y < 0)
 				y = 0;
@@ -48,11 +48,11 @@ Vec4 Image::getTexelAt(int32_t x, int32_t y)
 			x %= this->width * 2;
 			if (x < 0)
 				x += this->width * 2;
-			x = std::abs(x - (int32_t)this->width);
+			x = std::abs(x - ssize_t(this->width));
 			y %= this->height * 2;
 			if (y < 0)
 				y += this->height * 2;
-			y = std::abs(y - (int32_t)this->height);
+			y = std::abs(y - ssize_t(this->height));
 			break;
 		case IMAGE_WRAP_REPEAT:
 			x %= this->width;

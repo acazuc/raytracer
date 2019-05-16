@@ -1,14 +1,16 @@
 #ifndef SOBEL_H
 # define SOBEL_H
 
-# include "Vec/Vec4.h"
-# include <cstdint>
+# include "./Filter.h"
 
-class Sobel
+class Sobel : public Filter
 {
 
+	private:
+		Vec4 process(Vec4 *img, float *zbuffer, size_t x, size_t y, size_t width, size_t height);
+
 	public:
-		static Vec4 *sobel(Vec4 *img, float *zbuffer, uint64_t width, uint64_t height);
+		void operator()(Vec4 *dst, Vec4 *src, float *zBuffer, size_t width, size_t height);
 
 };
 

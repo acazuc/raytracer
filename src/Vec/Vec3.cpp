@@ -186,15 +186,15 @@ inline TVec3<T> max(T val, TVec3<T> vec)
 }
 
 template <typename T>
-inline TVec3<T> clamp(TVec3<T> vec, T min, T max)
+inline TVec3<T> clamp(TVec3<T> vec, T vmin, T vmax)
 {
-	return max(min, min(max));
+	return max(vmin, min(vec, vmax));
 }
 
 template <typename T>
-inline TVec3<T> clamp(TVec3<T> vec, TVec3<T> min, TVec3<T> max)
+inline TVec3<T> clamp(TVec3<T> vec, TVec3<T> vmin, TVec3<T> vmax)
 {
-	return max(min, min(max));
+	return max(vmin, min(vec, vmax));
 }
 
 template <typename T>

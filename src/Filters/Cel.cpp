@@ -1,27 +1,25 @@
 #include "Cel.h"
-#include <algorithm>
+#include <cmath>
 
-static Vec4 getPixelAt(Vec4 *img, uint64_t x, uint64_t y, uint64_t width, uint64_t height)
+Cel::Cel(uint8_t cels)
+: cels(cels)
 {
-	x = std::min(width - 1, std::max((uint64_t)0, x));
-	y = std::min(height - 1, std::max((uint64_t)0, y));
-	return img[x + y * width];
 }
 
-Vec4 *Cel::cel(Vec4 *img, uint8_t cels, uint64_t width, uint64_t height)
+void Cel::operator()(Vec4 *dst, Vec4 *src, float *zBuffer, size_t width, size_t height)
 {
-	Vec4 *newImg = new Vec4[width * height];
-	for (uint64_t x = 0; x < width; ++x)
+	for (size_t x = 0; x < width; ++x)
 	{
-		for (uint64_t y = 0; y < height; ++y)
+		for (size_t y = 0; y < height; ++y)
 		{
-			Vec4 val = getPixelAt(img, x, y, width, height);
-			uint32_t idx = x + y * width;
-			newImg[idx].x = (std::min((uint64_t)0xff, std::max((uint64_t)0, (uint64_t)(val.x * 0xff))) / cels * cels) / (float)0xff;
-			newImg[idx].y = (std::min((uint64_t)0xff, std::max((uint64_t)0, (uint64_t)(val.y * 0xff))) / cels * cels) / (float)0xff;
-			newImg[idx].z = (std::min((uint64_t)0xff, std::max((uint64_t)0, (uint64_t)(val.z * 0xff))) / cels * cels) / (float)0xff;
-			newImg[idx].a = val.a;
+			Vec4 val = src[x + y * width];
+			size_t idx = x + y * width;
+			float step = 1. / this->cels;
+			dst[idx].r = val.r - std::fmod(val.r, step);
+			dst[idx].g = val.g - std::fmod(val.g, step);
+			dst[idx].b = val.b - std::fmod(val.b, step);
+			dst[idx].a = val.a;
 		}
 	}
-	return newImg;
+	(void)zBuffer;
 }

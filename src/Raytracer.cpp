@@ -1,33 +1,29 @@
 #include "Raytracer.h"
-#include "Filters/Color/GreyShade.h"
-#include "Filters/Color/Negative.h"
-#include "Filters/Color/Sepia.h"
-#include "Filters/Fisheye.h"
-#include "Filters/Sobel.h"
-#include "Filters/Gamma.h"
-#include "Filters/Fxaa.h"
-#include "Filters/Blur.h"
+#include "Objects/Object.h"
+#include "Filters/Filter.h"
 #include "Utils/System.h"
-#include "Filters/Cel.h"
-#include "Filters/Fog.h"
+#include "Lights/Light.h"
+#include "Material.h"
 #include "Consts.h"
+#include "Image.h"
 #include "Debug.h"
+#include "Ray.h"
 #include <cstring>
 #include <random>
 #include <cmath>
 
-#define THREAD_NUMBER 8
-
-Raytracer::Raytracer(uint32_t width, uint32_t height)
+Raytracer::Raytracer(size_t width, size_t height)
 : ambient(0, 0, 0)
 , height(height)
 , width(width)
 {
-	this->fsaa = 1;
+	this->batches.resize((height + BATCH_SIZE - 1) / BATCH_SIZE, std::vector<enum BatchState>((width + BATCH_SIZE - 1) / BATCH_SIZE, BATCH_NOT_DONE));
+	this->samples = 1;
 	this->colorBuffer = new Vec4[width * height];
 	this->zBuffer = new float[width * height];
-	this->imgData = new char[width * height * 4];
-	this->threads = new std::thread*[THREAD_NUMBER];
+	this->imgData = new TVec4<uint8_t>[width * height];
+	this->globalIllumination = false;
+	this->ambientOcclusion = false;
 }
 
 Raytracer::~Raytracer()
@@ -58,15 +54,14 @@ bool Raytracer::trace(Ray &ray, Object *&object, Vec3 &pos, Object *avoid)
 	return true;
 }
 
-#define GI_SAMPLES 5
+#define GI_SAMPLES 25
 #define GI_FACTOR 1
-#define GI_ATTENUATION 5
-#define GI_ENABLED 1
+#define GI_ATTENUATION 2
 
 Vec3 Raytracer::getGlobalIllumination(Vec3 &pos, Vec3 &norm, Object *object, int recursion)
 {
 	Vec3 result(0);
-	if (!GI_ENABLED)
+	if (!this->globalIllumination)
 		return result;
 	if (recursion > 1)
 		return result;
@@ -87,21 +82,19 @@ Vec3 Raytracer::getGlobalIllumination(Vec3 &pos, Vec3 &norm, Object *object, int
 		if (!trace(newRay, collide, collidePos, object))
 			continue;
 		float len = length(pos - collidePos) / GI_ATTENUATION;
-		Vec3 color(getRayColor(newRay, object, 100 + recursion));
-		result += color * (1 - collide->Ir) * d / (1 + len);
-		//result += collide->Kd.rgb() * collide->Kd.a * (1 - collide->Ir) * d / (1 + len);
+		Vec3 color(getRayColor(newRay, object, 99 + recursion));
+		result += color * d / (1 + len);
 	}
 	return result / static_cast<float>(GI_SAMPLES) * static_cast<float>(GI_FACTOR);
 }
 
-#define AO_SAMPLES 5
+#define AO_SAMPLES 25
 #define AO_FACTOR 1
-#define AO_ATTENUATION 5
-#define AO_ENABLED 1
+#define AO_ATTENUATION 2
 
 float Raytracer::getAmbientOcclusion(Vec3 &pos, Vec3 &norm, Object *object)
 {
-	if (!AO_ENABLED)
+	if (!this->ambientOcclusion)
 		return 1;
 	float result = 0;
 	std::minstd_rand rnd(rand());
@@ -121,16 +114,16 @@ float Raytracer::getAmbientOcclusion(Vec3 &pos, Vec3 &norm, Object *object)
 		if (!trace(newRay, collide, collidePos, object))
 			continue;
 		float len = length(pos - collidePos) / AO_ATTENUATION;
-		result += 1. / (1 + len) * collide->Kd.a * (1 - collide->Ir);
+		result += 1. / (1 + len) * collide->material->opacity;// * (1 - collide->Ir);
 	}
 	return 1 - result / static_cast<float>(AO_SAMPLES) * AO_FACTOR;
 }
 
 Vec4 Raytracer::getDiffuseSpecularTransparencyLight(Light *light, Object *object, Ray &ray, Vec3 &pos)
 {
-	Vec4 result(object->Kd);
-	if (object->Kd_map)
-		result *= object->Kd_map->getDataAt(object->getUVAt(ray, pos));
+	Vec4 result(object->material->diffuseColor, object->material->opacity);
+	if (object->material->diffuseTexture)
+		result *= object->material->diffuseTexture->getDataAt(object->getUVAt(ray, pos));
 	if (result.a >= 1)
 		return result;
 	Ray newRay(pos, normalize(light->getDirectionFrom(pos)));
@@ -153,7 +146,7 @@ void Raytracer::getDiffuseSpecularLight(Ray &ray, Object *object, Vec3 &pos, Vec
 	Ray newRay(pos, Vec3());
 	Vec3 refl(reflect(ray.dir, norm));
 	float opacity;
-	diffuse += object->Ka.rgb() * object->Ka.a;
+	diffuse += object->material->ambientColor;
 	Vec3 newPos;
 	for (uint64_t i = 0; i < this->lights.size(); ++i)
 	{
@@ -166,9 +159,9 @@ void Raytracer::getDiffuseSpecularLight(Ray &ray, Object *object, Vec3 &pos, Vec
 		{
 			if (length(newPos - pos) > tmpLength)
 				goto next;
-			opacity = newObject->Kd.a;
-			if (newObject->Kd_map)
-				opacity *= newObject->Kd_map->getDataAt(newObject->getUVAt(newRay, newPos)).a;
+			opacity = newObject->material->opacity;
+			if (newObject->material->diffuseTexture)
+				opacity *= newObject->material->diffuseTexture->getDataAt(newObject->getUVAt(newRay, newPos)).a;
 			if (opacity >= 1)
 				continue;
 			Vec4 result = getDiffuseSpecularTransparencyLight(this->lights[i], newObject, newRay, newPos);
@@ -176,9 +169,9 @@ void Raytracer::getDiffuseSpecularLight(Ray &ray, Object *object, Vec3 &pos, Vec
 		}
 next:
 		diffuse += lightColorIntensity * std::max(0.f, dot(newRay.dir, norm));
-		specular += lightColorIntensity * float(pow(std::max(0.f, dot(refl, newRay.dir)), object->Ns));
+		specular += lightColorIntensity * float(pow(std::max(0.f, dot(refl, newRay.dir)), object->material->specularFactor));
 	}
-	specular *= object->Ks.rgb();
+	specular *= object->material->specularColor;
 }
 
 Vec3 Raytracer::getReflectionColor(Ray &ray, Object *object, Vec3 &pos, Vec3 &norm, int recursion)
@@ -194,7 +187,7 @@ Vec3 Raytracer::getTransparencyColor(Ray &ray, Object *object, Vec3 &pos, Vec3 &
 {
 	Ray newRay;
 	newRay.pos = pos;
-	float nextNi = object->Ni;
+	float nextNi = object->material->refraction;
 	if (normRev)
 		nextNi = 1;
 	newRay.Ni = nextNi;
@@ -224,36 +217,48 @@ Vec3 Raytracer::getRayColor(Ray &ray, Object *avoid, int recursion, float *zInde
 		return Vec3(0);
 	if (zIndex)
 		*zIndex = length(pos - ray.pos);
-	bool normRev = false;
-	Vec3 norm = normalize(object->getNormAt(ray, pos));
-	if (dot(norm, ray.dir) > 0)
-	{
-		norm = -norm;
-		normRev = true;
-	}
 	Vec3 diffuse;
 	Vec3 specular;
-	getDiffuseSpecularLight(ray, object, pos, norm, diffuse, specular);
+	bool normRev = false;
+	Vec3 norm;
+	if (this->shading)
+	{
+		norm = normalize(object->getNormAt(ray, pos));
+		if (dot(norm, ray.dir) > 0)
+		{
+			norm = -norm;
+			normRev = true;
+		}
+		getDiffuseSpecularLight(ray, object, pos, norm, diffuse, specular);
+	}
+	else
+	{
+		diffuse = Vec3(1);
+		specular = Vec3(0);
+	}
 	Vec4 texColor;
-	if (object->Kd_map)
-		texColor = object->Kd_map->getDataAt(object->getUVAt(ray, pos));
+	if (object->material->diffuseTexture)
+		texColor = object->material->diffuseTexture->getDataAt(object->getUVAt(ray, pos));
 	else
 		texColor = Vec4(1);
 	Vec3 col = diffuse + this->ambient;
 	col *= getAmbientOcclusion(pos, norm, object);
-	float transparency = object->Kd.a * texColor.a;
-	if (transparency < 1)
+	if (this->shading)
 	{
-		Vec3 transparencyColor(getTransparencyColor(ray, object, pos, norm, normRev, recursion));
-		col = col * transparency + transparencyColor * (1 - transparency);
-		//col = transparencyColor.rgb() * (1 - transparency);
+		float transparency = object->material->opacity * texColor.a;
+		if (transparency < 1)
+		{
+			Vec3 transparencyColor(getTransparencyColor(ray, object, pos, norm, normRev, recursion));
+			col = col * transparency + transparencyColor * (1 - transparency);
+			//col = transparencyColor.rgb() * (1 - transparency);
+		}
 	}
-	col *= object->Kd.rgb();
+	col *= object->material->diffuseColor;
 	col *= texColor.rgb();
 	col += specular;
 	col += getGlobalIllumination(pos, norm, object, recursion);
-	if (object->Ir > 0)
-		col = col * (1 - object->Ir) + getReflectionColor(ray, object, pos, norm, recursion + 1) * object->Kd.rgb() * texColor.rgb() * object->Ir;
+	if (this->shading && object->material->reflection > 0)
+		col = col * (1 - object->material->reflection) + getReflectionColor(ray, object, pos, norm, recursion + 1) * object->material->diffuseColor * texColor.rgb() * object->material->reflection;
 	return col;
 }
 
@@ -266,12 +271,12 @@ void Raytracer::calculatePixel(uint64_t x, uint64_t y)
 		ratio = 1 / ratio;
 	float lowestZ = INFINITY;
 	Vec3 colorSum(0);
-	for (size_t yy = 0; yy < this->fsaa; ++yy)
+	for (size_t yy = 0; yy < this->samples; ++yy)
 	{
-		for (size_t xx = 0; xx < this->fsaa; ++xx)
+		for (size_t xx = 0; xx < this->samples; ++xx)
 		{
-			float rx = (2 * (x + xx / static_cast<float>(this->fsaa)) / this->width - 1) * tan(this->fov / 2 * M_PI / 180) * ratio;
-			float ry = (1 - 2 * (y + yy / static_cast<float>(this->fsaa)) / this->height) * tan(this->fov / 2 * M_PI / 180);
+			float rx = (2 * (x + xx / static_cast<float>(this->samples)) / this->width - 1) * tan(this->fov / 2 * M_PI / 180) * ratio;
+			float ry = (1 - 2 * (y + yy / static_cast<float>(this->samples)) / this->height) * tan(this->fov / 2 * M_PI / 180);
 			ray.dir = normalize(this->rotMat * Vec3(rx, ry, 1));
 			float zIndex = 0;
 			Vec3 col = getRayColor(ray, nullptr, 0, &zIndex);
@@ -282,23 +287,82 @@ void Raytracer::calculatePixel(uint64_t x, uint64_t y)
 	}
 	size_t idx = x + y * this->width;
 	this->zBuffer[idx] = lowestZ;
-	Vec4 &dst = this->colorBuffer[idx];
-	Vec3 col = colorSum / static_cast<float>(this->fsaa * this->fsaa);
-	dst.r = std::min(1.f, std::max(0.f, col.r));
-	dst.g = std::min(1.f, std::max(0.f, col.g));
-	dst.b = std::min(1.f, std::max(0.f, col.b));
-	dst.a = 1;//std::min(1.f, std::max(0.f, col.a));
-	this->imgData[idx * 4 + 0] = std::min((int64_t)0xff, std::max((int64_t)0, (int64_t)(dst.r * 0xff)));
-	this->imgData[idx * 4 + 1] = std::min((int64_t)0xff, std::max((int64_t)0, (int64_t)(dst.g * 0xff)));
-	this->imgData[idx * 4 + 2] = std::min((int64_t)0xff, std::max((int64_t)0, (int64_t)(dst.b * 0xff)));
-	this->imgData[idx * 4 + 3] = std::min((int64_t)0xff, std::max((int64_t)0, (int64_t)(dst.a * 0xff)));
+	Vec3 col = colorSum / static_cast<float>(this->samples * this->samples);
+	col = clamp(col, 0.f, 1.f);
+	this->colorBuffer[idx] = Vec4(col, 1);
+	this->imgData[idx].r = col.r * 0xff;
+	this->imgData[idx].g = col.g * 0xff;
+	this->imgData[idx].b = col.b * 0xff;
+	this->imgData[idx].a = 1;
 }
 
-void Raytracer::runThread(Raytracer *raytracer, uint64_t start, uint64_t end)
+void Raytracer::runThread(Raytracer *raytracer)
 {
-	for (uint64_t i = start; i < end; ++i)
+	while (true)
 	{
-		raytracer->calculatePixel(i % raytracer->width, i / raytracer->width);
+		size_t batchX;
+		size_t batchY;
+		{
+			std::lock_guard<std::mutex> guard(raytracer->batchesMutex);
+			ssize_t batchesY = (raytracer->batches.size() + 1) / 2;
+			ssize_t batchesX = (raytracer->batches[0].size() + 1) / 2;
+			ssize_t batchesSize = std::max(batchesY, batchesX) + 1;
+			for (ssize_t i = 0; i < batchesSize; ++i)
+			{
+				for (ssize_t yy = batchesY - i; yy < batchesY + i; ++yy)
+				{
+					for (ssize_t xx = batchesX - i; xx < batchesX + i; ++xx)
+					{
+						if (yy < 0 || size_t(yy) >= raytracer->batches.size())
+							continue;
+						if (xx < 0 || size_t(xx) >= raytracer->batches[0].size())
+							continue;
+						if (raytracer->batches[yy][xx] == BATCH_NOT_DONE)
+						{
+							batchY = yy;
+							batchX = xx;
+							raytracer->batches[yy][xx] = BATCH_CALCULATING;
+							goto calcBatch;
+						}
+					}
+				}
+			}
+		}
+		return;
+calcBatch:
+		uint8_t calc[BATCH_SIZE * BATCH_SIZE];
+		std::fill(std::begin(calc), std::end(calc), 0);
+		size_t startX = batchX * BATCH_SIZE;
+		size_t startY = batchY * BATCH_SIZE;
+		size_t endX = std::min(raytracer->width, startX + BATCH_SIZE);
+		size_t endY = std::min(raytracer->height, startY + BATCH_SIZE);
+		for (size_t i = BATCH_SIZE / 2; i; i /= 2)
+		{
+			for (size_t y = startY; y < endY; y += i)
+			{
+				for (size_t x = startX; x < endX; x += i)
+				{
+					if (!calc[(y % BATCH_SIZE) * BATCH_SIZE + (x % BATCH_SIZE)])
+					{
+						calc[(y % BATCH_SIZE) * BATCH_SIZE + (x % BATCH_SIZE)] = 1;
+						raytracer->calculatePixel(x, y);
+					}
+					size_t base = x + y * raytracer->width;
+					for (size_t yy = 0; yy < i; ++yy)
+					{
+						for (size_t xx = 0; xx < i; ++xx)
+						{
+							size_t idx = x + xx + (y + yy) * raytracer->width;
+							if (!idx)
+								continue;
+							raytracer->imgData[idx] = raytracer->imgData[base];
+						}
+					}
+				}
+			}
+		}
+		std::lock_guard<std::mutex> guard(raytracer->batchesMutex);
+		raytracer->batches[batchY][batchX] = BATCH_DONE;
 	}
 }
 
@@ -306,59 +370,51 @@ void Raytracer::render()
 {
 	uint64_t started;
 	uint64_t ended;
-	uint64_t total = this->width * this->height;
 	started = System::nanotime();
-	for (uint8_t i = 0; i < THREAD_NUMBER; ++i)
+	this->threads.resize(this->threadsCount);
+	for (uint8_t i = 0; i < this->threadsCount; ++i)
 	{
-		uint64_t start = total * i / THREAD_NUMBER;
-		uint64_t end = total * (i + 1) / THREAD_NUMBER;
-		this->threads[i] = new std::thread(&Raytracer::runThread, this, start, end);
+		this->threads[i] = new std::thread(&Raytracer::runThread, this);
 	}
-	for (uint8_t i = 0; i < THREAD_NUMBER; ++i)
+	for (uint8_t i = 0; i < this->threadsCount; ++i)
 	{
 		this->threads[i]->join();
 		delete (this->threads[i]);
 	}
+	this->threads.clear();
 	ended = System::nanotime();
-	LOG("Draw: " << (ended - started) / 1000000. << " ms");
-	/*Vec4 *cel = Cel::cel(this->colorBuffer, 25, this->width, this->height);
-	delete[] (this->colorBuffer);
-	this->colorBuffer = cel;*/
-	/*Vec4 *sobel = Sobel::sobel(this->colorBuffer, this->zBuffer, this->width, this->height);
-	delete[] (this->colorBuffer);
-	this->colorBuffer = sobel;*/
-	/*Vec4 *fisheye = Fisheye::fisheye(this->colorBuffer, this->width, this->height);
-	delete[] (this->colorBuffer);
-	this->colorBuffer = fisheye;*/
-	/*Vec4 *fxaa = Fxaa::fxaa(this->colorBuffer, this->width, this->height);
-	delete[] (this->colorBuffer);
-	this->colorBuffer = fxaa;*/
-	/*Vec4 *blur = Blur::blur(this->colorBuffer, 10, this->width, this->height);
-	delete[] (this->colorBuffer);
-	this->colorBuffer = blur;*/
-	/*Vec4 *greyShade = GreyShade::greyShade(this->colorBuffer, this->width, this->height);
-	delete[] (this->colorBuffer);
-	this->colorBuffer = greyShade;*/
-	/*Vec4 *negative = Negative::negative(this->colorBuffer, this->width, this->height);
-	delete[] (this->colorBuffer);
-	this->colorBuffer = negative;*/
-	/*Vec4 *sepia = Sepia::sepia(this->colorBuffer, this->width, this->height);
-	delete[] (this->colorBuffer);
-	this->colorBuffer = sepia;*/
-	/*Vec4 *gamma = Gamma::gamma(this->colorBuffer, this->width, this->height, 1 / 2.2);
-	delete[] (this->colorBuffer);
-	this->colorBuffer = gamma;*/
-	/*Vec4 *fog = Fog::fog(this->colorBuffer, this->zBuffer, this->width, this->height, Vec4(1, 0, 0, 1), 0, 20, FOG_LINEAR);
-	delete[] (this->colorBuffer);
-	this->colorBuffer = fog;*/
-	/*for (uint64_t i = 0; i < this->width * this->height; ++i)
+	LOG("Draw: " << (ended - started) / 1000000 << " ms");
+	if (this->filters.size())
 	{
-		Vec4 &org = this->colorBuffer[i];
-		this->imgData[i * 4 + 0] = std::min((int64_t)0xff, std::max((int64_t)0, (int64_t)(org.r * 0xff)));
-		this->imgData[i * 4 + 1] = std::min((int64_t)0xff, std::max((int64_t)0, (int64_t)(org.g * 0xff)));
-		this->imgData[i * 4 + 2] = std::min((int64_t)0xff, std::max((int64_t)0, (int64_t)(org.b * 0xff)));
-		this->imgData[i * 4 + 3] = std::min((int64_t)0xff, std::max((int64_t)0, (int64_t)(org.a * 0xff)));
-	}*/
+		started = System::nanotime();
+		Vec4 *tmp = new Vec4[this->width * this->height];
+		Vec4 *dst = tmp;
+		Vec4 *src = this->colorBuffer;
+		for (size_t i = 0; i < this->filters.size(); ++i)
+		{
+			(*this->filters[i])(dst, src, this->zBuffer, this->width, this->height);
+			std::swap(src, dst);
+		}
+		if (src != this->colorBuffer)
+			std::memcpy(this->colorBuffer, src, sizeof(*src) * this->width * this->height);
+		delete[] (tmp);
+		ended = System::nanotime();
+		LOG("Filters: " << (ended - started) / 1000000 << " ms");
+	}
+	for (size_t i = 0; i < this->width * this->height; ++i)
+	{
+		Vec4 org = this->colorBuffer[i];
+		org = clamp(org, 0.f, 1.f);
+		this->imgData[i].r = org.r * 0xff;
+		this->imgData[i].g = org.g * 0xff;
+		this->imgData[i].b = org.b * 0xff;
+		this->imgData[i].a = org.a * 0xff;
+	}
+}
+
+void Raytracer::addFilter(Filter *filter)
+{
+	this->filters.push_back(filter);
 }
 
 void Raytracer::addObject(Object *object)
@@ -385,4 +441,29 @@ void Raytracer::setRot(Vec3 vec)
 	unrot = Mat3::rotateZ(unrot, -vec.z);
 	this->unrotMat = unrot;
 
+}
+
+void Raytracer::setSamples(uint8_t samples)
+{
+	this->samples = samples;
+}
+
+void Raytracer::setThreads(uint8_t threads)
+{
+	this->threadsCount = threads;
+}
+
+void Raytracer::setShading(bool shading)
+{
+	this->shading = shading;
+}
+
+void Raytracer::setGlobalIllumination(bool globalIllumination)
+{
+	this->globalIllumination = globalIllumination;
+}
+
+void Raytracer::setAmbientOcclusion(bool ambientOcclusion)
+{
+	this->ambientOcclusion = ambientOcclusion;
 }

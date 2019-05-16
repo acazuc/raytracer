@@ -1,14 +1,17 @@
 #ifndef CEL_H
 # define CEL_H
 
-# include "Vec/Vec4.h"
-# include <cstdint>
+# include "./Filter.h"
 
-class Cel
+class Cel : public Filter
 {
 
+	private:
+		uint8_t cels;
+
 	public:
-		static Vec4 *cel(Vec4 *img, uint8_t cels, uint64_t width, uint64_t height);
+		Cel(uint8_t cels);
+		void operator()(Vec4 *dst, Vec4 *src, float *zBuffer, size_t width, size_t height);
 
 };
 

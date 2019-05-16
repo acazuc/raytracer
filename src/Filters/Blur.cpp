@@ -1,37 +1,33 @@
 #include "Blur.h"
-#include <algorithm>
 
-static Vec4 getPixelAt(Vec4 *img, uint64_t x, uint64_t y, uint64_t width, uint64_t height)
+Blur::Blur(size_t radius)
+: radius(radius)
 {
-	x = std::min(width - 1, std::max((uint64_t)0, x));
-	y = std::min(height - 1, std::max((uint64_t)0, y));
-	return img[x + y * width];
 }
 
-static Vec4 process(Vec4 *img, uint64_t offset, uint64_t x, uint64_t y, uint64_t width, uint64_t height)
+Vec4 Blur::process(Vec4 *img, size_t x, size_t y, size_t width, size_t height)
 {
 	Vec4 total(0);
-	uint64_t count = 0;
-	for (int64_t xx = -offset; xx <= (int64_t)offset; ++xx)
+	size_t count = 0;
+	for (ssize_t xx = -this->radius; xx <= ssize_t(this->radius); ++xx)
 	{
-		for (int64_t yy = -offset; yy <= (int64_t)offset; ++yy)
+		for (ssize_t yy = -this->radius; yy <= ssize_t(this->radius); ++yy)
 		{
 			total += getPixelAt(img, x + xx, y + yy, width, height);
 			count++;
 		}
 	}
-	return total / (float)count;
+	return total / float(count);
 }
 
-Vec4 *Blur::blur(Vec4 *img, uint64_t offset, uint64_t width, uint64_t height)
+void Blur::operator()(Vec4 *dst, Vec4 *src, float *zBuffer, size_t width, size_t height)
 {
-	Vec4 *newImg = new Vec4[width * height];
-	for (uint64_t x = 0; x < width; ++x)
+	for (size_t x = 0; x < width; ++x)
 	{
-		for (uint64_t y = 0; y < height; ++y)
+		for (size_t y = 0; y < height; ++y)
 		{
-			newImg[x + y * width] = process(img, offset, x, y, width, height);
+			dst[x + y * width] = process(src, x, y, width, height);
 		}
 	}
-	return newImg;
+	(void)zBuffer;
 }

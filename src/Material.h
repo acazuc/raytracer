@@ -3,22 +3,23 @@
 
 # include "Vec/Vec4.h"
 # include "Vec/Vec3.h"
-# include "Image.h"
+
+class Image;
 
 class Material
 {
 
 	public:
-		Image *bumpTexture;
-		Image *texture;
-		Vec3 pos;
-		Vec3 rot;
-		Vec4 Ka;
-		Vec4 Kd;
-		Vec4 Ks;
-		float Ns;
-		float Ni;
-		float Ir;
+		Image *diffuseTexture;
+		Image *normalTexture;
+		Vec3 specularColor;
+		Vec3 diffuseColor;
+		Vec3 ambientColor;
+		float specularFactor;
+		float reflection;
+		float refraction;
+		float opacity;
+		Material();
 
 };
 

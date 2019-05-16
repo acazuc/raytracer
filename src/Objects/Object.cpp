@@ -1,31 +1,31 @@
 #include "Object.h"
 
 Object::Object()
-: Kd_map(NULL)
-, N_map(NULL)
-, unrotMat(1)
-, rotMat(1)
-, Ka(0)
-, Kd(1)
-, Ks(0)
-, Ns(100)
-, Ni(1)
-, Ir(0)
+: material(nullptr)
+, invMat(1)
+, mat(1)
 {
 }
 
-void Object::setRot(Vec3 vec)
+void Object::setMaterial(Material *material)
+{
+	this->material = material;
+}
+
+void Object::setPosition(Vec3 position)
+{
+	this->position = position;
+}
+
+void Object::setRotation(Vec3 rotation)
 {
 	//this->rot = vec;
-	Mat3 rot(1);
-	rot = Mat3::rotateZ(rot, vec.z);
-	rot = Mat3::rotateY(rot, vec.y);
-	rot = Mat3::rotateX(rot, vec.x);
-	this->rotMat = rot;
-	Mat3 unrot(1);
-	unrot = Mat3::rotateX(unrot, -vec.x);
-	unrot = Mat3::rotateY(unrot, -vec.y);
-	unrot = Mat3::rotateZ(unrot, -vec.z);
-	this->unrotMat = unrot;
-
+	this->mat = Mat3(1);
+	this->mat = Mat3::rotateZ(this->mat, rotation.z);
+	this->mat = Mat3::rotateY(this->mat, rotation.y);
+	this->mat = Mat3::rotateX(this->mat, rotation.x);
+	this->invMat = Mat3(1);
+	this->invMat = Mat3::rotateX(this->invMat, -rotation.x);
+	this->invMat = Mat3::rotateY(this->invMat, -rotation.y);
+	this->invMat = Mat3::rotateZ(this->invMat, -rotation.z);
 }
