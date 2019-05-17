@@ -13,8 +13,7 @@
 #include <cmath>
 
 Raytracer::Raytracer(size_t width, size_t height)
-: ambient(0, 0, 0)
-, height(height)
+: height(height)
 , width(width)
 {
 	this->batches.resize((height + BATCH_SIZE - 1) / BATCH_SIZE, std::vector<enum BatchState>((width + BATCH_SIZE - 1) / BATCH_SIZE, BATCH_NEED_CALCULATION));
@@ -24,9 +23,11 @@ Raytracer::Raytracer(size_t width, size_t height)
 	this->zBuffer.resize(width * height);
 	this->imgData.resize(width * height);
 	this->globalIlluminationSamples = 50;
+	this->globalIlluminationDistance = 1000;
 	this->globalIlluminationFactor = 1;
 	this->globalIllumination = false;
 	this->ambientOcclusionSamples = 50;
+	this->ambientOcclusionDistance = 10;
 	this->ambientOcclusionFactor = 1;
 	this->ambientOcclusion = false;
 }
@@ -56,8 +57,6 @@ bool Raytracer::trace(Ray &ray, Object *&object, Vec3 &pos, Object *avoid)
 	return true;
 }
 
-#define GI_ATTENUATION 2
-
 Vec3 Raytracer::getGlobalIllumination(Vec3 &pos, Vec3 &norm, Object *object, int recursion)
 {
 	Vec3 result(0);
@@ -81,14 +80,12 @@ Vec3 Raytracer::getGlobalIllumination(Vec3 &pos, Vec3 &norm, Object *object, int
 		Vec3 collidePos;
 		if (!trace(newRay, collide, collidePos, object))
 			continue;
-		float len = length(pos - collidePos) / GI_ATTENUATION;
+		float len = length(pos - collidePos) / this->globalIlluminationDistance;
 		Vec4 color(getRayColor(newRay, object, 99 + recursion));
 		result += color.rgb() * color.a * d / (1 + len);
 	}
 	return result / float(this->globalIlluminationSamples) * this->globalIlluminationFactor;
 }
-
-#define AO_ATTENUATION 2
 
 float Raytracer::getAmbientOcclusion(Vec3 &pos, Vec3 &norm, Object *object)
 {
@@ -111,7 +108,7 @@ float Raytracer::getAmbientOcclusion(Vec3 &pos, Vec3 &norm, Object *object)
 		Vec3 collidePos;
 		if (!trace(newRay, collide, collidePos, object))
 			continue;
-		float len = length(pos - collidePos) / AO_ATTENUATION;
+		float len = length(pos - collidePos) / this->ambientOcclusionDistance;
 		result += 1. / (1 + len) * collide->material->opacity;// * (1 - collide->Ir);
 	}
 	return 1 - result / float(this->ambientOcclusionSamples) * this->ambientOcclusionFactor;
@@ -146,7 +143,6 @@ void Raytracer::getDiffuseSpecularLight(Ray &ray, Object *object, Vec3 &pos, Vec
 	Ray newRay(pos, Vec3());
 	Vec3 refl(reflect(ray.dir, norm));
 	float opacity;
-	diffuse += object->material->ambientColor;
 	Vec3 newPos;
 	for (uint64_t i = 0; i < this->lights.size(); ++i)
 	{
@@ -223,7 +219,7 @@ Vec4 Raytracer::getRayColor(Ray &ray, Object *avoid, int recursion, float *zInde
 	Vec3 norm;
 	if (this->shading)
 	{
-		norm = normalize(object->getNormAt(ray, pos));
+		norm = object->getNormAt(ray, pos);
 		if (dot(norm, ray.dir) > 0)
 		{
 			norm = -norm;
@@ -237,11 +233,12 @@ Vec4 Raytracer::getRayColor(Ray &ray, Object *avoid, int recursion, float *zInde
 		specular = Vec3(0);
 	}
 	Vec4 texColor;
+	Vec2 UV(object->getUVAt(ray, pos));
 	if (object->material->diffuseTexture)
-		texColor = object->material->diffuseTexture->getDataAt(object->getUVAt(ray, pos));
+		texColor = object->material->diffuseTexture->getDataAt(UV);
 	else
 		texColor = Vec4(1);
-	Vec3 col = diffuse + this->ambient;
+	Vec3 col = diffuse + object->material->emissiveColor;
 	col *= getAmbientOcclusion(pos, norm, object);
 	float transparency;
 	if (this->shading)
@@ -261,8 +258,14 @@ Vec4 Raytracer::getRayColor(Ray &ray, Object *avoid, int recursion, float *zInde
 	}
 	col *= object->material->diffuseColor;
 	col *= texColor.rgb();
-	col += specular;
-	col += object->material->specularColor * getGlobalIllumination(pos, norm, object, recursion);
+	Vec3 spec(specular * object->material->specularColor);
+	if (object->material->specularTexture)
+	{
+		Vec4 texSpec(object->material->specularTexture->getDataAt(UV));
+		spec *= texSpec.rgb() * texSpec.a;
+	}
+	col += spec;
+	col += spec * getGlobalIllumination(pos, norm, object, recursion);
 	if (this->shading && object->material->reflection > 0)
 	{
 		Vec4 reflectionColor(getReflectionColor(ray, object, pos, norm, recursion + 1));
@@ -273,7 +276,7 @@ Vec4 Raytracer::getRayColor(Ray &ray, Object *avoid, int recursion, float *zInde
 
 Vec4 Raytracer::calculatePixel(size_t x, size_t y)
 {
-	Ray ray(this->pos, Vec3(0, 0, 1));
+	Ray ray(this->position, Vec3(0, 0, 1));
 	ray.Ni = 1;
 	float ratio = this->width / float(this->height);
 	if (this->width < this->height)
@@ -286,9 +289,10 @@ Vec4 Raytracer::calculatePixel(size_t x, size_t y)
 		{
 			float rx = (2 * (x + xx / float(this->samples)) / this->width - 1) * tan(this->fov / 2 * M_PI / 180) * ratio;
 			float ry = (1 - 2 * (y + yy / float(this->samples)) / this->height) * tan(this->fov / 2 * M_PI / 180);
-			ray.dir = normalize(this->rotMat * Vec3(rx, ry, 1));
+			ray.dir = normalize(this->mat * Vec3(rx, ry, 1));
 			float zIndex = 0;
 			Vec4 col(getRayColor(ray, nullptr, 0, &zIndex));
+			col = clamp(col, 0.f, 1.f);
 			if (zIndex < lowestZ)
 				lowestZ = zIndex;
 			colorSum += col;
@@ -517,20 +521,26 @@ void Raytracer::addLight(Light *light)
 	this->lights.push_back(light);
 }
 
-void Raytracer::setRot(Vec3 vec)
+void Raytracer::setCameraPosition(Vec3 position)
 {
-	//this->rot = vec;
-	Mat3 rot(1);
-	rot = Mat3::rotateZ(rot, vec.z);
-	rot = Mat3::rotateY(rot, vec.y);
-	rot = Mat3::rotateX(rot, vec.x);
-	this->rotMat = rot;
-	Mat3 unrot(1);
-	unrot = Mat3::rotateX(unrot, -vec.x);
-	unrot = Mat3::rotateY(unrot, -vec.y);
-	unrot = Mat3::rotateZ(unrot, -vec.z);
-	this->unrotMat = unrot;
+	this->position = position;
+}
 
+void Raytracer::setCameraRotation(Vec3 rotation)
+{
+	this->mat = Mat3(1);
+	this->mat = Mat3::rotateZ(this->mat, rotation.z);
+	this->mat = Mat3::rotateY(this->mat, rotation.y);
+	this->mat = Mat3::rotateX(this->mat, rotation.x);
+	this->invMat = Mat3(1);
+	this->invMat = Mat3::rotateX(this->invMat, -rotation.x);
+	this->invMat = Mat3::rotateY(this->invMat, -rotation.y);
+	this->invMat = Mat3::rotateZ(this->invMat, -rotation.z);
+}
+
+void Raytracer::setCameraFov(float fov)
+{
+	this->fov = fov;
 }
 
 void Raytracer::setSamples(uint8_t samples)
@@ -548,6 +558,11 @@ void Raytracer::setShading(bool shading)
 	this->shading = shading;
 }
 
+void Raytracer::setGlobalIlluminationDistance(float distance)
+{
+	this->globalIlluminationDistance = distance;
+}
+
 void Raytracer::setGlobalIlluminationSamples(size_t samples)
 {
 	this->globalIlluminationSamples = samples;
@@ -561,6 +576,11 @@ void Raytracer::setGlobalIlluminationFactor(float factor)
 void Raytracer::setGlobalIllumination(bool globalIllumination)
 {
 	this->globalIllumination = globalIllumination;
+}
+
+void Raytracer::setAmbientOcclusionDistance(float distance)
+{
+	this->ambientOcclusionDistance = distance;
 }
 
 void Raytracer::setAmbientOcclusionSamples(size_t samples)

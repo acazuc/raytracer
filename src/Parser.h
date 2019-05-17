@@ -27,7 +27,6 @@ class Parser
 		Vec3 cameraPosition;
 		Vec3 cameraRotation;
 		float cameraFov;
-		Vec3 ambient;
 		uint8_t threads;
 		uint8_t samples;
 		bool shading;
@@ -42,8 +41,10 @@ class Parser
 		float denoisingThreshold;
 		size_t denoisingRadius;
 		size_t globalIlluminationSamples;
+		float globalIlluminationDistance;
 		float globalIlluminationFactor;
 		size_t ambientOcclusionSamples;
+		float ambientOcclusionDistance;
 		float ambientOcclusionFactor;
 		float depthOfFieldAperture;
 		float depthOfFieldFocal;
@@ -105,7 +106,6 @@ class Parser
 		void parseDenoising(xmlNode *node);
 		void parseFilters(xmlNode *node);
 		void parseCamera(xmlNode *node);
-		void parseEnvironment(xmlNode *node);
 		void parseScene(xmlNode *node);
 		Material *getMaterial(std::string name);
 

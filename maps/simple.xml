@@ -1,10 +1,7 @@
-<Scene samples="4" ambientOcclusion="true" ambientOcclusionSamples="50" ambientOcclusionFactor="1" globalIllumination="false" globalIlluminationSamples="10" globalIlluminationFactor="1" threads="8" shading="true">
-	<Environment>
-		<Ambient r="0.2" g="0.2" b="0.2"/>
-	</Environment>
-	<Camera width="1280" height="720" fov="60">
-		<Position x="1" y="3" z="-15"/>
-		<Rotation x="0.3" y="-0.2" z="0"/>
+<Scene samples="4" ambientOcclusion="true" ambientOcclusionSamples="100" ambientOcclusionFactor="1.2" ambientOcclusionDistance="11" globalIllumination="true" globalIlluminationSamples="20" globalIlluminationFactor="1" globalIlluminationDistance="10000000000000000" threads="8" shading="true">
+	<Camera width="1280" height="720" fov="40">
+		<Position x="3" y="0" z="-20"/>
+		<Rotation x="0.05" y="-0.3" z="0"/>
 	</Camera>
 	<Filters>
 		<!--<Saturation value="2"/>-->
@@ -19,45 +16,54 @@
 		<!--<Fisheye aperture="178"/>-->
 		<!--<Glow threshold="0.5" intensity="5" radius="50"/>-->
 		<!--<Blur radius="5"/>-->
-		<!--<DepthOfField focal="16" aperture="2"/>-->
+		<!--<DepthOfField focal="16" aperture="0.5"/>-->
+		<Denoising radius="3" threshold="0.999"/>
 	</Filters>
 	<Materials>
 		<Material name="sphere_trans" transparency="1" refraction="2">
 			<DiffuseColor r="1" g="1" b="1"/>
-			<SpecularColor r="0" g="0" b="0"/>
+			<SpecularColor r="1" g="1" b="1"/>
 		</Material>
-		<Material name="sphere_refl" reflection="1">
+		<Material name="sphere_refl" reflection="0.75">
 			<DiffuseColor r="1" g="1" b="1"/>
 			<SpecularColor r="1" g="1" b="1"/>
 		</Material>
 		<Material name="plane_left">
 			<DiffuseColor r="1" g="0" b="0"/>
 			<SpecularColor r="1" g="1" b="1"/>
+			<SpecularFactor value="500000000"/>
 		</Material>
 		<Material name="plane_right">
 			<DiffuseColor r="0" g="1" b="0"/>
 			<SpecularColor r="1" g="1" b="1"/>
+			<SpecularFactor value="500000000"/>
 		</Material>
 		<Material name="plane_bot">
 			<NormalTexture file="normal_7.png"/>
 			<SpecularColor r="1" g="1" b="1"/>
-			<SpecularFactor value="5000000"/>
+			<SpecularFactor value="500000000"/>
 		</Material>
 		<Material name="plane_top">
 			<DiffuseColor r=".5" g=".5" b=".5"/>
 			<SpecularColor r="1" g="1" b="1"/>
+			<SpecularFactor value="500000000"/>
 		</Material>
 		<Material name="plane_front">
+			<EmissiveColor r="1" g="1" b="1"/>
 			<DiffuseColor r=".5" g=".5" b=".5"/>
 			<SpecularColor r="1" g="1" b="1"/>
+			<SpecularFactor value="500000000"/>
+			<DiffuseTexture file="earth_2.png"/>
 		</Material>
 		<Material name="plane_back">
 			<DiffuseColor r=".5" g=".5" b=".5"/>
 			<SpecularColor r="1" g="1" b="1"/>
+			<SpecularFactor value="500000000"/>
 		</Material>
 		<Material name="cylinder_1">
 			<DiffuseColor r="0" g="0" b="1"/>
 			<SpecularColor r="1" g="1" b="1"/>
+			<SpecularFactor value="10"/>
 		</Material>
 	</Materials>
 	<Objects>
@@ -77,7 +83,7 @@
 		</Plane>
 		<Plane material="plane_bot">
 			<Position x="0" y="-5" z="0"/>
-			<Rotation x="0" y="0" z="0"/>
+			<Rotation x="3.14" y="0" z="0"/>
 		</Plane>
 		<Plane material="plane_left">
 			<Position x="-5" y="0" z="0"/>
@@ -97,7 +103,7 @@
 		</Plane>
 	</Objects>
 	<Lights>
-		<PunctualLight power="0.8">
+		<PunctualLight power="2">
 			<Position x="3" y="0" z="4"/>
 			<Color r="1" g="1" b="1"/>
 		</PunctualLight>

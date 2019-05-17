@@ -35,7 +35,6 @@ Parser::Parser(std::string filename)
 	this->cameraPosition = Vec3(0);
 	this->cameraRotation = Vec3(0);
 	this->cameraFov = 66;
-	this->ambient = Vec3(0);
 	this->threads = 1;
 	this->samples = 1;
 	this->shading = true;
@@ -44,7 +43,13 @@ Parser::Parser(std::string filename)
 	this->defaultMaterial = new Material();
 	this->denoisingThreshold = 0.999;
 	this->denoisingRadius = 2;
+	this->globalIlluminationDistance = 1000;
+	this->globalIlluminationSamples = 50;
+	this->globalIlluminationFactor = 1;
 	this->globalIllumination = false;
+	this->ambientOcclusionDistance = 10;
+	this->ambientOcclusionSamples = 50;
+	this->ambientOcclusionFactor = 1;
 	this->ambientOcclusion = false;
 	this->celShadingCels = 0xff;
 	this->fisheyeAperture = 178;
@@ -78,19 +83,20 @@ Parser::Parser(std::string filename)
 Raytracer *Parser::createRaytracer()
 {
 	Raytracer *raytracer = new Raytracer(this->width, this->height);
+	raytracer->setGlobalIlluminationDistance(this->globalIlluminationDistance);
 	raytracer->setGlobalIlluminationSamples(this->globalIlluminationSamples);
 	raytracer->setGlobalIlluminationFactor(this->globalIlluminationFactor);
 	raytracer->setGlobalIllumination(this->globalIllumination);
+	raytracer->setAmbientOcclusionDistance(this->ambientOcclusionDistance);
 	raytracer->setAmbientOcclusionSamples(this->ambientOcclusionSamples);
 	raytracer->setAmbientOcclusionFactor(this->ambientOcclusionFactor);
 	raytracer->setAmbientOcclusion(this->ambientOcclusion);
 	raytracer->setThreads(this->threads);
 	raytracer->setSamples(this->samples);
 	raytracer->setShading(this->shading);
-	raytracer->setFov(this->cameraFov);
-	raytracer->setAmbient(this->ambient);
-	raytracer->setPos(this->cameraPosition);
-	raytracer->setRot(this->cameraRotation);
+	raytracer->setCameraPosition(this->cameraPosition);
+	raytracer->setCameraRotation(this->cameraRotation);
+	raytracer->setCameraFov(this->cameraFov);
 	for (size_t i = 0; i < this->objects.size(); ++i)
 		raytracer->addObject(this->objects[i]);
 	for (size_t i = 0; i < this->lights.size(); ++i)
@@ -440,15 +446,20 @@ void Parser::parseMaterial(xmlNode *node)
 	}
 	for (xmlNode *child = node->children; child; child = child->next)
 	{
+		if (!std::string(reinterpret_cast<const char*>(child->name)).compare("DiffuseTexture"))
+		{
+			parseTexture(child, &material->diffuseTexture);
+			continue;
+		}
 		if (!std::string(reinterpret_cast<const char*>(child->name)).compare("DiffuseColor"))
 		{
 			parseVec3(child, &material->diffuseColor);
 			material->diffuseColor = clamp(material->diffuseColor, 0.f, 1.f);
 			continue;
 		}
-		if (!std::string(reinterpret_cast<const char*>(child->name)).compare("DiffuseTexture"))
+		if (!std::string(reinterpret_cast<const char*>(child->name)).compare("SpecularTexture"))
 		{
-			parseTexture(child, &material->diffuseTexture);
+			parseTexture(child, &material->specularTexture);
 			continue;
 		}
 		if (!std::string(reinterpret_cast<const char*>(child->name)).compare("SpecularColor"))
@@ -462,9 +473,9 @@ void Parser::parseMaterial(xmlNode *node)
 			parseVec1(child, &material->specularFactor);
 			continue;
 		}
-		if (!std::string(reinterpret_cast<const char*>(child->name)).compare("AmbientColor"))
+		if (!std::string(reinterpret_cast<const char*>(child->name)).compare("EmissiveColor"))
 		{
-			parseVec3(child, &material->ambientColor);
+			parseVec3(child, &material->emissiveColor);
 			continue;
 		}
 		if (!std::string(reinterpret_cast<const char*>(child->name)).compare("NormalTexture"))
@@ -795,18 +806,6 @@ void Parser::parseCamera(xmlNode *node)
 	}
 }
 
-void Parser::parseEnvironment(xmlNode *node)
-{
-	for (xmlNode *child = node->children; child; child = child->next)
-	{
-		if (!std::string(reinterpret_cast<const char*>(child->name)).compare("Ambient"))
-		{
-			parseVec3(child, &this->ambient);
-			continue;
-		}
-	}
-}
-
 void Parser::parseScene(xmlNode *node)
 {
 	for (xmlAttr *attr = node->properties; attr; attr = attr->next)
@@ -835,6 +834,11 @@ void Parser::parseScene(xmlNode *node)
 			parseAttrUInt(attr, &this->globalIlluminationSamples);
 			continue;
 		}
+		if (!std::string(reinterpret_cast<const char*>(attr->name)).compare("globalIlluminationDistamce"))
+		{
+			parseAttrFloat(attr, &this->globalIlluminationDistance);
+			continue;
+		}
 		if (!std::string(reinterpret_cast<const char*>(attr->name)).compare("globalIlluminationFactor"))
 		{
 			parseAttrFloat(attr, &this->globalIlluminationFactor);
@@ -850,6 +854,11 @@ void Parser::parseScene(xmlNode *node)
 			parseAttrUInt(attr, &this->ambientOcclusionSamples);
 			continue;
 		}
+		if (!std::string(reinterpret_cast<const char*>(attr->name)).compare("ambientOcclusionDistance"))
+		{
+			parseAttrFloat(attr, &this->ambientOcclusionDistance);
+			continue;
+		}
 		if (!std::string(reinterpret_cast<const char*>(attr->name)).compare("ambientOcclusionFactor"))
 		{
 			parseAttrFloat(attr, &this->ambientOcclusionFactor);
@@ -863,11 +872,6 @@ void Parser::parseScene(xmlNode *node)
 	}
 	for (xmlNode *child = node->children; child; child = child->next)
 	{
-		if (!std::string(reinterpret_cast<const char*>(child->name)).compare("Environment"))
-		{
-			parseEnvironment(child);
-			continue;
-		}
 		if (!std::string(reinterpret_cast<const char*>(child->name)).compare("Camera"))
 		{
 			parseCamera(child);

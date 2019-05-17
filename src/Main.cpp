@@ -100,10 +100,10 @@ static void draw()
 			{
 				if (raytracer->getBatches()[y][x] != BATCH_CALCULATING && raytracer->getBatches()[y][x] != BATCH_FILTERING)
 					continue;
-				float startX = x0 + std::min(displayWidth - 1, float(x * BATCH_SIZE) * zoom);
-				float startY = y0 + std::min(displayHeight - 1, float(y * BATCH_SIZE) * zoom);
-				float endX = x0 + std::min(displayWidth - 1, float((x + 1) * BATCH_SIZE) * zoom);
-				float endY = y0 + std::min(displayHeight - 1, float((y + 1) * BATCH_SIZE) * zoom);
+				ssize_t startX = x0 + std::min(displayWidth - 1, float(x * BATCH_SIZE) * zoom);
+				ssize_t startY = y0 + std::min(displayHeight - 1, float(y * BATCH_SIZE) * zoom);
+				ssize_t endX = x0 + std::min(displayWidth - 1, float((x + 1) * BATCH_SIZE) * zoom);
+				ssize_t endY = y0 + std::min(displayHeight - 1, float((y + 1) * BATCH_SIZE) * zoom);
 				glVertex2f(startX + .5f, startY + .5f);
 				glVertex2f(endX + .5f, startY + .5f);
 				glVertex2f(endX + .5f, startY + .5f);

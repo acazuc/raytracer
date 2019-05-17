@@ -29,7 +29,7 @@ Vec3 Plane::getNormAt(Ray &ray, Vec3 &pos)
 	{
 		Vec4 bump = this->material->normalTexture->getDataAt(getUVAt(ray, pos));
 		Vec3 tmp = (bump.rgb() - .5f) * 2.f;
-		norm = normalize(Vec3(-tmp.r, tmp.b, tmp.g));
+		norm = Vec3(-tmp.r, tmp.b, tmp.g);
 	}
-	return this->mat * norm;
+	return normalize(this->mat * norm);
 }

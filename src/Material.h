@@ -10,11 +10,12 @@ class Material
 {
 
 	public:
+		Image *specularTexture;
 		Image *diffuseTexture;
 		Image *normalTexture;
+		Vec3 emissiveColor;
 		Vec3 specularColor;
 		Vec3 diffuseColor;
-		Vec3 ambientColor;
 		float specularFactor;
 		float reflection;
 		float refraction;
