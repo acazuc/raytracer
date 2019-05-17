@@ -18,11 +18,10 @@ class Fog : public Filter
 		Vec3 color;
 		float v1;
 		float v2;
-		Vec4 process(Vec4 *img, float *zBuffer, size_t x, size_t y, size_t width, size_t height);
 
 	public:
 		Fog(enum FogType type, Vec3 color, float v1, float v2);
-		void operator()(Vec4 *dst, Vec4 *src, float *zBuffer, uint64_t width, uint64_t height);
+		Vec4 operator()(Vec4 *colorBuffer, float *zBuffer, size_t x, size_t y, size_t width, size_t height);
 
 };
 

@@ -1,0 +1,70 @@
+<Scene samples="3" threads="8" ambientOcclusion="false" globalIllumination="false">
+	<Camera width="1280" height="720" fov="60">
+		<Position x="0" y="20" z="-20"/>
+		<Rotation x="0.78" y="0" z="0"/>
+	</Camera>
+	<Filters>
+		<Gamma value="0.45"/>
+		<!--<Brightness value="0.1"/>-->
+		<!--<Contrast value="1.1"/>-->
+		<Saturation value="2"/>
+		<!--<Sobel/>-->
+		<!--<CelShading cels="20"/>-->
+		<!--<Fisheye aperture="178"/>-->
+		<!--<Blur radius="10"/>-->
+		<Glow radius="100" threshold="0.75" intensity="5"/>
+	</Filters>
+	<Materials>
+		<Material name="sphere_1" reflection="1">
+		</Material>
+		<Material name="sphere_2" transparency="0.5">
+			<DiffuseColor r="1" g="1" b="1"/>
+		</Material>
+	</Materials>
+	<Objects>
+		<Plane>
+			<Position x="0" y="-2" z="0"/>
+		</Plane>
+		<Sphere size="1" material="sphere_1">
+			<Position x="-20" y="0" z="5"/>
+		</Sphere>
+		<Sphere size="1" material="sphere_2">
+			<Position x="-15" y="0" z="5"/>
+		</Sphere>
+		<Sphere size="1">
+			<Position x="-10" y="0" z="5"/>
+		</Sphere>
+		<Sphere size="1">
+			<Position x="-5" y="0" z="5"/>
+		</Sphere>
+		<Sphere size="1" material="sphere_1">
+			<Position x="0" y="0" z="5"/>
+		</Sphere>
+		<Sphere size="1" material="sphere_2">
+			<Position x="5" y="0" z="5"/>
+		</Sphere>
+		<Sphere size="1">
+			<Position x="10" y="0" z="5"/>
+		</Sphere>
+		<Sphere size="1">
+			<Position x="15" y="0" z="5"/>
+		</Sphere>
+		<Sphere size="1">
+			<Position x="20" y="0" z="5"/>
+		</Sphere>
+	</Objects>
+	<Lights>
+		<PunctualLight power="3">
+			<Position x="-5" y="1" z="0"/>
+			<Color r="1" g="0" b="0"/>
+		</PunctualLight>
+		<PunctualLight power="3">
+			<Position x="0" y="1" z="0"/>
+			<Color r="0" g="1" b="0"/>
+		</PunctualLight>
+		<PunctualLight power="3">
+			<Position x="5" y="1" z="0"/>
+			<Color r="0" g="0" b="1"/>
+		</PunctualLight>
+	</Lights>
+</Scene>

@@ -50,6 +50,10 @@ static void draw()
 	glOrtho(0, width, height, 0, 0, 1);
 	glColor3f(1, 1, 1);
 	glBindTexture(GL_TEXTURE_2D, texture);
+	float x0 = (width - raytracer->getWidth()) / 2;
+	float x1 = (width + raytracer->getWidth()) / 2;
+	float y0 = (height - raytracer->getHeight()) / 2;
+	float y1 = (height + raytracer->getHeight()) / 2;
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, raytracer->getWidth(), raytracer->getHeight(), 0, GL_RGBA, GL_UNSIGNED_BYTE, raytracer->getImgData());
 	coords[0] = 0;
 	coords[1] = 0;
@@ -59,14 +63,14 @@ static void draw()
 	coords[5] = 1;
 	coords[6] = 0;
 	coords[7] = 1;
-	vertex[0] = (width - raytracer->getWidth()) / 2;
-	vertex[1] = (height - raytracer->getHeight()) / 2;
-	vertex[2] = (width + raytracer->getWidth()) / 2;
-	vertex[3] = (height - raytracer->getHeight()) / 2;
-	vertex[4] = (width + raytracer->getWidth()) / 2;
-	vertex[5] = (height + raytracer->getHeight()) / 2;
-	vertex[6] = (width - raytracer->getWidth()) / 2;
-	vertex[7] = (height + raytracer->getHeight()) / 2;
+	vertex[0] = x0;
+	vertex[1] = y0;
+	vertex[2] = x1;
+	vertex[3] = y0;
+	vertex[4] = x1;
+	vertex[5] = y1;
+	vertex[6] = x0;
+	vertex[7] = y1;
 	glVertexPointer(2, GL_FLOAT, 0, vertex);
 	glTexCoordPointer(2, GL_FLOAT, 0, coords);
 	glDrawArrays(GL_QUADS, 0, 4);
@@ -80,12 +84,12 @@ static void draw()
 		{
 			for (size_t x = 0; x < raytracer->getBatches()[y].size(); ++x)
 			{
-				if (raytracer->getBatches()[y][x] != BATCH_CALCULATING)
+				if (raytracer->getBatches()[y][x] != BATCH_CALCULATING && raytracer->getBatches()[y][x] != BATCH_FILTERING)
 					continue;
-				size_t startX = std::min(size_t(raytracer->getWidth() - 1), x * BATCH_SIZE);
-				size_t startY = std::min(size_t(raytracer->getHeight() - 1), y * BATCH_SIZE);
-				size_t endX = std::min(size_t(raytracer->getWidth() - 1), (x + 1) * BATCH_SIZE);
-				size_t endY = std::min(size_t(raytracer->getHeight() - 1), (y + 1) * BATCH_SIZE);
+				size_t startX = x0 + std::min(size_t(raytracer->getWidth() - 1), x * BATCH_SIZE);
+				size_t startY = x0 + std::min(size_t(raytracer->getHeight() - 1), y * BATCH_SIZE);
+				size_t endX = y0 + std::min(size_t(raytracer->getWidth() - 1), (x + 1) * BATCH_SIZE);
+				size_t endY = y0 + std::min(size_t(raytracer->getHeight() - 1), (y + 1) * BATCH_SIZE);
 				glVertex2f(startX + .5f, startY + .5f);
 				glVertex2f(endX + .5f, startY + .5f);
 				glVertex2f(endX + .5f, startY + .5f);

@@ -1,4 +1,4 @@
-<Scene samples="2" ambientOcclusion="true" globalIllumination="false" threads="8" shading="true">
+<Scene samples="1" ambientOcclusion="true" globalIllumination="false" threads="8" shading="true">
 	<Environment>
 		<Ambient r="0.2" g="0.2" b="0.2"/>
 	</Environment>
@@ -7,14 +7,19 @@
 		<Rotation x="0.3" y="-0.2" z="0"/>
 	</Camera>
 	<Filters>
+		<!--<Saturation value="2"/>-->
 		<!--<Fxaa/>-->
 		<!--<Sobel/>-->
+		<!--<Contrast value="1.2"/>-->
 		<!--<GreyShade/>-->
 		<!--<CelShading cels="20"/>-->
 		<!--<Negative/>-->
 		<!--<Sepia/>-->
 		<!--<Blur radius="5"/>-->
 		<!--<Fisheye aperture="178"/>-->
+		<!--<Glow threshold="0.5" intensity="5" radius="50"/>-->
+		<!--<Blur radius="5"/>-->
+		<!--<DepthOfField focal="16" aperture="2"/>-->
 	</Filters>
 	<Materials>
 		<Material name="sphere_trans" transparency="1" refraction="1.5">
@@ -73,9 +78,13 @@
 		</Plane>
 	</Objects>
 	<Lights>
-		<PunctualLight power=".8">
-			<Position x="3" y="-1" z="4.5"/>
+		<PunctualLight power="0.8">
+			<Position x="3" y="-1" z="4.1"/>
 			<Color r="1" g="1" b="1"/>
 		</PunctualLight>
+		<!--<DirectionalLight power="0.5">
+			<Direction x="0" y="0" z="1"/>
+			<Color r="0" g="0" b="1"/>
+		</DirectionalLight>-->
 	</Lights>
 </Scene>

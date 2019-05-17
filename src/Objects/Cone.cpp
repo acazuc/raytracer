@@ -20,7 +20,7 @@ bool Cone::collide(Ray &ray, float &t)
 	Quadratic quadratic;
 	quadratic.a = dot(rdir2, rdir);
 	quadratic.b = dot(rdir2, delta) * 2.f;
-	quadratic.c = dot(delta2, delta) - 9;
+	quadratic.c = dot(delta2, delta) - this->size * this->size;
 	quadratic.solve();
 	return (t = quadratic.getMinPosT()) >= EPSILON;
 }

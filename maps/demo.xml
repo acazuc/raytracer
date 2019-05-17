@@ -1,0 +1,59 @@
+<Scene samples="1">
+	<Camera width="1280" height="720" fov="40">
+		<Position x="0" y="3" z="-20"/>
+		<Rotation x="0" y="0" z="0"/>
+	</Camera>
+	<Materials>
+		<Material name="sphere_1">
+			<DiffuseColor r="1" g="0" b="0"/>
+		</Material>
+		<Material name="sphere_2">
+			<DiffuseColor r="0" g="1" b="0"/>
+		</Material>
+		<Material name="cone_1">
+			<DiffuseColor r="1" g="0" b="1"/>
+		</Material>
+		<Material name="cylinder_1">
+			<DiffuseColor r="1" g="1" b="0"/>
+		</Material>
+		<Material name="plane_1">
+			<DiffuseColor r="0" g="0" b="1"/>
+		</Material>
+		<Material name="plane_2">
+			<DiffuseColor r="1" g="1" b="1"/>
+		</Material>
+	</Materials>
+	<Objects>
+		<Sphere size="1" material="sphere_1">
+			<Position x="-5" y="0" z="0"/>
+		</Sphere>
+		<Sphere size="1" material="sphere_2">
+			<Position x="5" y="0" z="0"/>
+		</Sphere>
+		<Cone size="0" material="cone_1">
+			<Position x="-2" y="2" z="7"/>
+			<Rotation x="0" y="0" z="0.78"/>
+		</Cone>
+		<Cylinder size="1" material="cylinder_1">
+			<Position x="2" y="2" z="5"/>
+			<Rotation x="0" y="0" z="-0.78"/>
+		</Cylinder>
+		<Plane material="plane_1">
+			<Position x="0" y="0" z="10"/>
+			<Rotation x="1.57" y="0" z="0"/>
+		</Plane>
+		<Plane material="plane_2">
+			<Position x="0" y="-1" z="0"/>
+		</Plane>
+	</Objects>
+	<Lights>
+		<PunctualLight power="1">
+			<Position x="-5" y="2" z="-5"/>
+			<Color r="1" g="1" b="1"/>
+		</PunctualLight>
+		<PunctualLight power="1">
+			<Position x="5" y="2" z="-5"/>
+			<Color r="1" g="1" b="1"/>
+		</PunctualLight>
+	</Lights>
+</Scene>

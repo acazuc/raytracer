@@ -10,9 +10,9 @@ Fog::Fog(enum FogType type, Vec3 color, float v1, float v2)
 {
 }
 
-Vec4 Fog::process(Vec4 *img, float *zBuffer, size_t x, size_t y, size_t width, size_t height)
+Vec4 Fog::operator()(Vec4 *colorBuffer, float *zBuffer, size_t x, size_t y, size_t width, size_t height)
 {
-	Vec4 diffuse = img[x + y * width];
+	Vec4 diffuse = colorBuffer[x + y * width];
 	float z = zBuffer[x + y * width];
 	float factor = 0;
 	switch (this->type)
@@ -32,15 +32,4 @@ Vec4 Fog::process(Vec4 *img, float *zBuffer, size_t x, size_t y, size_t width, s
 	factor = std::min(1.f, std::max(0.f, factor));
 	return Vec4(mix(diffuse.rgb(), this->color, factor), diffuse.a);
 	(void)height;
-}
-
-void Fog::operator()(Vec4 *dst, Vec4 *src, float *zBuffer, size_t width, size_t height)
-{
-	for (size_t x = 0; x < width; ++x)
-	{
-		for (size_t y = 0; y < height; ++y)
-		{
-			dst[x + y * width] = process(src, zBuffer, x, y, width, height);
-		}
-	}
 }

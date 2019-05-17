@@ -17,8 +17,9 @@ Raytracer::Raytracer(size_t width, size_t height)
 , height(height)
 , width(width)
 {
-	this->batches.resize((height + BATCH_SIZE - 1) / BATCH_SIZE, std::vector<enum BatchState>((width + BATCH_SIZE - 1) / BATCH_SIZE, BATCH_NOT_DONE));
+	this->batches.resize((height + BATCH_SIZE - 1) / BATCH_SIZE, std::vector<enum BatchState>((width + BATCH_SIZE - 1) / BATCH_SIZE, BATCH_NEED_CALCULATION));
 	this->samples = 1;
+	this->threadsCount = 1;
 	this->colorBuffer = new Vec4[width * height];
 	this->zBuffer = new float[width * height];
 	this->imgData = new TVec4<uint8_t>[width * height];
@@ -54,7 +55,7 @@ bool Raytracer::trace(Ray &ray, Object *&object, Vec3 &pos, Object *avoid)
 	return true;
 }
 
-#define GI_SAMPLES 25
+#define GI_SAMPLES 50
 #define GI_FACTOR 1
 #define GI_ATTENUATION 2
 
@@ -88,7 +89,7 @@ Vec3 Raytracer::getGlobalIllumination(Vec3 &pos, Vec3 &norm, Object *object, int
 	return result / static_cast<float>(GI_SAMPLES) * static_cast<float>(GI_FACTOR);
 }
 
-#define AO_SAMPLES 25
+#define AO_SAMPLES 50
 #define AO_FACTOR 1
 #define AO_ATTENUATION 2
 
@@ -290,52 +291,91 @@ void Raytracer::calculatePixel(uint64_t x, uint64_t y)
 	Vec3 col = colorSum / static_cast<float>(this->samples * this->samples);
 	col = clamp(col, 0.f, 1.f);
 	this->colorBuffer[idx] = Vec4(col, 1);
-	this->imgData[idx].r = col.r * 0xff;
-	this->imgData[idx].g = col.g * 0xff;
-	this->imgData[idx].b = col.b * 0xff;
-	this->imgData[idx].a = 1;
 }
 
-void Raytracer::runThread(Raytracer *raytracer)
+bool Raytracer::findBatch(enum BatchState state, enum BatchState setState, size_t *batchX, size_t *batchY)
+{
+	std::lock_guard<std::mutex> guard(this->batchesMutex);
+	ssize_t batchesY = (this->batches.size() + 1) / 2;
+	ssize_t batchesX = (this->batches[0].size() + 1) / 2;
+	ssize_t batchesSize = std::max(batchesY, batchesX) + 1;
+	for (ssize_t i = 0; i < batchesSize; ++i)
+	{
+		for (ssize_t yy = batchesY - i; yy < batchesY + i; ++yy)
+		{
+			for (ssize_t xx = batchesX - i; xx < batchesX + i; ++xx)
+			{
+				if (yy < 0 || size_t(yy) >= this->batches.size())
+					continue;
+				if (xx < 0 || size_t(xx) >= this->batches[0].size())
+					continue;
+				if (this->batches[yy][xx] == state)
+				{
+					*batchY = yy;
+					*batchX = xx;
+					this->batches[yy][xx] = setState;
+					return true;
+				}
+			}
+		}
+	}
+	return false;
+}
+
+void Raytracer::runThreadFiltering()
 {
 	while (true)
 	{
 		size_t batchX;
 		size_t batchY;
-		{
-			std::lock_guard<std::mutex> guard(raytracer->batchesMutex);
-			ssize_t batchesY = (raytracer->batches.size() + 1) / 2;
-			ssize_t batchesX = (raytracer->batches[0].size() + 1) / 2;
-			ssize_t batchesSize = std::max(batchesY, batchesX) + 1;
-			for (ssize_t i = 0; i < batchesSize; ++i)
-			{
-				for (ssize_t yy = batchesY - i; yy < batchesY + i; ++yy)
-				{
-					for (ssize_t xx = batchesX - i; xx < batchesX + i; ++xx)
-					{
-						if (yy < 0 || size_t(yy) >= raytracer->batches.size())
-							continue;
-						if (xx < 0 || size_t(xx) >= raytracer->batches[0].size())
-							continue;
-						if (raytracer->batches[yy][xx] == BATCH_NOT_DONE)
-						{
-							batchY = yy;
-							batchX = xx;
-							raytracer->batches[yy][xx] = BATCH_CALCULATING;
-							goto calcBatch;
-						}
-					}
-				}
-			}
-		}
-		return;
-calcBatch:
+		if (!findBatch(BATCH_NEED_FILTERING, BATCH_FILTERING, &batchX, &batchY))
+			return;
 		uint8_t calc[BATCH_SIZE * BATCH_SIZE];
 		std::fill(std::begin(calc), std::end(calc), 0);
 		size_t startX = batchX * BATCH_SIZE;
 		size_t startY = batchY * BATCH_SIZE;
-		size_t endX = std::min(raytracer->width, startX + BATCH_SIZE);
-		size_t endY = std::min(raytracer->height, startY + BATCH_SIZE);
+		size_t endX = std::min(this->width, startX + BATCH_SIZE);
+		size_t endY = std::min(this->height, startY + BATCH_SIZE);
+		for (size_t i = BATCH_SIZE / 2; i; i /= 2)
+		{
+			for (size_t y = startY; y < endY; y += i)
+			{
+				for (size_t x = startX; x < endX; x += i)
+				{
+					if (calc[(y % BATCH_SIZE) * BATCH_SIZE + (x % BATCH_SIZE)])
+						continue;
+					calc[(y % BATCH_SIZE) * BATCH_SIZE + (x % BATCH_SIZE)] = 1;
+					size_t idx = x + y * this->width;
+					this->filterDst[idx] = (*this->currentFilter)(this->filterSrc, this->zBuffer, x, y, this->width, this->height);
+					Vec4 col(this->filterDst[idx]);
+					this->imgData[idx].r = col.r * 0xff;
+					this->imgData[idx].g = col.g * 0xff;
+					this->imgData[idx].b = col.b * 0xff;
+					this->imgData[idx].a = col.a * 0xff;
+				}
+			}
+		}
+		{
+			std::lock_guard<std::mutex> guard(this->batchesMutex);
+			this->batches[batchY][batchX] = BATCH_DONE;
+		}
+	}
+}
+
+void Raytracer::runThreadCalculation()
+{
+	while (true)
+	{
+		size_t batchX;
+		size_t batchY;
+		if (!findBatch(BATCH_NEED_CALCULATION, BATCH_CALCULATING, &batchX, &batchY))
+			return;
+		uint8_t calc[BATCH_SIZE * BATCH_SIZE];
+		std::fill(std::begin(calc), std::end(calc), 0);
+		size_t startX = batchX * BATCH_SIZE;
+		size_t startY = batchY * BATCH_SIZE;
+		size_t endX = std::min(this->width, startX + BATCH_SIZE);
+		size_t endY = std::min(this->height, startY + BATCH_SIZE);
 		for (size_t i = BATCH_SIZE / 2; i; i /= 2)
 		{
 			for (size_t y = startY; y < endY; y += i)
@@ -345,24 +385,54 @@ calcBatch:
 					if (!calc[(y % BATCH_SIZE) * BATCH_SIZE + (x % BATCH_SIZE)])
 					{
 						calc[(y % BATCH_SIZE) * BATCH_SIZE + (x % BATCH_SIZE)] = 1;
-						raytracer->calculatePixel(x, y);
+						this->calculatePixel(x, y);
+						size_t idx = x + y * this->width;
+						Vec4 col(this->colorBuffer[idx]);
+						this->imgData[idx].r = col.r * 0xff;
+						this->imgData[idx].g = col.g * 0xff;
+						this->imgData[idx].b = col.b * 0xff;
+						this->imgData[idx].a = col.a * 0xff;
 					}
-					size_t base = x + y * raytracer->width;
+					size_t base = x + y * this->width;
 					for (size_t yy = 0; yy < i; ++yy)
 					{
 						for (size_t xx = 0; xx < i; ++xx)
 						{
-							size_t idx = x + xx + (y + yy) * raytracer->width;
+							size_t idx = x + xx + (y + yy) * this->width;
 							if (!idx)
 								continue;
-							raytracer->imgData[idx] = raytracer->imgData[base];
+							this->imgData[idx] = this->imgData[base];
 						}
 					}
 				}
 			}
 		}
-		std::lock_guard<std::mutex> guard(raytracer->batchesMutex);
-		raytracer->batches[batchY][batchX] = BATCH_DONE;
+		{
+			std::lock_guard<std::mutex> guard(this->batchesMutex);
+			if (this->filters.size())
+				this->batches[batchY][batchX] = BATCH_NEED_FILTERING;
+			else
+				this->batches[batchY][batchX] = BATCH_DONE;
+		}
+	}
+}
+
+void Raytracer::runThread(Raytracer *raytracer)
+{
+	std::unique_lock<std::mutex> lock(raytracer->conditionMutex, std::defer_lock);
+	while (true)
+	{
+		if (raytracer->threadsStopped)
+			return;
+		if (raytracer->threadsAction == THREAD_CALCULATION)
+			raytracer->runThreadCalculation();
+		else if (raytracer->threadsAction == THREAD_FILTERING)
+			raytracer->runThreadFiltering();
+		raytracer->threadsFinished++;
+		lock.lock();
+		raytracer->finishedCondition.notify_one();
+		raytracer->runCondition.wait(lock);
+		lock.unlock();
 	}
 }
 
@@ -370,46 +440,59 @@ void Raytracer::render()
 {
 	uint64_t started;
 	uint64_t ended;
+	std::unique_lock<std::mutex> lock(this->conditionMutex, std::defer_lock);
 	started = System::nanotime();
+	this->threadsStopped = false;
+	this->threadsAction = THREAD_CALCULATION;
+	this->threadsFinished = 0;
 	this->threads.resize(this->threadsCount);
 	for (uint8_t i = 0; i < this->threadsCount; ++i)
 	{
 		this->threads[i] = new std::thread(&Raytracer::runThread, this);
 	}
+	lock.lock();
+	this->finishedCondition.wait(lock, [this]{return this->threadsFinished == this->threadsCount;});
+	lock.unlock();
+	ended = System::nanotime();
+	LOG("Draw: " << (ended - started) / 1000000 << " ms");
+	if (this->filters.size())
+	{
+		this->threadsAction = THREAD_FILTERING;
+		started = System::nanotime();
+		Vec4 *tmp = new Vec4[this->width * this->height];
+		this->filterDst = tmp;
+		this->filterSrc = this->colorBuffer;
+		for (size_t i = 0; i < this->filters.size(); ++i)
+		{
+			for (size_t y = 0; y < this->batches.size(); ++y)
+			{
+				for (size_t x = 0; x < this->batches[y].size(); ++x)
+					this->batches[y][x] = BATCH_NEED_FILTERING;
+			}
+			this->threadsFinished = 0;
+			this->currentFilter = this->filters[i];
+			lock.lock();
+			this->runCondition.notify_all();
+			this->finishedCondition.wait(lock, [this]{return this->threadsFinished == this->threadsCount;});
+			lock.unlock();
+			std::swap(this->filterSrc, this->filterDst);
+		}
+		if (this->filterSrc != this->colorBuffer)
+			std::memcpy(this->colorBuffer, this->filterSrc, sizeof(*this->filterSrc) * this->width * this->height);
+		delete[] (tmp);
+		ended = System::nanotime();
+		LOG("Filters: " << (ended - started) / 1000000 << " ms");
+	}
+	this->threadsStopped = true;
+	lock.lock();
+	this->runCondition.notify_all();
+	lock.unlock();
 	for (uint8_t i = 0; i < this->threadsCount; ++i)
 	{
 		this->threads[i]->join();
 		delete (this->threads[i]);
 	}
 	this->threads.clear();
-	ended = System::nanotime();
-	LOG("Draw: " << (ended - started) / 1000000 << " ms");
-	if (this->filters.size())
-	{
-		started = System::nanotime();
-		Vec4 *tmp = new Vec4[this->width * this->height];
-		Vec4 *dst = tmp;
-		Vec4 *src = this->colorBuffer;
-		for (size_t i = 0; i < this->filters.size(); ++i)
-		{
-			(*this->filters[i])(dst, src, this->zBuffer, this->width, this->height);
-			std::swap(src, dst);
-		}
-		if (src != this->colorBuffer)
-			std::memcpy(this->colorBuffer, src, sizeof(*src) * this->width * this->height);
-		delete[] (tmp);
-		ended = System::nanotime();
-		LOG("Filters: " << (ended - started) / 1000000 << " ms");
-	}
-	for (size_t i = 0; i < this->width * this->height; ++i)
-	{
-		Vec4 org = this->colorBuffer[i];
-		org = clamp(org, 0.f, 1.f);
-		this->imgData[i].r = org.r * 0xff;
-		this->imgData[i].g = org.g * 0xff;
-		this->imgData[i].b = org.b * 0xff;
-		this->imgData[i].a = org.a * 0xff;
-	}
 }
 
 void Raytracer::addFilter(Filter *filter)

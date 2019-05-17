@@ -1,9 +1,14 @@
 #include "Parser.h"
+#include "Filters/Color/Brightness.h"
+#include "Filters/Color/Saturation.h"
 #include "Lights/DirectionalLight.h"
 #include "Filters/Color/GreyShade.h"
 #include "Filters/Color/Negative.h"
+#include "Filters/Color/Contrast.h"
 #include "Lights/PunctualLight.h"
+#include "Filters/DepthOfField.h"
 #include "Filters/Color/Sepia.h"
+#include "Filters/Color/Gamma.h"
 #include "Objects/Cylinder.h"
 #include "Objects/Triangle.h"
 #include "Filters/Fisheye.h"
@@ -14,13 +19,14 @@
 #include "Lights/Light.h"
 #include "Filters/Fxaa.h"
 #include "Filters/Blur.h"
+#include "Filters/Glow.h"
 #include "Filters/Cel.h"
 #include "Raytracer.h"
 #include "Material.h"
 #include "Image.h"
+#include "Debug.h"
 #include "PNG.h"
 #include <algorithm>
-#include <iostream>
 
 Parser::Parser(std::string filename)
 : filename(filename)
@@ -39,15 +45,30 @@ Parser::Parser(std::string filename)
 	this->ambientOcclusion = false;
 	this->celShadingCels = 0xff;
 	this->fisheyeAperture = 178;
+	this->glowThreshold = 0.8;
+	this->glowIntensity = 1;
+	this->glowRadius = 10;
 	this->blurRadius = 1;
+	this->depthOfFieldAperture = 555;
+	this->depthOfFieldFocal = 1;
+	this->brightnessValue = 0;
+	this->saturationValue = 1;
+	this->contrastValue = 1;
+	this->gammaValue = 1;
+	this->depthOfField = false;
 	this->celShading = false;
+	this->brightness = false;
+	this->saturation = false;
 	this->greyShade = false;
 	this->negative = false;
+	this->contrast = false;
 	this->fisheye = false;
 	this->sobel = false;
 	this->sepia = false;
+	this->gamma = false;
 	this->fxaa = false;
 	this->blur = false;
+	this->glow = false;
 }
 
 Raytracer *Parser::createRaytracer()
@@ -66,6 +87,16 @@ Raytracer *Parser::createRaytracer()
 		raytracer->addObject(this->objects[i]);
 	for (size_t i = 0; i < this->lights.size(); ++i)
 		raytracer->addLight(this->lights[i]);
+	if (this->gamma)
+		raytracer->addFilter(new Gamma(this->gammaValue));
+	if (this->contrast)
+		raytracer->addFilter(new Contrast(this->contrastValue));
+	if (this->brightness)
+		raytracer->addFilter(new Brightness(this->brightnessValue));
+	if (this->saturation)
+		raytracer->addFilter(new Saturation(this->saturationValue));
+	if (this->depthOfField)
+		raytracer->addFilter(new DepthOfField(this->depthOfFieldFocal, 1 / this->depthOfFieldAperture));
 	if (this->sobel)
 		raytracer->addFilter(new Sobel());
 	if (this->greyShade)
@@ -82,6 +113,8 @@ Raytracer *Parser::createRaytracer()
 		raytracer->addFilter(new Fxaa());
 	if (this->blur)
 		raytracer->addFilter(new Blur(this->blurRadius));
+	if (this->glow)
+		raytracer->addFilter(new Glow(this->glowRadius, this->glowThreshold, this->glowIntensity));
 	return raytracer;
 }
 
@@ -494,9 +527,7 @@ void Parser::parseBlur(xmlNode *node)
 	{
 		if (!std::string(reinterpret_cast<const char*>(attr->name)).compare("radius"))
 		{
-			uint64_t value;
-			parseAttrUInt(attr, &value);
-			this->blurRadius = value;
+			parseAttrUInt(attr, &this->blurRadius);
 			continue;
 		}
 	}
@@ -505,12 +536,111 @@ void Parser::parseBlur(xmlNode *node)
 
 void Parser::parseFisheye(xmlNode *node)
 {
-	this->blur = true;
+	this->fisheye = true;
 	for (xmlAttr *attr = node->properties; attr; attr = attr->next)
 	{
 		if (!std::string(reinterpret_cast<const char*>(attr->name)).compare("aperture"))
 		{
 			parseAttrFloat(attr, &this->fisheyeAperture);
+			continue;
+		}
+	}
+	(void)node;
+}
+
+void Parser::parseGlow(xmlNode *node)
+{
+	this->glow = true;
+	for (xmlAttr *attr = node->properties; attr; attr = attr->next)
+	{
+		if (!std::string(reinterpret_cast<const char*>(attr->name)).compare("radius"))
+		{
+			parseAttrUInt(attr, &this->glowRadius);
+			continue;
+		}
+		if (!std::string(reinterpret_cast<const char*>(attr->name)).compare("threshold"))
+		{
+			parseAttrFloat(attr, &this->glowThreshold);
+			continue;
+		}
+		if (!std::string(reinterpret_cast<const char*>(attr->name)).compare("intensity"))
+		{
+			parseAttrFloat(attr, &this->glowIntensity);
+			continue;
+		}
+	}
+	(void)node;
+}
+
+void Parser::parseGamma(xmlNode *node)
+{
+	this->gamma = true;
+	for (xmlAttr *attr = node->properties; attr; attr = attr->next)
+	{
+		if (!std::string(reinterpret_cast<const char*>(attr->name)).compare("value"))
+		{
+			parseAttrFloat(attr, &this->gammaValue);
+			continue;
+		}
+	}
+	(void)node;
+}
+
+void Parser::parseBrightness(xmlNode *node)
+{
+	this->brightness = true;
+	for (xmlAttr *attr = node->properties; attr; attr = attr->next)
+	{
+		if (!std::string(reinterpret_cast<const char*>(attr->name)).compare("value"))
+		{
+			parseAttrFloat(attr, &this->brightnessValue);
+			continue;
+		}
+	}
+	(void)node;
+}
+
+void Parser::parseContrast(xmlNode *node)
+{
+	this->contrast = true;
+	for (xmlAttr *attr = node->properties; attr; attr = attr->next)
+	{
+		if (!std::string(reinterpret_cast<const char*>(attr->name)).compare("value"))
+		{
+			parseAttrFloat(attr, &this->contrastValue);
+			continue;
+		}
+	}
+	(void)node;
+}
+
+void Parser::parseSaturation(xmlNode *node)
+{
+	this->saturation = true;
+	for (xmlAttr *attr = node->properties; attr; attr = attr->next)
+	{
+		if (!std::string(reinterpret_cast<const char*>(attr->name)).compare("value"))
+		{
+			parseAttrFloat(attr, &this->saturationValue);
+			continue;
+		}
+	}
+	(void)node;
+}
+
+void Parser::parseDepthOfField(xmlNode *node)
+{
+	this->depthOfField = true;
+	for (xmlAttr *attr = node->properties; attr; attr = attr->next)
+	{
+		if (!std::string(reinterpret_cast<const char*>(attr->name)).compare("focal"))
+		{
+			parseAttrFloat(attr, &this->depthOfFieldFocal);
+			continue;
+		}
+		if (!std::string(reinterpret_cast<const char*>(attr->name)).compare("aperture"))
+		{
+			parseAttrFloat(attr, &this->depthOfFieldAperture);
 			continue;
 		}
 	}
@@ -559,6 +689,36 @@ void Parser::parseFilters(xmlNode *node)
 		if (!std::string(reinterpret_cast<const char*>(child->name)).compare("Fisheye"))
 		{
 			parseFisheye(child);
+			continue;
+		}
+		if (!std::string(reinterpret_cast<const char*>(child->name)).compare("Glow"))
+		{
+			parseGlow(child);
+			continue;
+		}
+		if (!std::string(reinterpret_cast<const char*>(child->name)).compare("Gamma"))
+		{
+			parseGamma(child);
+			continue;
+		}
+		if (!std::string(reinterpret_cast<const char*>(child->name)).compare("Brightness"))
+		{
+			parseBrightness(child);
+			continue;
+		}
+		if (!std::string(reinterpret_cast<const char*>(child->name)).compare("Contrast"))
+		{
+			parseContrast(child);
+			continue;
+		}
+		if (!std::string(reinterpret_cast<const char*>(child->name)).compare("Saturation"))
+		{
+			parseSaturation(child);
+			continue;
+		}
+		if (!std::string(reinterpret_cast<const char*>(child->name)).compare("DepthOfField"))
+		{
+			parseDepthOfField(child);
 			continue;
 		}
 	}

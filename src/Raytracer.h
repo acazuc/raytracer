@@ -6,6 +6,7 @@
 # include "Vec/Vec4.h"
 # include "Vec/Vec3.h"
 # include "Mat/Mat3.h"
+# include <condition_variable>
 # include <cstdint>
 # include <vector>
 # include <thread>
@@ -13,9 +14,17 @@
 
 enum BatchState
 {
-	BATCH_NOT_DONE,
+	BATCH_NEED_CALCULATION,
 	BATCH_CALCULATING,
+	BATCH_NEED_FILTERING,
+	BATCH_FILTERING,
 	BATCH_DONE
+};
+
+enum ThreadAction
+{
+	THREAD_CALCULATION,
+	THREAD_FILTERING
 };
 
 class Filter;
@@ -32,12 +41,20 @@ class Raytracer
 		std::vector<Filter*> filters;
 		std::vector<Object*> objects;
 		std::vector<Light*> lights;
+		std::condition_variable finishedCondition;
+		std::condition_variable runCondition;
+		std::mutex conditionMutex;
 		std::mutex batchesMutex;
+		Filter *currentFilter;
+		Vec4 *filterSrc;
+		Vec4 *filterDst;
 		Vec4 *colorBuffer;
 		Mat3 unrotMat;
 		Vec3 ambient;
 		Mat3 rotMat;
 		Vec3 pos;
+		enum ThreadAction threadsAction;
+		uint8_t threadsFinished;
 		uint8_t threadsCount;
 		uint8_t samples;
 		size_t height;
@@ -46,9 +63,13 @@ class Raytracer
 		float fov;
 		bool globalIllumination;
 		bool ambientOcclusion;
+		bool threadsStopped;
 		bool shading;
 		TVec4<uint8_t> *imgData;
 		static void runThread(Raytracer *raytracer);
+		bool findBatch(enum BatchState state, enum BatchState setState, size_t *batchX, size_t *batchY);
+		void runThreadCalculation();
+		void runThreadFiltering();
 		void calculatePixel(size_t x, size_t y);
 		Vec3 getRayColor(Ray &ray, Object *avoid, int recursion, float *zIndex = nullptr);
 		bool trace(Ray &ray, Object *&object, Vec3 &pos, Object *avoid);

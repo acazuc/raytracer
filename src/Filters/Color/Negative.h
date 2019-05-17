@@ -7,7 +7,7 @@ class Negative : public Filter
 {
 
 	public:
-		void operator()(Vec4 *dst, Vec4 *src, float *zBuffer, size_t width, size_t height);
+		Vec4 operator()(Vec4 *colorBuffer, float *zBuffer, size_t x, size_t y, size_t width, size_t height);
 
 };
 

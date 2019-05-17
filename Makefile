@@ -2,7 +2,7 @@ NAME = raytracer
 
 CXX = g++
 
-CXXFLAGS = -std=gnu++17 -Wall -Wextra -Ofast -g -flto -march=native -finline
+CXXFLAGS = -std=gnu++17 -Wall -Wextra -Ofast -g -flto=4 -march=native -finline
 
 INCLUDES = -I include
 INCLUDES+= -I /usr/include/libxml2
@@ -32,10 +32,15 @@ SRCS_NAME = Main.cpp \
 	    Filters/Fisheye.cpp \
 	    Filters/Blur.cpp \
 	    Filters/Fog.cpp \
+	    Filters/Glow.cpp \
+	    Filters/DepthOfField.cpp \
 	    Filters/Color/Gamma.cpp \
 	    Filters/Color/GreyShade.cpp \
 	    Filters/Color/Negative.cpp \
 	    Filters/Color/Sepia.cpp \
+	    Filters/Color/Brightness.cpp \
+	    Filters/Color/Contrast.cpp \
+	    Filters/Color/Saturation.cpp \
 	    Utils/System.cpp \
 
 SRCS = $(addprefix $(SRCS_PATH), $(SRCS_NAME))
