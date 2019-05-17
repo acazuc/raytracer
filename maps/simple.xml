@@ -1,4 +1,4 @@
-<Scene samples="1" ambientOcclusion="true" globalIllumination="false" threads="8" shading="true">
+<Scene samples="4" ambientOcclusion="true" ambientOcclusionSamples="50" ambientOcclusionFactor="1" globalIllumination="false" globalIlluminationSamples="10" globalIlluminationFactor="1" threads="8" shading="true">
 	<Environment>
 		<Ambient r="0.2" g="0.2" b="0.2"/>
 	</Environment>
@@ -22,23 +22,42 @@
 		<!--<DepthOfField focal="16" aperture="2"/>-->
 	</Filters>
 	<Materials>
-		<Material name="sphere_trans" transparency="1" refraction="1.5">
+		<Material name="sphere_trans" transparency="1" refraction="2">
 			<DiffuseColor r="1" g="1" b="1"/>
+			<SpecularColor r="0" g="0" b="0"/>
 		</Material>
 		<Material name="sphere_refl" reflection="1">
 			<DiffuseColor r="1" g="1" b="1"/>
+			<SpecularColor r="1" g="1" b="1"/>
 		</Material>
 		<Material name="plane_left">
 			<DiffuseColor r="1" g="0" b="0"/>
+			<SpecularColor r="1" g="1" b="1"/>
 		</Material>
 		<Material name="plane_right">
 			<DiffuseColor r="0" g="1" b="0"/>
+			<SpecularColor r="1" g="1" b="1"/>
 		</Material>
 		<Material name="plane_bot">
 			<NormalTexture file="normal_7.png"/>
+			<SpecularColor r="1" g="1" b="1"/>
+			<SpecularFactor value="5000000"/>
+		</Material>
+		<Material name="plane_top">
+			<DiffuseColor r=".5" g=".5" b=".5"/>
+			<SpecularColor r="1" g="1" b="1"/>
+		</Material>
+		<Material name="plane_front">
+			<DiffuseColor r=".5" g=".5" b=".5"/>
+			<SpecularColor r="1" g="1" b="1"/>
+		</Material>
+		<Material name="plane_back">
+			<DiffuseColor r=".5" g=".5" b=".5"/>
+			<SpecularColor r="1" g="1" b="1"/>
 		</Material>
 		<Material name="cylinder_1">
 			<DiffuseColor r="0" g="0" b="1"/>
+			<SpecularColor r="1" g="1" b="1"/>
 		</Material>
 	</Materials>
 	<Objects>
@@ -79,7 +98,7 @@
 	</Objects>
 	<Lights>
 		<PunctualLight power="0.8">
-			<Position x="3" y="-1" z="4.1"/>
+			<Position x="3" y="0" z="4"/>
 			<Color r="1" g="1" b="1"/>
 		</PunctualLight>
 		<!--<DirectionalLight power="0.5">

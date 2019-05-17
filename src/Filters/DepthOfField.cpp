@@ -30,7 +30,7 @@ Vec4 DepthOfField::operator()(Vec4 *colorBuffer, float *zBuffer, size_t x, size_
 					factor = 1;
 				factor = 1 - factor;
 			}
-			total += getPixelAt(colorBuffer, x + xx, y + yy, width, height).rgb() * factor;
+			total += getPixelAt(colorBuffer, ssize_t(x) + xx, ssize_t(y) + yy, width, height).rgb() * factor;
 			count += factor;
 		}
 	}

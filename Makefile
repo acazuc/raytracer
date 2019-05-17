@@ -34,6 +34,7 @@ SRCS_NAME = Main.cpp \
 	    Filters/Fog.cpp \
 	    Filters/Glow.cpp \
 	    Filters/DepthOfField.cpp \
+	    Filters/Denoising.cpp \
 	    Filters/Color/Gamma.cpp \
 	    Filters/Color/GreyShade.cpp \
 	    Filters/Color/Negative.cpp \

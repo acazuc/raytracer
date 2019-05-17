@@ -21,7 +21,7 @@ Vec4 Glow::operator()(Vec4 *colorBuffer, float *zBuffer, size_t x, size_t y, siz
 			if (factor > 1)
 				factor = 1;
 			factor = 1 - factor;
-			total += clamp((getPixelAt(colorBuffer, x + xx, y + yy, width, height).rgb() - threshold) / (1 - threshold), 0.f, 1.f) * factor;
+			total += clamp((getPixelAt(colorBuffer, ssize_t(x) + xx, ssize_t(y) + yy, width, height).rgb() - threshold) / (1 - threshold), 0.f, 1.f) * factor;
 			count += factor;
 		}
 	}

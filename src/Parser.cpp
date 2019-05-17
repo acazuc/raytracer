@@ -9,6 +9,7 @@
 #include "Filters/DepthOfField.h"
 #include "Filters/Color/Sepia.h"
 #include "Filters/Color/Gamma.h"
+#include "Filters/Denoising.h"
 #include "Objects/Cylinder.h"
 #include "Objects/Triangle.h"
 #include "Filters/Fisheye.h"
@@ -41,6 +42,8 @@ Parser::Parser(std::string filename)
 	this->width = 640;
 	this->height = 480;
 	this->defaultMaterial = new Material();
+	this->denoisingThreshold = 0.999;
+	this->denoisingRadius = 2;
 	this->globalIllumination = false;
 	this->ambientOcclusion = false;
 	this->celShadingCels = 0xff;
@@ -60,6 +63,7 @@ Parser::Parser(std::string filename)
 	this->brightness = false;
 	this->saturation = false;
 	this->greyShade = false;
+	this->denoising = false;
 	this->negative = false;
 	this->contrast = false;
 	this->fisheye = false;
@@ -74,7 +78,11 @@ Parser::Parser(std::string filename)
 Raytracer *Parser::createRaytracer()
 {
 	Raytracer *raytracer = new Raytracer(this->width, this->height);
+	raytracer->setGlobalIlluminationSamples(this->globalIlluminationSamples);
+	raytracer->setGlobalIlluminationFactor(this->globalIlluminationFactor);
 	raytracer->setGlobalIllumination(this->globalIllumination);
+	raytracer->setAmbientOcclusionSamples(this->ambientOcclusionSamples);
+	raytracer->setAmbientOcclusionFactor(this->ambientOcclusionFactor);
 	raytracer->setAmbientOcclusion(this->ambientOcclusion);
 	raytracer->setThreads(this->threads);
 	raytracer->setSamples(this->samples);
@@ -87,6 +95,8 @@ Raytracer *Parser::createRaytracer()
 		raytracer->addObject(this->objects[i]);
 	for (size_t i = 0; i < this->lights.size(); ++i)
 		raytracer->addLight(this->lights[i]);
+	if (this->denoising)
+		raytracer->addFilter(new Denoising(this->denoisingRadius, this->denoisingThreshold));
 	if (this->gamma)
 		raytracer->addFilter(new Gamma(this->gammaValue));
 	if (this->contrast)
@@ -128,6 +138,7 @@ void Parser::parsePunctualLight(xmlNode *node)
 			float power;
 			parseAttrFloat(attr, &power);
 			light->setIntensity(power);
+			continue;
 		}
 	}
 	for (xmlNode *child = node->children; child; child = child->next)
@@ -160,6 +171,7 @@ void Parser::parseDirectionalLight(xmlNode *node)
 			float power;
 			parseAttrFloat(attr, &power);
 			light->setIntensity(power);
+			continue;
 		}
 	}
 	for (xmlNode *child = node->children; child; child = child->next)
@@ -647,6 +659,25 @@ void Parser::parseDepthOfField(xmlNode *node)
 	(void)node;
 }
 
+void Parser::parseDenoising(xmlNode *node)
+{
+	this->denoising = true;
+	for (xmlAttr *attr = node->properties; attr; attr = attr->next)
+	{
+		if (!std::string(reinterpret_cast<const char*>(attr->name)).compare("radius"))
+		{
+			parseAttrUInt(attr, &this->denoisingRadius);
+			continue;
+		}
+		if (!std::string(reinterpret_cast<const char*>(attr->name)).compare("threshold"))
+		{
+			parseAttrFloat(attr, &this->denoisingThreshold);
+			continue;
+		}
+	}
+	(void)node;
+}
+
 void Parser::parseFilters(xmlNode *node)
 {
 	for (xmlNode *child = node->children; child; child = child->next)
@@ -719,6 +750,11 @@ void Parser::parseFilters(xmlNode *node)
 		if (!std::string(reinterpret_cast<const char*>(child->name)).compare("DepthOfField"))
 		{
 			parseDepthOfField(child);
+			continue;
+		}
+		if (!std::string(reinterpret_cast<const char*>(child->name)).compare("Denoising"))
+		{
+			parseDenoising(child);
 			continue;
 		}
 	}
@@ -794,9 +830,29 @@ void Parser::parseScene(xmlNode *node)
 			parseAttrBool(attr, &this->shading);
 			continue;
 		}
+		if (!std::string(reinterpret_cast<const char*>(attr->name)).compare("globalIlluminationSamples"))
+		{
+			parseAttrUInt(attr, &this->globalIlluminationSamples);
+			continue;
+		}
+		if (!std::string(reinterpret_cast<const char*>(attr->name)).compare("globalIlluminationFactor"))
+		{
+			parseAttrFloat(attr, &this->globalIlluminationFactor);
+			continue;
+		}
 		if (!std::string(reinterpret_cast<const char*>(attr->name)).compare("globalIllumination"))
 		{
 			parseAttrBool(attr, &this->globalIllumination);
+			continue;
+		}
+		if (!std::string(reinterpret_cast<const char*>(attr->name)).compare("ambientOcclusionSamples"))
+		{
+			parseAttrUInt(attr, &this->ambientOcclusionSamples);
+			continue;
+		}
+		if (!std::string(reinterpret_cast<const char*>(attr->name)).compare("ambientOcclusionFactor"))
+		{
+			parseAttrFloat(attr, &this->ambientOcclusionFactor);
 			continue;
 		}
 		if (!std::string(reinterpret_cast<const char*>(attr->name)).compare("ambientOcclusion"))

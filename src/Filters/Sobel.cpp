@@ -14,8 +14,7 @@ Vec4 Sobel::operator()(Vec4 *colorBuffer, float *zBuffer, size_t x, size_t y, si
 	{
 		for (int j = 0; j < 3; ++j)
 		{
-			//Vec3 sample(getZAt(zBuffer, pos.x + i - 1, pos.y + j - 1, width, height) / 50);
-			data[i][j] = getZAt(zBuffer, x + i - 1, y + j - 1, width, height);//sample.length();
+			data[i][j] = getZAt(zBuffer, ssize_t(x) + i - 1, ssize_t(y) + j - 1, width, height);
 		}
 	}
 	float gx = dot(sx[0], data[0]) + dot(sx[1], data[1]) + dot(sx[2], data[2]);

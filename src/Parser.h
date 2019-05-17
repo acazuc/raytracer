@@ -39,6 +39,12 @@ class Parser
 		float glowIntensity;
 		size_t glowRadius;
 		size_t blurRadius;
+		float denoisingThreshold;
+		size_t denoisingRadius;
+		size_t globalIlluminationSamples;
+		float globalIlluminationFactor;
+		size_t ambientOcclusionSamples;
+		float ambientOcclusionFactor;
 		float depthOfFieldAperture;
 		float depthOfFieldFocal;
 		float brightnessValue;
@@ -52,6 +58,7 @@ class Parser
 		bool brightness;
 		bool saturation;
 		bool greyShade;
+		bool denoising;
 		bool negative;
 		bool contrast;
 		bool fisheye;
@@ -95,6 +102,7 @@ class Parser
 		void parseContrast(xmlNode *node);
 		void parseSaturation(xmlNode *node);
 		void parseDepthOfField(xmlNode *node);
+		void parseDenoising(xmlNode *node);
 		void parseFilters(xmlNode *node);
 		void parseCamera(xmlNode *node);
 		void parseEnvironment(xmlNode *node);

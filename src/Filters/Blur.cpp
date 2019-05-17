@@ -19,7 +19,7 @@ Vec4 Blur::operator()(Vec4 *colorBuffer, float *zBuffer, size_t x, size_t y, siz
 			if (factor > 1)
 				factor = 1;
 			factor = 1 - factor;
-			total += getPixelAt(colorBuffer, x + xx, y + yy, width, height) * factor;
+			total += getPixelAt(colorBuffer, ssize_t(x) + xx, ssize_t(y) + yy, width, height) * factor;
 			count += factor;
 		}
 	}

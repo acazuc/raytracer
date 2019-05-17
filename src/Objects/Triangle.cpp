@@ -21,7 +21,7 @@ bool Triangle::collide(Ray &ray, float &t)
 	float v = dot(ray.dir, q) * det;
 	if (v < EPSILON || v > 1 + EPSILON)
 		return false;
-	return (t = dot(e2, q) * det) > 0;
+	return (t = dot(e2, q) * det) > EPSILON;
 }
 
 Vec2 Triangle::getUVAt(Ray &ray, Vec3 &pos)
