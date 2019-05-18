@@ -205,6 +205,7 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
 
 int main(int ac, char **av)
 {
+	srand(time(nullptr));
 	if (!glfwInit())
 		ERROR("Can't init glfw");
 	if (ac < 2)

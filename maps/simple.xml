@@ -1,4 +1,4 @@
-<Scene samples="4" ambientOcclusion="true" ambientOcclusionSamples="100" ambientOcclusionFactor="1.2" ambientOcclusionDistance="11" globalIllumination="true" globalIlluminationSamples="20" globalIlluminationFactor="1" globalIlluminationDistance="10000000000000000" threads="8" shading="true">
+<Scene samples="1" ambientOcclusion="false" ambientOcclusionSamples="10" ambientOcclusionFactor="1.5" ambientOcclusionDistance="5" globalIllumination="true" globalIlluminationSamples="1000" globalIlluminationFactor="1" globalIlluminationDistance="100000000000" threads="8" shading="true">
 	<Camera width="1280" height="720" fov="40">
 		<Position x="3" y="0" z="-20"/>
 		<Rotation x="0.05" y="-0.3" z="0"/>
@@ -17,7 +17,7 @@
 		<!--<Glow threshold="0.5" intensity="5" radius="50"/>-->
 		<!--<Blur radius="5"/>-->
 		<!--<DepthOfField focal="16" aperture="0.5"/>-->
-		<Denoising radius="3" threshold="0.999"/>
+		<!--<Denoising radius="3" threshold="0.999"/>-->
 	</Filters>
 	<Materials>
 		<Material name="sphere_trans" transparency="1" refraction="2">
@@ -63,7 +63,7 @@
 		<Material name="cylinder_1">
 			<DiffuseColor r="0" g="0" b="1"/>
 			<SpecularColor r="1" g="1" b="1"/>
-			<SpecularFactor value="10"/>
+			<SpecularFactor value="100"/>
 		</Material>
 	</Materials>
 	<Objects>
@@ -103,7 +103,7 @@
 		</Plane>
 	</Objects>
 	<Lights>
-		<PunctualLight power="2">
+		<PunctualLight power=".8">
 			<Position x="3" y="0" z="4"/>
 			<Color r="1" g="1" b="1"/>
 		</PunctualLight>

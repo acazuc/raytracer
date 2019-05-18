@@ -57,22 +57,22 @@ bool Raytracer::trace(Ray &ray, Object *&object, Vec3 &pos, Object *avoid)
 	return true;
 }
 
-Vec3 Raytracer::getGlobalIllumination(Vec3 &pos, Vec3 &norm, Object *object, int recursion)
+Vec3 Raytracer::getGlobalIllumination(FragmentContext &context, Vec3 &pos, Vec3 &norm, Object *object)
 {
-	Vec3 result(0);
 	if (!this->globalIllumination)
-		return result;
-	if (recursion > 1)
-		return result;
-	std::minstd_rand rnd(rand());
-	float max = rnd.max();
+		return Vec3(0);
+	if (context.globalIlluminationRecursion >= 1)
+		return Vec3(0);
+	Vec3 result(0);
+	context.globalIlluminationRecursion++;
+	float max = context.rnd.max();
 	for (size_t i = 0; i < this->globalIlluminationSamples; ++i)
 	{
-		Vec3 dir(normalize(Vec3(rnd() / max, rnd() / max, rnd() / max) - .5f));
+		Vec3 dir(normalize(Vec3(context.rnd() / max, context.rnd() / max, context.rnd() / max) - .5f));
 		float d = dot(dir, norm);
 		if (d <= EPSILON)
 		{
-			--i;
+			i--;
 			continue;
 		}
 		Ray newRay(pos, dir);
@@ -81,26 +81,28 @@ Vec3 Raytracer::getGlobalIllumination(Vec3 &pos, Vec3 &norm, Object *object, int
 		if (!trace(newRay, collide, collidePos, object))
 			continue;
 		float len = length(pos - collidePos) / this->globalIlluminationDistance;
-		Vec4 color(getRayColor(newRay, object, 99 + recursion));
+		Vec4 color(getRayColor(context, newRay, object));
 		result += color.rgb() * color.a * d / (1 + len);
 	}
+	context.globalIlluminationRecursion--;
 	return result / float(this->globalIlluminationSamples) * this->globalIlluminationFactor;
 }
 
-float Raytracer::getAmbientOcclusion(Vec3 &pos, Vec3 &norm, Object *object)
+float Raytracer::getAmbientOcclusion(FragmentContext &context, Vec3 &pos, Vec3 &norm, Object *object)
 {
 	if (!this->ambientOcclusion)
 		return 1;
+	if (context.globalIlluminationRecursion >= 1)
+		return 1;
 	float result = 0;
-	std::minstd_rand rnd(rand());
-	float max = rnd.max();
+	float max = context.rnd.max();
 	for (size_t i = 0; i < this->ambientOcclusionSamples; ++i)
 	{
-		Vec3 dir(normalize(Vec3(rnd() / max, rnd() / max, rnd() / max) - .5f));
+		Vec3 dir(normalize(Vec3(context.rnd() / max, context.rnd() / max, context.rnd() / max) - .5f));
 		float d = dot(dir, norm);
 		if (d <= EPSILON)
 		{
-			--i;
+			i--;
 			continue;
 		}
 		Ray newRay(pos, dir);
@@ -170,16 +172,21 @@ next:
 	specular *= object->material->specularColor;
 }
 
-Vec4 Raytracer::getReflectionColor(Ray &ray, Object *object, Vec3 &pos, Vec3 &norm, int recursion)
+Vec4 Raytracer::getReflectionColor(FragmentContext &context, Ray &ray, Object *object, Vec3 &pos, Vec3 &norm)
 {
+	if (context.reflectionRecursion > 100)
+		return Vec4(0);
 	Ray newRay;
 	newRay.pos = pos;
 	newRay.dir = normalize(reflect(ray.dir, norm));
 	newRay.Ni = ray.Ni;
-	return getRayColor(newRay, object, recursion + 1);
+	context.reflectionRecursion++;
+	Vec4 ret(getRayColor(context, newRay, object));
+	context.reflectionRecursion--;
+	return ret;
 }
 
-Vec4 Raytracer::getTransparencyColor(Ray &ray, Object *object, Vec3 &pos, Vec3 &norm, bool normRev, int recursion)
+Vec4 Raytracer::getTransparencyColor(FragmentContext &context, Ray &ray, Object *object, Vec3 &pos, Vec3 &norm, bool normRev)
 {
 	Ray newRay;
 	newRay.pos = pos;
@@ -200,13 +207,11 @@ Vec4 Raytracer::getTransparencyColor(Ray &ray, Object *object, Vec3 &pos, Vec3 &
 		newRay.dir = ray.dir * factor + norm * float(factor * costhetai - sqrt(1 - sin2thetat));
 	}
 	newRay.dir = normalize(newRay.dir);;
-	return getRayColor(newRay, object, recursion);
+	return getRayColor(context, newRay, object);
 }
 
-Vec4 Raytracer::getRayColor(Ray &ray, Object *avoid, int recursion, float *zIndex)
+Vec4 Raytracer::getRayColor(FragmentContext &context, Ray &ray, Object *avoid, float *zIndex)
 {
-	if (recursion > 100)
-		return Vec4(0);
 	Object *object = nullptr;
 	Vec3 pos;
 	if (!trace(ray, object, pos, avoid))
@@ -239,14 +244,14 @@ Vec4 Raytracer::getRayColor(Ray &ray, Object *avoid, int recursion, float *zInde
 	else
 		texColor = Vec4(1);
 	Vec3 col = diffuse + object->material->emissiveColor;
-	col *= getAmbientOcclusion(pos, norm, object);
+	col *= getAmbientOcclusion(context, pos, norm, object);
 	float transparency;
 	if (this->shading)
 	{
 		transparency = object->material->opacity * texColor.a;
 		if (transparency < 1)
 		{
-			Vec4 transparencyColor(getTransparencyColor(ray, object, pos, norm, normRev, recursion));
+			Vec4 transparencyColor(getTransparencyColor(context, ray, object, pos, norm, normRev));
 			float transFactor = transparencyColor.a * (1 - transparency);
 			col = col * transparency + transparencyColor.rgb() * transFactor;
 			transparency += transFactor;
@@ -258,17 +263,16 @@ Vec4 Raytracer::getRayColor(Ray &ray, Object *avoid, int recursion, float *zInde
 	}
 	col *= object->material->diffuseColor;
 	col *= texColor.rgb();
-	Vec3 spec(specular * object->material->specularColor);
+	Vec3 spec(object->material->specularColor);
 	if (object->material->specularTexture)
 	{
 		Vec4 texSpec(object->material->specularTexture->getDataAt(UV));
 		spec *= texSpec.rgb() * texSpec.a;
 	}
-	col += spec;
-	col += spec * getGlobalIllumination(pos, norm, object, recursion);
+	col += spec * (specular + getGlobalIllumination(context, pos, norm, object));
 	if (this->shading && object->material->reflection > 0)
 	{
-		Vec4 reflectionColor(getReflectionColor(ray, object, pos, norm, recursion + 1));
+		Vec4 reflectionColor(getReflectionColor(context, ray, object, pos, norm));
 		col = col * (1 - object->material->reflection) + reflectionColor.rgb() * reflectionColor.a * object->material->diffuseColor * texColor.rgb() * object->material->reflection;
 	}
 	return Vec4(col, transparency);
@@ -291,7 +295,11 @@ Vec4 Raytracer::calculatePixel(size_t x, size_t y)
 			float ry = (1 - 2 * (y + yy / float(this->samples)) / this->height) * tan(this->fov / 2 * M_PI / 180);
 			ray.dir = normalize(this->mat * Vec3(rx, ry, 1));
 			float zIndex = 0;
-			Vec4 col(getRayColor(ray, nullptr, 0, &zIndex));
+			FragmentContext ctx;
+			ctx.reflectionRecursion = 0;
+			ctx.globalIlluminationRecursion = 0;
+			ctx.rnd = std::minstd_rand(rand());
+			Vec4 col(getRayColor(ctx, ray, nullptr, &zIndex));
 			col = clamp(col, 0.f, 1.f);
 			if (zIndex < lowestZ)
 				lowestZ = zIndex;

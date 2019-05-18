@@ -10,6 +10,7 @@
 # include <cstdint>
 # include <vector>
 # include <thread>
+# include <random>
 # include <mutex>
 
 enum BatchState
@@ -25,6 +26,13 @@ enum ThreadAction
 {
 	THREAD_CALCULATION,
 	THREAD_FILTERING
+};
+
+struct FragmentContext
+{
+	std::minstd_rand rnd;
+	int reflectionRecursion;
+	int globalIlluminationRecursion;
 };
 
 class Filter;
@@ -76,14 +84,14 @@ class Raytracer
 		void runThreadCalculation();
 		void runThreadFiltering();
 		Vec4 calculatePixel(size_t x, size_t y);
-		Vec4 getRayColor(Ray &ray, Object *avoid, int recursion, float *zIndex = nullptr);
+		Vec4 getRayColor(FragmentContext &context, Ray &ray, Object *avoid, float *zIndex = nullptr);
 		bool trace(Ray &ray, Object *&object, Vec3 &pos, Object *avoid);
 		void getDiffuseSpecularLight(Ray &ray, Object *object, Vec3 &pos, Vec3 &norm, Vec3 &diffuse, Vec3 &specular);
-		Vec4 getReflectionColor(Ray &ray, Object *object, Vec3 &pos, Vec3 &norm, int recursion);
-		Vec4 getTransparencyColor(Ray &ray, Object *object, Vec3 &pos, Vec3 &norm, bool normRev, int recursion);
+		Vec4 getReflectionColor(FragmentContext &context, Ray &ray, Object *object, Vec3 &pos, Vec3 &norm);
+		Vec4 getTransparencyColor(FragmentContext &context, Ray &ray, Object *object, Vec3 &pos, Vec3 &norm, bool normRev);
 		Vec4 getDiffuseSpecularTransparencyLight(Light *light, Object *object, Ray &ray, Vec3 &pos);
-		float getAmbientOcclusion(Vec3 &pos, Vec3 &norm, Object *object);
-		Vec3 getGlobalIllumination(Vec3 &pos, Vec3 &norm, Object *object, int recursion);
+		float getAmbientOcclusion(FragmentContext &context, Vec3 &pos, Vec3 &norm, Object *object);
+		Vec3 getGlobalIllumination(FragmentContext &context, Vec3 &pos, Vec3 &norm, Object *object);
 
 	public:
 		Raytracer(size_t width, size_t height);
