@@ -237,13 +237,19 @@ Vec4 Raytracer::getRayColor(FragmentContext &context, Ray &ray, Object *avoid, f
 		diffuse = Vec3(1);
 		specular = Vec3(0);
 	}
-	Vec4 texColor;
 	Vec2 UV(object->getUVAt(ray, pos));
+	Vec4 texColor;
 	if (object->material->diffuseTexture)
 		texColor = object->material->diffuseTexture->getDataAt(UV);
 	else
 		texColor = Vec4(1);
-	Vec3 col = diffuse + object->material->emissiveColor;
+	Vec3 emi(object->material->emissiveColor);
+	if (object->material->emissiveTexture)
+	{
+		Vec4 emiTex(object->material->emissiveTexture->getDataAt(UV));
+		emi *= emiTex.rgb() * emiTex.a;
+	}
+	Vec3 col = diffuse;
 	col *= getAmbientOcclusion(context, pos, norm, object);
 	float transparency;
 	if (this->shading)

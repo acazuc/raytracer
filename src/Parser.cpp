@@ -473,6 +473,11 @@ void Parser::parseMaterial(xmlNode *node)
 			parseVec1(child, &material->specularFactor);
 			continue;
 		}
+		if (!std::string(reinterpret_cast<const char*>(child->name)).compare("EmissiveTexture"))
+		{
+			parseTexture(child, &material->emissiveTexture);
+			continue;
+		}
 		if (!std::string(reinterpret_cast<const char*>(child->name)).compare("EmissiveColor"))
 		{
 			parseVec3(child, &material->emissiveColor);

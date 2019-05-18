@@ -11,6 +11,7 @@ class Material
 
 	public:
 		Image *specularTexture;
+		Image *emissiveTexture;
 		Image *diffuseTexture;
 		Image *normalTexture;
 		Vec3 emissiveColor;

@@ -2,6 +2,7 @@
 
 Material::Material()
 : specularTexture(nullptr)
+, emissiveTexture(nullptr)
 , diffuseTexture(nullptr)
 , normalTexture(nullptr)
 , emissiveColor(0)
