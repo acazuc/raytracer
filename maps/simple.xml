@@ -74,7 +74,8 @@
 			<SpecularFactor value="100"/>
 		</Material>
 		<Material name="triangle_1">
-			<DiffuseTexture file="assets/earth_2.png"/>
+			<!--<DiffuseTexture file="assets/earth_2.png"/>-->
+			<NormalTexture file="assets/normal_7.png" filtering="cubic"/>
 		</Material>
 	</Materials>
 	<Objects>
@@ -121,14 +122,15 @@
 			<Rotation x="1.57" y="0" z="0"/>
 		</Plane>
 		<Triangle material="triangle_1">
-			<Point1 x="-1" y="1" z="-1"/>
-			<Point2 x="1" y="0" z="-1"/>
-			<Point3 x="1" y="-2" z="1"/>
-			<Position x="0" y="2" z="0"/>
+			<Point1 x="0" y="0" z="0"/>
+			<Point2 x="1" y="0" z="2"/>
+			<Point3 x="1" y="1" z="2"/>
+			<Position x="-3" y="0" z="-5"/>
+			<Scale x="5" y="5" z="5"/>
 			<!--<Rotation x="0" y="0.78" z="0"/>-->
 			<UV1 x="0" y="0"/>
 			<UV2 x="1" y="0"/>
-			<UV3 x="0" y="1"/>
+			<UV3 x="1" y="1"/>
 		</Triangle>
 	</Objects>
 	<Lights>

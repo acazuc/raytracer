@@ -1,8 +1,9 @@
 #include "Triangle.h"
 #include "Raytracer.h"
+#include "Material.h"
 #include "Consts.h"
+#include "Image.h"
 #include "Ray.h"
-#include "Debug.h"
 #include <cmath>
 
 Triangle::Triangle()
@@ -48,9 +49,22 @@ Vec2 Triangle::getUVAt(CollisionContext &collision)
 
 Vec3 Triangle::getNormAt(CollisionContext &collision)
 {
-	float u = collision.tmpData[0];
-	float v = collision.tmpData[1];
-	Vec3 norm(u * this->norm2 + v * this->norm3 + (1 - u - v) * this->norm1);
+	Vec3 norm;
+	if (this->material->normalTexture)
+	{
+		Vec4 bump(this->material->normalTexture->getDataAt(collision.UV));
+		Vec3 tmp((bump.rgb() - .5f) * 2.f);
+		float r = 1.f / (this->UVd1.x * this->UVd2.y - this->UVd1.y * this->UVd2.x);
+		Vec3 T(-(this->e1 * this->UVd2.y - this->e2 * this->UVd1.y) * r);
+		Vec3 B((this->e2 * this->UVd1.x - this->e1 * this->UVd2.x) * r);
+		norm = T * tmp.r + B * tmp.g + this->norm * tmp.b;
+	}
+	else
+	{
+		float u = collision.tmpData[0];
+		float v = collision.tmpData[1];
+		norm = u * this->norm2 + v * this->norm3 + (1 - u - v) * this->norm1;
+	}
 	return normalize(this->mat * norm);
 }
 
@@ -58,13 +72,13 @@ void Triangle::updateNorms()
 {
 	if (this->sets == TRIANGLE_NORMS)
 		return;
-	Vec3 norm(normalize(cross(this->e1, this->e2)));
+	this->norm = normalize(cross(this->e1, this->e2));
 	if (!(this->sets & TRIANGLE_NORM1))
-		this->norm1 = norm;
+		this->norm1 = this->norm;
 	if (!(this->sets & TRIANGLE_NORM2))
-		this->norm2 = norm;
+		this->norm2 = this->norm;
 	if (!(this->sets & TRIANGLE_NORM3))
-		this->norm3 = norm;
+		this->norm3 = this->norm;
 }
 
 void Triangle::setPoint1(Vec3 p1)
@@ -110,14 +124,18 @@ void Triangle::setNorm3(Vec3 norm)
 void Triangle::setUV1(Vec2 UV)
 {
 	this->UV1 = UV;
+	this->UVd1 = this->UV2 - this->UV1;
+	this->UVd2 = this->UV3 - this->UV1;
 }
 
 void Triangle::setUV2(Vec2 UV)
 {
 	this->UV2 = UV;
+	this->UVd1 = this->UV2 - this->UV1;
 }
 
 void Triangle::setUV3(Vec2 UV)
 {
 	this->UV3 = UV;
+	this->UVd2 = this->UV3 - this->UV1;
 }

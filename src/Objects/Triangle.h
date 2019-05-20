@@ -16,12 +16,16 @@ class Triangle : public Object
 
 	private:
 		void updateNorms();
+		void updateBT();
 
 	public:
 		uint8_t sets;
 		Vec3 norm1;
 		Vec3 norm2;
 		Vec3 norm3;
+		Vec3 norm;
+		Vec2 UVd1;
+		Vec2 UVd2;
 		Vec2 UV1;
 		Vec2 UV2;
 		Vec2 UV3;
