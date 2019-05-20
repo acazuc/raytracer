@@ -13,7 +13,7 @@ Sphere::Sphere()
 {
 }
 
-bool Sphere::collide(Ray &ray, float &t)
+bool Sphere::collide(Ray &ray, CollisionContext &collision)
 {
 	Vec3 delta(this->invMat * (ray.pos - this->position));
 	Vec3 rdir(this->invMat * ray.dir);
@@ -23,7 +23,14 @@ bool Sphere::collide(Ray &ray, float &t)
 	quadratic.c = dot(delta, delta) - this->sizeSq;
 	if (!quadratic.solve())
 		return false;
-	return (t = quadratic.getMinPosT()) >= EPSILON;
+	float t = quadratic.getMinPosT();
+	if (t < EPSILON)
+		return false;
+	if (t > collision.t)
+		return false;
+	collision.object = this;
+	collision.t = t;
+	return true;
 }
 
 Vec2 Sphere::getUVAt(CollisionContext &collision)

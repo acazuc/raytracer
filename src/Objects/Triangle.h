@@ -31,7 +31,7 @@ class Triangle : public Object
 		Vec3 p2;
 		Vec3 p3;
 		Triangle();
-		bool collide(Ray &ray, float &t);
+		bool collide(Ray &ray, CollisionContext &collision);
 		Vec2 getUVAt(CollisionContext &collision);
 		Vec3 getNormAt(CollisionContext &collision);
 		void setPoint1(Vec3 p1);

@@ -13,7 +13,7 @@ Cone::Cone()
 {
 }
 
-bool Cone::collide(Ray &ray, float &t)
+bool Cone::collide(Ray &ray, CollisionContext &collision)
 {
 	Vec3 delta(this->invMat * (ray.pos - this->position));
 	Vec3 delta2(delta);
@@ -27,7 +27,14 @@ bool Cone::collide(Ray &ray, float &t)
 	quadratic.c = dot(delta2, delta) - this->sizeSq;
 	if (!quadratic.solve())
 		return false;
-	return (t = quadratic.getMinPosT()) >= EPSILON;
+	float t = quadratic.getMinPosT();
+	if (t < EPSILON)
+		return false;
+	if (t > collision.t)
+		return false;
+	collision.object = this;
+	collision.t = t;
+	return true;
 }
 
 Vec2 Cone::getUVAt(CollisionContext &collision)
@@ -35,7 +42,7 @@ Vec2 Cone::getUVAt(CollisionContext &collision)
 	Vec3 norm(this->invMat * (collision.pos - this->position));
 	float oldY = norm.y;
 	norm.y = 0;
-	return Vec2(.5f + atan2(norm.z, norm.x) / (2 * M_PI), .5 + oldY / M_PI);
+	return Vec2(.5f + atan2(norm.z, norm.x) / (2 * M_PI), oldY / M_PI);
 }
 
 Vec3 Cone::getNormAt(CollisionContext &collision)

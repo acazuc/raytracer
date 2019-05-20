@@ -38,26 +38,14 @@ Raytracer::~Raytracer()
 
 bool Raytracer::trace(Ray &ray, CollisionContext &collision, Object *avoid)
 {
-	float nearestDistance = INFINITY;
-	float t;
-	Object *obj = nullptr;
+	collision.t = INFINITY;
 	for (Object *object : this->objects)
-	{
-		if (!object->collide(ray, t))
-			continue;
-		if (t >= nearestDistance)
-			continue;
-		/*if (this->objects[i] == avoid && t < EPSILON) //Useless, already checked in Object::collide
-			continue;*/
-		obj = object;
-		nearestDistance = t;
-	}
-	if (nearestDistance == INFINITY)
+		object->collide(ray, collision);
+	if (collision.t == INFINITY)
 		return false;
-	collision.object = obj;
-	collision.pos = ray.pos + ray.dir * nearestDistance;
-	collision.t = nearestDistance;
+	collision.pos = ray.pos + ray.dir * collision.t;
 	return true;
+	(void)avoid;
 }
 
 Vec3 Raytracer::getGlobalIllumination(FragmentContext &context, CollisionContext &collision)

@@ -10,49 +10,61 @@ Triangle::Triangle()
 {
 }
 
-bool Triangle::collide(Ray &ray, float &t)
+bool Triangle::collide(Ray &ray, CollisionContext &collision)
 {
-	Vec3 rdir(ray.dir);
+	Vec3 rdir(this->invMat * ray.dir);
 	Vec3 p(cross(rdir, this->e2));
 	float det = dot(this->e1, p);
-	if (det == 0)
+	if (det > -EPSILON && det < EPSILON)
 		return false;
 	det = 1. / det;
-	Vec3 rpos(ray.pos - this->position);
+	Vec3 rpos(this->invMat * (ray.pos - this->position));
 	Vec3 tt(rpos - this->p1);
 	float u = dot(tt, p) * det;
-	if (u < EPSILON || u >= 1 + EPSILON)
+	if (u < 0 || u > 1)
 		return false;
 	Vec3 q(cross(tt, this->e1));
 	float v = dot(rdir, q) * det;
-	if (v < EPSILON || u + v > 1 + EPSILON)
+	if (v < 0 || u + v > 1)
 		return false;
-	return (t = dot(this->e2, q) * det) >= EPSILON;
+	float t = dot(this->e2, q) * det;
+	if (t < EPSILON)
+		return false;
+	if (t > collision.t)
+		return false;
+	collision.tmpData[0] = u;
+	collision.tmpData[1] = v;
+	collision.object = this;
+	collision.t = t;
+	return true;
 }
 
 Vec2 Triangle::getUVAt(CollisionContext &collision)
 {
-	(void)collision;
-	return Vec2(0, 0);
+	float u = collision.tmpData[0];
+	float v = collision.tmpData[1];
+	return u * this->UV2 + v * this->UV3 + (1 - u - v) * this->UV1;
 }
 
 Vec3 Triangle::getNormAt(CollisionContext &collision)
 {
-	(void)collision;
-	return normalize(this->mat * this->norm1);
+	float u = collision.tmpData[0];
+	float v = collision.tmpData[1];
+	Vec3 norm(u * this->norm2 + v * this->norm3 + (1 - u - v) * this->norm1);
+	return normalize(this->mat * norm);
 }
 
 void Triangle::updateNorms()
 {
 	if (this->sets == TRIANGLE_NORMS)
 		return;
-	Vec3 norm(cross(this->e1, this->e2));
+	Vec3 norm(normalize(cross(this->e1, this->e2)));
 	if (!(this->sets & TRIANGLE_NORM1))
 		this->norm1 = norm;
 	if (!(this->sets & TRIANGLE_NORM2))
-		this->norm1 = norm;
+		this->norm2 = norm;
 	if (!(this->sets & TRIANGLE_NORM3))
-		this->norm1 = norm;
+		this->norm3 = norm;
 }
 
 void Triangle::setPoint1(Vec3 p1)
@@ -91,7 +103,7 @@ void Triangle::setNorm2(Vec3 norm)
 
 void Triangle::setNorm3(Vec3 norm)
 {
-	this->sets |= TRIANGLE_NORM1;
+	this->sets |= TRIANGLE_NORM3;
 	this->norm3 = norm;
 }
 

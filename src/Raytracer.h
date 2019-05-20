@@ -47,6 +47,7 @@ struct CollisionContext
 	Vec3 pos;
 	Vec3 norm;
 	Vec2 UV;
+	float tmpData[4];
 };
 
 class Raytracer

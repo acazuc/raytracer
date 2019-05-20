@@ -31,7 +31,7 @@ class Object
 		void setPosition(Vec3 position);
 		void setRotation(Vec3 rotation);
 		void setScale(Vec3 scale);
-		virtual bool collide(Ray &ray, float &t) = 0;
+		virtual bool collide(Ray &ray, CollisionContext &collision) = 0;
 		virtual Vec2 getUVAt(CollisionContext &collision) = 0;
 		virtual Vec3 getNormAt(CollisionContext &collision) = 0;
 
