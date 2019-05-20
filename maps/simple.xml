@@ -1,4 +1,4 @@
-<Scene samples="1" ambientOcclusion="false" ambientOcclusionSamples="10" ambientOcclusionFactor="1.5" ambientOcclusionDistance="5" globalIllumination="false" globalIlluminationSamples="2" globalIlluminationFactor="1" globalIlluminationDistance="100000000000" threads="8" shading="true">
+<Scene samples="1" ambientOcclusion="false" ambientOcclusionSamples="10" ambientOcclusionFactor="1.5" ambientOcclusionDistance="5" globalIllumination="false" globalIlluminationSamples="10" globalIlluminationFactor="1" globalIlluminationDistance="100000000000" threads="8" shading="true">
 	<Camera width="1920" height="1060" fov="40">
 		<Position x="3" y="0" z="-20"/>
 		<Rotation x="0.05" y="-0.3" z="0"/>
@@ -25,7 +25,7 @@
 			<SpecularColor r="1" g="1" b="1"/>
 		</Material>
 		<Material name="sphere_refl" reflection=".75">
-			<NormalTexture file="assets/normal_1.png" filtering="linear"/>
+			<NormalTexture file="assets/normal_1.png" filtering="cubic"/>
 			<DiffuseColor r="1" g="1" b="1"/>
 			<SpecularColor r="1" g="1" b="1"/>
 		</Material>
@@ -62,13 +62,13 @@
 			<SpecularFactor value="500000000"/>
 		</Material>
 		<Material name="cylinder_1">
-			<NormalTexture file="assets/normal_7.png"/>
-			<DiffuseColor r="0" g="0" b="1"/>
+			<NormalTexture file="assets/normal_7.png" filtering="cubic"/>
+			<DiffuseColor r=".4" g=".4" b="1"/>
 			<SpecularColor r="1" g="1" b="1"/>
 			<SpecularFactor value="100"/>
 		</Material>
 		<Material name="cone_1">
-			<NormalTexture file="assets/normal_2.png" filtering="nearest"/>
+			<NormalTexture file="assets/normal_2.png"/>
 			<DiffuseColor r="0" g="0" b="1"/>
 			<SpecularColor r="1" g="1" b="1"/>
 			<SpecularFactor value="100"/>
@@ -84,7 +84,6 @@
 		</Sphere>
 		<Cylinder size="1" material="cylinder_1">
 			<Position x="0" y="1" z="3.5"/>
-			<!--<Rotation x="-0.75" y="0" z="1.57"/>-->
 			<Rotation x="1" y="0" z="0"/>
 		</Cylinder>
 		<Sphere size="0.1">

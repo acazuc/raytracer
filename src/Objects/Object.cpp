@@ -13,15 +13,15 @@ Object::Object()
 void Object::calcMatrix()
 {
 	this->mat = Mat3(1);
-	this->mat = Mat3::scale(this->mat, this->scale);
 	this->mat = Mat3::rotateZ(this->mat, this->rotation.z);
 	this->mat = Mat3::rotateY(this->mat, this->rotation.y);
 	this->mat = Mat3::rotateX(this->mat, this->rotation.x);
+	this->mat = Mat3::scale(this->mat, this->scale);
 	this->invMat = Mat3(1);
+	this->invMat = Mat3::scale(this->invMat, Vec3(1.f) / this->scale);
 	this->invMat = Mat3::rotateX(this->invMat, -this->rotation.x);
 	this->invMat = Mat3::rotateY(this->invMat, -this->rotation.y);
 	this->invMat = Mat3::rotateZ(this->invMat, -this->rotation.z);
-	this->invMat = Mat3::scale(this->invMat, Vec3(1.f) / this->scale);
 }
 
 void Object::setMaterial(Material *material)

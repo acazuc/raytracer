@@ -38,40 +38,55 @@ Vec4 Image::getTexelAt(ssize_t x, ssize_t y)
 	switch (this->wrap)
 	{
 		case IMAGE_WRAP_CLAMP:
+		{
 			if (x >= ssize_t(this->width))
-				x = this->width;
+				x = this->width - 1;
 			else if (x < 0)
 				x = 0;
 			if (y >= ssize_t(this->height))
-				y = this->height;
+				y = this->height - 1;
 			else if (y < 0)
 				y = 0;
 			break;
+		}
 		case IMAGE_WRAP_MIRRORED_REPEAT:
-			x %= this->width * 2;
+		{
+			ssize_t width2 = this->width * 2;
+			x %= width2;
 			if (x < 0)
-				x += this->width * 2;
-			x = std::abs(x - ssize_t(this->width));
-			y %= this->height * 2;
+				x += width2;
+			if (x >= ssize_t(this->width))
+				x = this->width - 1 - (x - ssize_t(this->width));
+			ssize_t height2 = this->height * 2;
+			y %= height2;
 			if (y < 0)
-				y += this->height * 2;
-			y = std::abs(y - ssize_t(this->height));
+				y += height2;
+			if (y >= ssize_t(this->height))
+				y = this->height - 1 - (y - ssize_t(this->height));
 			break;
+		}
+		default:
 		case IMAGE_WRAP_REPEAT:
-			x %= this->width;
+		{
+			x %= ssize_t(this->width);
 			if (x < 0)
-				x += this->width;
-			y %= this->height;
+				x += ssize_t(this->width);
+			y %= ssize_t(this->height);
 			if (y < 0)
-				y += this->height;
+				y += ssize_t(this->height);
 			break;
+		}
 	}
 	return this->data[x + y * this->width];
 }
 
 static Vec4 cubicInterpolate(Vec4 *values, float x)
 {
-	return values[1] + (values[2] - values[0] + (values[0] * 2.f - values[1] * 5.f + values[2] * 4.f - values[3] + ((values[1] - values[2]) * 3.f + values[3] - values[0]) * x) * x) * x * .5f;
+	Vec4 v0(values[0]);
+	Vec4 v1(values[1]);
+	Vec4 v2(values[2]);
+	Vec4 v3(values[3]);
+	return v1 + (v2 - v0 + (v0 * 2.f - v1 * 5.f + v2 * 4.f - v3 + ((v1 - v2) * 3.f + v3 - v0) * x) * x) * x * .5f;
 }
 
 Vec4 Image::getDataAt(Vec2 uv)
@@ -82,10 +97,14 @@ Vec4 Image::getDataAt(Vec2 uv)
 	{
 		case IMAGE_FILTERING_CUBIC:
 		{
-			int32_t x0 = uv.x * this->width;
-			int32_t y0 = uv.y * this->height;
+			ssize_t x0 = std::floor(uv.x * this->width);
+			ssize_t y0 = std::floor(uv.y * this->height);
 			float px = (uv.x - float(x0) / this->width) * this->width;
+			if (px < 0)
+				px++;
 			float py = (uv.y - float(y0) / this->height) * this->height;
+			if (py < 0)
+				py++;
 			Vec4 p[4];
 			Vec4 p2[4];
 			for (int32_t i = 0; i < 4; ++i)
@@ -100,19 +119,23 @@ Vec4 Image::getDataAt(Vec2 uv)
 		}
 		case IMAGE_FILTERING_LINEAR:
 		{
-			int32_t x0 = uv.x * this->width;
-			int32_t x1 = x0 + 1;
-			int32_t y0 = uv.y * this->height;
-			int32_t y1 = y0 + 1;
+			ssize_t x0 = std::floor(uv.x * this->width);
+			ssize_t x1 = x0 + 1;
+			ssize_t y0 = std::floor(uv.y * this->height);
+			ssize_t y1 = y0 + 1;
 			float px = (uv.x - float(x0) / this->width) * this->width;
+			if (px < 0)
+				px++;
 			float py = (uv.y - float(y0) / this->height) * this->height;
-			Vec4 p00 = getTexelAt(x0, y0);
-			Vec4 p01 = getTexelAt(x0, y1);
-			Vec4 p10 = getTexelAt(x1, y0);
-			Vec4 p11 = getTexelAt(x1, y1);
-			Vec4 p0 = p00 * (1 - py) + p01 * py;
-			Vec4 p1 = p10 * (1 - py) + p11 * py;
-			return p0 * (1 - px) + p1 * px;
+			if (py < 0)
+				py++;
+			Vec4 p00(getTexelAt(x0, y0));
+			Vec4 p01(getTexelAt(x0, y1));
+			Vec4 p10(getTexelAt(x1, y0));
+			Vec4 p11(getTexelAt(x1, y1));
+			Vec4 p0(p00 + (p01 - p00) * py);
+			Vec4 p1(p10 + (p11 - p10) * py);
+			return p0 + (p1 - p0) * px;
 		}
 		case IMAGE_FILTERING_NEAREST:
 		default:

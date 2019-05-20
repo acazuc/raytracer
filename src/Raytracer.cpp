@@ -225,7 +225,7 @@ Vec4 Raytracer::getRayColor(FragmentContext &context, Ray &ray, Object *avoid, f
 	if (zIndex)
 		*zIndex = collision.t;
 	collision.UV = collision.object->getUVAt(collision);
-	//return Vec4(collision.UV, 1, 1);
+	//return Vec4(std::abs(collision.UV.x), std::abs(collision.UV.y), 1, 1);
 	collision.norm = collision.object->getNormAt(collision);
 	bool normRev;
 	if (dot(collision.norm, ray.dir) > 0)

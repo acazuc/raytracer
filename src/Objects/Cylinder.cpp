@@ -33,8 +33,7 @@ Vec2 Cylinder::getUVAt(CollisionContext &collision)
 	Vec3 norm(this->invMat * (collision.pos - this->position));
 	float oldY = norm.y;
 	norm.y = 0;
-	//norm = normalize(norm);
-	return Vec2(.5f + atan2(norm.z, norm.x) / (2 * M_PI), .5f + oldY / M_PI);
+	return Vec2(.5f + atan2(norm.z, norm.x) / (2 * M_PI), oldY / (M_PI * 2));
 }
 
 Vec3 Cylinder::getNormAt(CollisionContext &collision)

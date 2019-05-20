@@ -1109,9 +1109,10 @@ void Parser::parseTexture(xmlNode *node, Image **texture)
 			uint32_t width;
 			uint32_t height;
 			if (!PNG::read(file, data, width, height))
-				return;
+				continue;
 			(*texture)->setData(width, height, data);
-			return;
+			delete[] (data);
+			continue;
 		}
 		if (!std::string(reinterpret_cast<const char*>(attr->name)).compare("filtering"))
 		{
@@ -1123,6 +1124,7 @@ void Parser::parseTexture(xmlNode *node, Image **texture)
 				(*texture)->setFiltering(IMAGE_FILTERING_LINEAR);
 			else if (!filtering.compare("cubic"))
 				(*texture)->setFiltering(IMAGE_FILTERING_CUBIC);
+			continue;
 		}
 	}
 }

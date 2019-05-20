@@ -35,7 +35,6 @@ Vec2 Cone::getUVAt(CollisionContext &collision)
 	Vec3 norm(this->invMat * (collision.pos - this->position));
 	float oldY = norm.y;
 	norm.y = 0;
-	//norm = normalize(norm);
 	return Vec2(.5f + atan2(norm.z, norm.x) / (2 * M_PI), .5 + oldY / M_PI);
 }
 
