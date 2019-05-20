@@ -36,28 +36,31 @@ Raytracer::~Raytracer()
 {
 }
 
-bool Raytracer::trace(Ray &ray, Object *&object, Vec3 &pos, Object *avoid)
+bool Raytracer::trace(Ray &ray, CollisionContext &collision, Object *avoid)
 {
 	float nearestDistance = INFINITY;
 	float t;
-	for (size_t i = 0; i < this->objects.size(); ++i)
+	Object *obj = nullptr;
+	for (Object *object : this->objects)
 	{
-		if (!this->objects[i]->collide(ray, t))
+		if (!object->collide(ray, t))
 			continue;
 		if (t >= nearestDistance)
 			continue;
-		if (this->objects[i] == avoid && t < EPSILON)
-			continue;
-		object = this->objects[i];
+		/*if (this->objects[i] == avoid && t < EPSILON) //Useless, already checked in Object::collide
+			continue;*/
+		obj = object;
 		nearestDistance = t;
 	}
 	if (nearestDistance == INFINITY)
 		return false;
-	pos = ray.pos + ray.dir * nearestDistance;
+	collision.object = obj;
+	collision.pos = ray.pos + ray.dir * nearestDistance;
+	collision.t = nearestDistance;
 	return true;
 }
 
-Vec3 Raytracer::getGlobalIllumination(FragmentContext &context, Vec3 &pos, Vec3 &norm, Object *object)
+Vec3 Raytracer::getGlobalIllumination(FragmentContext &context, CollisionContext &collision)
 {
 	if (!this->globalIllumination)
 		return Vec3(0);
@@ -69,26 +72,25 @@ Vec3 Raytracer::getGlobalIllumination(FragmentContext &context, Vec3 &pos, Vec3 
 	for (size_t i = 0; i < this->globalIlluminationSamples; ++i)
 	{
 		Vec3 dir(normalize(Vec3(context.rnd() / max, context.rnd() / max, context.rnd() / max) - .5f));
-		float d = dot(dir, norm);
+		float d = dot(dir, collision.norm);
 		if (d <= EPSILON)
 		{
 			i--;
 			continue;
 		}
-		Ray newRay(pos, dir);
-		Object *collide = nullptr;
-		Vec3 collidePos;
-		if (!trace(newRay, collide, collidePos, object))
+		Ray newRay(collision.pos, dir);
+		CollisionContext newCollision;
+		if (!trace(newRay, newCollision, collision.object))
 			continue;
-		float len = length(pos - collidePos) / this->globalIlluminationDistance;
-		Vec4 color(getRayColor(context, newRay, object));
+		float len = newCollision.t / this->globalIlluminationDistance;
+		Vec4 color(getRayColor(context, newRay, collision.object));
 		result += color.rgb() * color.a * d / (1 + len);
 	}
 	context.globalIlluminationRecursion--;
 	return result / float(this->globalIlluminationSamples) * this->globalIlluminationFactor;
 }
 
-float Raytracer::getAmbientOcclusion(FragmentContext &context, Vec3 &pos, Vec3 &norm, Object *object)
+float Raytracer::getAmbientOcclusion(FragmentContext &context, CollisionContext &collision)
 {
 	if (!this->ambientOcclusion)
 		return 1;
@@ -99,98 +101,103 @@ float Raytracer::getAmbientOcclusion(FragmentContext &context, Vec3 &pos, Vec3 &
 	for (size_t i = 0; i < this->ambientOcclusionSamples; ++i)
 	{
 		Vec3 dir(normalize(Vec3(context.rnd() / max, context.rnd() / max, context.rnd() / max) - .5f));
-		float d = dot(dir, norm);
+		float d = dot(dir, collision.norm);
 		if (d <= EPSILON)
 		{
 			i--;
 			continue;
 		}
-		Ray newRay(pos, dir);
-		Object *collide = nullptr;
-		Vec3 collidePos;
-		if (!trace(newRay, collide, collidePos, object))
+		Ray newRay(collision.pos, dir);
+		CollisionContext newCollision;
+		if (!trace(newRay, newCollision, collision.object))
 			continue;
-		float len = length(pos - collidePos) / this->ambientOcclusionDistance;
-		result += 1. / (1 + len) * collide->material->opacity;// * (1 - collide->Ir);
+		float len = newCollision.t / this->ambientOcclusionDistance;
+		result += 1. / (1 + len) * newCollision.object->material->opacity;// * (1 - newCollision.object->Ir);
 	}
 	return 1 - result / float(this->ambientOcclusionSamples) * this->ambientOcclusionFactor;
 }
 
-Vec4 Raytracer::getDiffuseSpecularTransparencyLight(Light *light, Object *object, Ray &ray, Vec3 &pos)
+Vec4 Raytracer::getDiffuseSpecularTransparencyLight(Light *light, CollisionContext &collision)
 {
-	Vec4 result(object->material->diffuseColor, object->material->opacity);
-	if (object->material->diffuseTexture)
-		result *= object->material->diffuseTexture->getDataAt(object->getUVAt(ray, pos));
-	if (result.a >= 1)
+	Vec4 result(collision.object->material->diffuseColor, 1 - collision.object->material->opacity);
+	{
+		if (collision.object->material->diffuseTexture)
+		{
+			Vec4 texCol(collision.object->material->diffuseTexture->getDataAt(collision.object->getUVAt(collision)));
+			result *= Vec4(texCol.rgb(), 1 - texCol.a);
+		}
+	}
+	if (result.a <= 0)
 		return result;
-	Ray newRay(pos, light->getDirectionFrom(pos));
+	Ray newRay(collision.pos, light->getDirectionFrom(collision.pos));
 	Vec3 tmp(newRay.dir);
 	newRay.dir = normalize(newRay.dir);
-	Object *newObject = nullptr;
-	Vec3 newPos;
-	if (!trace(newRay, newObject, newPos, object))
-		goto end;
-	if (length(newPos - pos) > length(tmp))
-		goto end;
-	result *= getDiffuseSpecularTransparencyLight(light, newObject, newRay, newPos);
+	{
+		CollisionContext newCollision;
+		if (!trace(newRay, newCollision, collision.object))
+			goto end;
+		if (newCollision.t > length(tmp))
+			goto end;
+		Vec4 nextCol(getDiffuseSpecularTransparencyLight(light, newCollision));
+		result *= Vec4(nextCol.rgb(), nextCol.a);
+	}
 end:
 	return result;
 }
 
-void Raytracer::getDiffuseSpecularLight(Ray &ray, Object *object, Vec3 &pos, Vec3 &norm, Vec3 &diffuse, Vec3 &specular)
+void Raytracer::getDiffuseSpecularLight(Ray &ray, CollisionContext &collision, Vec3 &diffuse, Vec3 &specular)
 {
 	diffuse = Vec3(0);
 	specular = Vec3(0);
-	Object *newObject = nullptr;
-	Ray newRay(pos, Vec3());
-	Vec3 refl(reflect(ray.dir, norm));
+	Ray newRay(collision.pos, Vec3());
+	Vec3 refl(reflect(ray.dir, collision.norm));
 	float opacity;
-	Vec3 newPos;
-	for (uint64_t i = 0; i < this->lights.size(); ++i)
+	for (Light *light : this->lights)
 	{
-		newRay.dir = this->lights[i]->getDirectionFrom(pos);
+		newRay.dir = light->getDirectionFrom(collision.pos);
 		Vec3 tmp(newRay.dir);
-		newRay.dir = normalize(newRay.dir);
 		float tmpLength = length(tmp);
-		Vec3 lightColorIntensity = this->lights[i]->color * this->lights[i]->intensity;
-		if (trace(newRay, newObject, newPos, object))
+		newRay.dir = normalize(newRay.dir);
+		Vec3 lightColorIntensity = light->color * light->intensity;
+		CollisionContext newCollision;
+		if (trace(newRay, newCollision, collision.object))
 		{
-			if (length(newPos - pos) > tmpLength)
+			if (newCollision.t > tmpLength)
 				goto next;
-			opacity = newObject->material->opacity;
-			if (newObject->material->diffuseTexture)
-				opacity *= newObject->material->diffuseTexture->getDataAt(newObject->getUVAt(newRay, newPos)).a;
+			opacity = newCollision.object->material->opacity;
+			if (newCollision.object->material->diffuseTexture)
+				opacity *= newCollision.object->material->diffuseTexture->getDataAt(newCollision.object->getUVAt(newCollision)).a;
 			if (opacity >= 1)
 				continue;
-			Vec4 result = getDiffuseSpecularTransparencyLight(this->lights[i], newObject, newRay, newPos);
-			lightColorIntensity = lightColorIntensity * (1 - result.a) * result.rgb();
+			Vec4 result(getDiffuseSpecularTransparencyLight(light, newCollision));
+			lightColorIntensity = lightColorIntensity * result.a * result.rgb();
 		}
 next:
-		diffuse += lightColorIntensity * std::max(0.f, dot(newRay.dir, norm));
-		specular += lightColorIntensity * float(pow(std::max(0.f, dot(refl, newRay.dir)), object->material->specularFactor));
+		diffuse += lightColorIntensity * std::max(0.f, dot(newRay.dir, collision.norm));
+		specular += lightColorIntensity * float(pow(std::max(0.f, dot(refl, newRay.dir)), collision.object->material->specularFactor));
 	}
-	specular *= object->material->specularColor;
+	specular *= collision.object->material->specularColor;
 }
 
-Vec4 Raytracer::getReflectionColor(FragmentContext &context, Ray &ray, Object *object, Vec3 &pos, Vec3 &norm)
+Vec4 Raytracer::getReflectionColor(FragmentContext &context, Ray &ray, CollisionContext &collision)
 {
 	if (context.reflectionRecursion > 100)
 		return Vec4(0);
 	Ray newRay;
-	newRay.pos = pos;
-	newRay.dir = normalize(reflect(ray.dir, norm));
+	newRay.pos = collision.pos;
+	newRay.dir = reflect(ray.dir, collision.norm);
 	newRay.Ni = ray.Ni;
 	context.reflectionRecursion++;
-	Vec4 ret(getRayColor(context, newRay, object));
+	Vec4 ret(getRayColor(context, newRay, collision.object));
 	context.reflectionRecursion--;
 	return ret;
 }
 
-Vec4 Raytracer::getTransparencyColor(FragmentContext &context, Ray &ray, Object *object, Vec3 &pos, Vec3 &norm, bool normRev)
+Vec4 Raytracer::getTransparencyColor(FragmentContext &context, Ray &ray, CollisionContext &collision, bool normRev)
 {
 	Ray newRay;
-	newRay.pos = pos;
-	float nextNi = object->material->refraction;
+	newRay.pos = collision.pos;
+	float nextNi = collision.object->material->refraction;
 	if (normRev)
 		nextNi = 1;
 	newRay.Ni = nextNi;
@@ -201,63 +208,67 @@ Vec4 Raytracer::getTransparencyColor(FragmentContext &context, Ray &ray, Object 
 	else
 	{
 		float factor = ray.Ni / nextNi;
-		float costhetai = -dot(ray.dir, norm);
+		float costhetai = -dot(ray.dir, collision.norm);
 		float sin2thetat = factor * factor * (1 - costhetai * costhetai);
 		sin2thetat = std::min(1.f, sin2thetat);
-		newRay.dir = ray.dir * factor + norm * float(factor * costhetai - sqrt(1 - sin2thetat));
+		newRay.dir = ray.dir * factor + collision.norm * float(factor * costhetai - sqrt(1 - sin2thetat));
 	}
-	newRay.dir = normalize(newRay.dir);;
-	return getRayColor(context, newRay, object);
+	newRay.dir = normalize(newRay.dir);
+	return getRayColor(context, newRay, collision.object);
 }
 
 Vec4 Raytracer::getRayColor(FragmentContext &context, Ray &ray, Object *avoid, float *zIndex)
 {
-	Object *object = nullptr;
-	Vec3 pos;
-	if (!trace(ray, object, pos, avoid))
+	CollisionContext collision;
+	if (!trace(ray, collision, avoid))
 		return Vec4(0);
 	if (zIndex)
-		*zIndex = length(pos - ray.pos);
+		*zIndex = collision.t;
+	collision.UV = collision.object->getUVAt(collision);
+	//return Vec4(collision.UV, 1, 1);
+	collision.norm = collision.object->getNormAt(collision);
+	bool normRev;
+	if (dot(collision.norm, ray.dir) > 0)
+	{
+		collision.norm = -collision.norm;
+		normRev = true;
+	}
+	else
+	{
+		normRev = false;
+	}
+	//return Vec4(collision.norm, 1);
 	Vec3 diffuse;
 	Vec3 specular;
-	bool normRev = false;
-	Vec3 norm;
 	if (this->shading)
 	{
-		norm = object->getNormAt(ray, pos);
-		if (dot(norm, ray.dir) > 0)
-		{
-			norm = -norm;
-			normRev = true;
-		}
-		getDiffuseSpecularLight(ray, object, pos, norm, diffuse, specular);
+		getDiffuseSpecularLight(ray, collision, diffuse, specular);
 	}
 	else
 	{
 		diffuse = Vec3(1);
 		specular = Vec3(0);
 	}
-	Vec2 UV(object->getUVAt(ray, pos));
 	Vec4 texColor;
-	if (object->material->diffuseTexture)
-		texColor = object->material->diffuseTexture->getDataAt(UV);
+	if (collision.object->material->diffuseTexture)
+		texColor = collision.object->material->diffuseTexture->getDataAt(collision.UV);
 	else
 		texColor = Vec4(1);
-	Vec3 emi(object->material->emissiveColor);
-	if (object->material->emissiveTexture)
+	Vec3 emi(collision.object->material->emissiveColor);
+	if (collision.object->material->emissiveTexture)
 	{
-		Vec4 emiTex(object->material->emissiveTexture->getDataAt(UV));
+		Vec4 emiTex(collision.object->material->emissiveTexture->getDataAt(collision.UV));
 		emi *= emiTex.rgb() * emiTex.a;
 	}
 	Vec3 col = diffuse;
-	col *= getAmbientOcclusion(context, pos, norm, object);
+	col *= getAmbientOcclusion(context, collision);
 	float transparency;
 	if (this->shading)
 	{
-		transparency = object->material->opacity * texColor.a;
+		transparency = collision.object->material->opacity * texColor.a;
 		if (transparency < 1)
 		{
-			Vec4 transparencyColor(getTransparencyColor(context, ray, object, pos, norm, normRev));
+			Vec4 transparencyColor(getTransparencyColor(context, ray, collision, normRev));
 			float transFactor = transparencyColor.a * (1 - transparency);
 			col = col * transparency + transparencyColor.rgb() * transFactor;
 			transparency += transFactor;
@@ -267,19 +278,19 @@ Vec4 Raytracer::getRayColor(FragmentContext &context, Ray &ray, Object *avoid, f
 	{
 		transparency = 1;
 	}
-	col *= object->material->diffuseColor;
+	col *= collision.object->material->diffuseColor;
 	col *= texColor.rgb();
-	Vec3 spec(object->material->specularColor);
-	if (object->material->specularTexture)
+	Vec3 spec(collision.object->material->specularColor);
+	if (collision.object->material->specularTexture)
 	{
-		Vec4 texSpec(object->material->specularTexture->getDataAt(UV));
+		Vec4 texSpec(collision.object->material->specularTexture->getDataAt(collision.UV));
 		spec *= texSpec.rgb() * texSpec.a;
 	}
-	col += spec * (specular + getGlobalIllumination(context, pos, norm, object));
-	if (this->shading && object->material->reflection > 0)
+	col += spec * (specular + getGlobalIllumination(context, collision));
+	if (this->shading && collision.object->material->reflection > 0)
 	{
-		Vec4 reflectionColor(getReflectionColor(context, ray, object, pos, norm));
-		col = col * (1 - object->material->reflection) + reflectionColor.rgb() * reflectionColor.a * object->material->diffuseColor * texColor.rgb() * object->material->reflection;
+		Vec4 reflectionColor(getReflectionColor(context, ray, collision));
+		col = col * (1 - collision.object->material->reflection) + reflectionColor.rgb() * reflectionColor.a * collision.object->material->diffuseColor * texColor.rgb() * collision.object->material->reflection;
 	}
 	return Vec4(col, transparency);
 }

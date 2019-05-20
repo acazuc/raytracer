@@ -7,13 +7,14 @@ class Sphere : public Object
 {
 
 	private:
+		float sizeSq;
 		float size;
 
 	public:
 		Sphere();
 		bool collide(Ray &ray, float &t);
-		Vec2 getUVAt(Ray &ray, Vec3 &pos);
-		Vec3 getNormAt(Ray &ray, Vec3 &pos);
+		Vec2 getUVAt(CollisionContext &collision);
+		Vec3 getNormAt(CollisionContext &collision);
 		void setSize(float size);
 		inline float getSize() {return this->size;};
 

@@ -27,13 +27,14 @@ class Image
 		enum ImageFilteringMode filtering;
 		enum ImageWrapMode wrap;
 		std::vector<Vec4> data;
-		uint32_t height;
-		uint32_t width;
-		Image(uint32_t width, uint32_t height);
+		size_t height;
+		size_t width;
+		Image(size_t width, size_t height);
 		Image();
-		void setData(uint32_t width, uint32_t height, uint8_t *data);
+		void setData(size_t width, size_t height, const uint8_t *data);
 		Vec4 getTexelAt(ssize_t x, ssize_t y);
 		Vec4 getDataAt(Vec2 uv);
+		void setFiltering(enum ImageFilteringMode filtering) {this->filtering = filtering;};
 
 };
 

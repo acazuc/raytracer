@@ -6,23 +6,32 @@
 
 template <typename T>
 TMat3<T>::TMat3(TVec3<T> vec1, TVec3<T> vec2, TVec3<T> vec3)
-	: data{vec1, vec2, vec3}
+: data{vec1, vec2, vec3}
 {
-	//Empty
 }
 
 template <typename T>
 TMat3<T>::TMat3(TVec3<T> vec)
-	: data{{vec.x, T(0), T(0)}, {T(0), vec.y, T(0)}, {T(0), T(0), T(0), vec.z}}
+: data{{vec.x, T(0), T(0)}, {T(0), vec.y, T(0)}, {T(0), T(0), T(0), vec.z}}
 {
-	//Empty
 }
 
 template <typename T>
 TMat3<T>::TMat3(T value)
-	: data{{value, T(0), T(0)}, {T(0), value, T(0)}, {T(0), T(0), value}}
+: data{{value, T(0), T(0)}, {T(0), value, T(0)}, {T(0), T(0), value}}
 {
-	//Empty
+}
+
+template <typename T>
+TMat3<T> TMat3<T>::scale(TMat3<T> mat, TVec3<T> scale)
+{
+	return TMat3<T>(mat[0] * scale.x, mat[1] * scale.y, mat[2] * scale.z);
+}
+
+template <typename T>
+TMat3<T> TMat3<T>::scale(TMat3<T> mat, T scale)
+{
+	return TMat3<T>(mat[0] * scale, mat[1] * scale, mat[2] * scale);
 }
 
 template <typename T>

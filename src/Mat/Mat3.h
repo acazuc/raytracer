@@ -12,6 +12,8 @@ template <typename T> class TMat3
 		TMat3<T>(TVec3<T> vec);
 		TMat3<T>(T val);
 		TMat3<T>() {};
+		static TMat3<T> scale(TMat3<T>, TVec3<T> scale);
+		static TMat3<T> scale(TMat3<T>, T scale);
 		static TMat3<T> rotate(TMat3<T> mat, T angle, TVec3<T> axis);
 		static TMat3<T> rotateX(TMat3<T> mat, T angle);
 		static TMat3<T> rotateY(TMat3<T> mat, T angle);

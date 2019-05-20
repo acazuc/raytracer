@@ -13,6 +13,11 @@
 # include <random>
 # include <mutex>
 
+class Filter;
+class Object;
+class Light;
+class Ray;
+
 enum BatchState
 {
 	BATCH_NEED_CALCULATION,
@@ -35,10 +40,14 @@ struct FragmentContext
 	int globalIlluminationRecursion;
 };
 
-class Filter;
-class Object;
-class Light;
-class Ray;
+struct CollisionContext
+{
+	Object *object;
+	float t;
+	Vec3 pos;
+	Vec3 norm;
+	Vec2 UV;
+};
 
 class Raytracer
 {
@@ -85,13 +94,13 @@ class Raytracer
 		void runThreadFiltering();
 		Vec4 calculatePixel(size_t x, size_t y);
 		Vec4 getRayColor(FragmentContext &context, Ray &ray, Object *avoid, float *zIndex = nullptr);
-		bool trace(Ray &ray, Object *&object, Vec3 &pos, Object *avoid);
-		void getDiffuseSpecularLight(Ray &ray, Object *object, Vec3 &pos, Vec3 &norm, Vec3 &diffuse, Vec3 &specular);
-		Vec4 getReflectionColor(FragmentContext &context, Ray &ray, Object *object, Vec3 &pos, Vec3 &norm);
-		Vec4 getTransparencyColor(FragmentContext &context, Ray &ray, Object *object, Vec3 &pos, Vec3 &norm, bool normRev);
-		Vec4 getDiffuseSpecularTransparencyLight(Light *light, Object *object, Ray &ray, Vec3 &pos);
-		float getAmbientOcclusion(FragmentContext &context, Vec3 &pos, Vec3 &norm, Object *object);
-		Vec3 getGlobalIllumination(FragmentContext &context, Vec3 &pos, Vec3 &norm, Object *object);
+		bool trace(Ray &ray, CollisionContext &collision, Object *avoid);
+		void getDiffuseSpecularLight(Ray &ray, CollisionContext &collision, Vec3 &diffuse, Vec3 &specular);
+		Vec4 getReflectionColor(FragmentContext &context, Ray &ray, CollisionContext &collision);
+		Vec4 getTransparencyColor(FragmentContext &context, Ray &ray, CollisionContext &collision, bool normRev);
+		Vec4 getDiffuseSpecularTransparencyLight(Light *light, CollisionContext &collision);
+		float getAmbientOcclusion(FragmentContext &context, CollisionContext &collision);
+		Vec3 getGlobalIllumination(FragmentContext &context, CollisionContext &collision);
 
 	public:
 		Raytracer(size_t width, size_t height);

@@ -3,7 +3,7 @@
 #include <algorithm>
 #include <cmath>
 
-Image::Image(uint32_t width, uint32_t height)
+Image::Image(size_t width, size_t height)
 : filtering(IMAGE_FILTERING_NEAREST)
 , wrap(IMAGE_WRAP_REPEAT)
 , data(width * height)
@@ -18,15 +18,18 @@ Image::Image()
 {
 }
 
-void Image::setData(uint32_t width, uint32_t height, uint8_t *data)
+void Image::setData(size_t width, size_t height, const uint8_t *data)
 {
 	this->width = width;
 	this->height = height;
 	this->data.resize(this->width * this->height);
-	for (uint64_t i = 0; i < this->data.size(); ++i)
+	size_t idx = 0;
+	for (size_t i = 0; i < this->data.size(); ++i)
 	{
-		uint64_t idx = i * 4;
-		this->data[i] = Vec4(data[idx] / 255., data[idx + 1] / 255., data[idx + 2] / 255., data[idx + 3] / 255.);
+		this->data[i].r = data[idx++] / 255.;
+		this->data[i].g = data[idx++] / 255.;
+		this->data[i].b = data[idx++] / 255.;
+		this->data[i].a = data[idx++] / 255.;
 	}
 }
 
@@ -81,8 +84,8 @@ Vec4 Image::getDataAt(Vec2 uv)
 		{
 			int32_t x0 = uv.x * this->width;
 			int32_t y0 = uv.y * this->height;
-			float px = (uv.x - (float)x0 / this->width) * this->width;
-			float py = (uv.y - (float)y0 / this->height) * this->height;
+			float px = (uv.x - float(x0) / this->width) * this->width;
+			float py = (uv.y - float(y0) / this->height) * this->height;
 			Vec4 p[4];
 			Vec4 p2[4];
 			for (int32_t i = 0; i < 4; ++i)
@@ -101,8 +104,8 @@ Vec4 Image::getDataAt(Vec2 uv)
 			int32_t x1 = x0 + 1;
 			int32_t y0 = uv.y * this->height;
 			int32_t y1 = y0 + 1;
-			float px = (uv.x - (float)x0 / this->width) * this->width;
-			float py = (uv.y - (float)y0 / this->height) * this->height;
+			float px = (uv.x - float(x0) / this->width) * this->width;
+			float py = (uv.y - float(y0) / this->height) * this->height;
 			Vec4 p00 = getTexelAt(x0, y0);
 			Vec4 p01 = getTexelAt(x0, y1);
 			Vec4 p10 = getTexelAt(x1, y0);

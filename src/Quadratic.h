@@ -8,14 +8,14 @@ class Quadratic
 
 	public:
 		uint8_t solutions;
+		float minT;
 		float t1;
 		float t2;
 		float a;
 		float b;
 		float c;
 		float d;
-		Quadratic() : solutions(0), t1(-1), t2(-1) {};
-		void solve();
+		bool solve();
 		float getMinPosT();
 
 };

@@ -253,6 +253,13 @@ void Parser::parseSphere(xmlNode *node)
 			sphere->setRotation(rotation);
 			continue;
 		}
+		if (!std::string(reinterpret_cast<const char*>(child->name)).compare("Scale"))
+		{
+			Vec3 scale;
+			parseVec3(child, &scale);
+			sphere->setScale(scale);
+			continue;
+		}
 	}
 	this->objects.push_back(sphere);
 }
@@ -291,6 +298,13 @@ void Parser::parseCylinder(xmlNode *node)
 			Vec3 rotation;
 			parseVec3(child, &rotation);
 			cylinder->setRotation(rotation);
+			continue;
+		}
+		if (!std::string(reinterpret_cast<const char*>(child->name)).compare("Scale"))
+		{
+			Vec3 scale;
+			parseVec3(child, &scale);
+			cylinder->setScale(scale);
 			continue;
 		}
 	}
@@ -333,6 +347,13 @@ void Parser::parseCone(xmlNode *node)
 			cone->setRotation(rotation);
 			continue;
 		}
+		if (!std::string(reinterpret_cast<const char*>(child->name)).compare("Scale"))
+		{
+			Vec3 scale;
+			parseVec3(child, &scale);
+			cone->setScale(scale);
+			continue;
+		}
 	}
 	this->objects.push_back(cone);
 }
@@ -366,13 +387,76 @@ void Parser::parsePlane(xmlNode *node)
 			plane->setRotation(rotation);
 			continue;
 		}
+		if (!std::string(reinterpret_cast<const char*>(child->name)).compare("Scale"))
+		{
+			Vec3 scale;
+			parseVec3(child, &scale);
+			plane->setScale(scale);
+			continue;
+		}
 	}
 	this->objects.push_back(plane);
 }
 
 void Parser::parseTriangle(xmlNode *node)
 {
-	(void)node;
+	Triangle *triangle = new Triangle();
+	std::string material;
+	for (xmlAttr *attr = node->properties; attr; attr = attr->next)
+	{
+		if (!std::string(reinterpret_cast<const char*>(attr->name)).compare("material"))
+		{
+			parseAttrString(attr, &material);
+			continue;
+		}
+	}
+	triangle->setMaterial(getMaterial(material));
+	for (xmlNode *child = node->children; child; child = child->next)
+	{
+		if (!std::string(reinterpret_cast<const char*>(child->name)).compare("Point1"))
+		{
+			Vec3 point;
+			parseVec3(child, &point);
+			triangle->setPoint1(point);
+			continue;
+		}
+		if (!std::string(reinterpret_cast<const char*>(child->name)).compare("Point2"))
+		{
+			Vec3 point;
+			parseVec3(child, &point);
+			triangle->setPoint2(point);
+			continue;
+		}
+		if (!std::string(reinterpret_cast<const char*>(child->name)).compare("Point3"))
+		{
+			Vec3 point;
+			parseVec3(child, &point);
+			triangle->setPoint3(point);
+			continue;
+		}
+		if (!std::string(reinterpret_cast<const char*>(child->name)).compare("Position"))
+		{
+			Vec3 position;
+			parseVec3(child, &position);
+			triangle->setPosition(position);
+			continue;
+		}
+		if (!std::string(reinterpret_cast<const char*>(child->name)).compare("Rotation"))
+		{
+			Vec3 rotation;
+			parseVec3(child, &rotation);
+			triangle->setRotation(rotation);
+			continue;
+		}
+		if (!std::string(reinterpret_cast<const char*>(child->name)).compare("Scale"))
+		{
+			Vec3 scale;
+			parseVec3(child, &scale);
+			triangle->setScale(scale);
+			continue;
+		}
+	}
+	this->objects.push_back(triangle);
 }
 
 void Parser::parseObjects(xmlNode *node)
@@ -1013,6 +1097,8 @@ void Parser::parseVec1(xmlNode *node, float *val)
 
 void Parser::parseTexture(xmlNode *node, Image **texture)
 {
+	delete (*texture);
+	*texture = new Image();
 	for (xmlAttr *attr = node->properties; attr; attr = attr->next)
 	{
 		if (!std::string(reinterpret_cast<const char*>(attr->name)).compare("file"))
@@ -1024,9 +1110,19 @@ void Parser::parseTexture(xmlNode *node, Image **texture)
 			uint32_t height;
 			if (!PNG::read(file, data, width, height))
 				return;
-			*texture = new Image();
 			(*texture)->setData(width, height, data);
 			return;
+		}
+		if (!std::string(reinterpret_cast<const char*>(attr->name)).compare("filtering"))
+		{
+			std::string filtering;
+			parseAttrString(attr, &filtering);
+			if (!filtering.compare("nearest"))
+				(*texture)->setFiltering(IMAGE_FILTERING_NEAREST);
+			else if (!filtering.compare("linear"))
+				(*texture)->setFiltering(IMAGE_FILTERING_LINEAR);
+			else if (!filtering.compare("cubic"))
+				(*texture)->setFiltering(IMAGE_FILTERING_CUBIC);
 		}
 	}
 }

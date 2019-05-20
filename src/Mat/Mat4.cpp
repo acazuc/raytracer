@@ -7,30 +7,26 @@
 
 template <typename T>
 TMat4<T>::TMat4(TVec4<T> vec1, TVec4<T> vec2, TVec4<T> vec3, TVec4<T> vec4)
-	: data{vec1, vec2, vec3, vec4}
+: data{vec1, vec2, vec3, vec4}
 {
-	//Empty
 }
 
 template <typename T>
 TMat4<T>::TMat4(TMat3<T> mat)
-	: data{TVec4<T>(mat[0], T(0)), TVec4<T>(mat[1], T(0)), TVec4<T>(mat[2], T(0)), TVec4<T>(T(0), T(0), T(0), T(1))}
+: data{TVec4<T>(mat[0], T(0)), TVec4<T>(mat[1], T(0)), TVec4<T>(mat[2], T(0)), TVec4<T>(T(0), T(0), T(0), T(1))}
 {
-	//Empty
 }
 
 template <typename T>
 TMat4<T>::TMat4(TVec4<T> vec)
-	: data{{vec.x, T(0), T(0), T(0)}, {T(0), vec.y, T(0), T(0)}, {T(0), T(0), vec.z, T(0)}, {T(0), T(0), T(0), vec.w}}
+: data{{vec.x, T(0), T(0), T(0)}, {T(0), vec.y, T(0), T(0)}, {T(0), T(0), vec.z, T(0)}, {T(0), T(0), T(0), vec.w}}
 {
-	//Empty
 }
 
 template <typename T>
 TMat4<T>::TMat4(T value)
-	: data{{value, T(0), T(0), T(0)}, {T(0), value, T(0), T(0)}, {T(0), T(0), value, T(0)}, {T(0), T(0), T(0), value}}
+: data{{value, T(0), T(0), T(0)}, {T(0), value, T(0), T(0)}, {T(0), T(0), value, T(0)}, {T(0), T(0), T(0), value}}
 {
-	//Empty
 }
 
 template <typename T>
