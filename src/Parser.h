@@ -76,6 +76,7 @@ class Parser
 		bool parseAttrString(xmlAttr *attr, std::string *value);
 		void parseVec4(xmlNode *node, Vec4 *vec);
 		void parseVec3(xmlNode *node, Vec3 *vec);
+		void parseVec2(xmlNode *node, Vec2 *vec);
 		void parseVec1(xmlNode *node, float *vec);
 		void parseTexture(xmlNode *node, Image **texture);
 		void parseDirectionalLight(xmlNode *node);

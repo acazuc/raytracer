@@ -434,6 +434,48 @@ void Parser::parseTriangle(xmlNode *node)
 			triangle->setPoint3(point);
 			continue;
 		}
+		if (!std::string(reinterpret_cast<const char*>(child->name)).compare("Norm1"))
+		{
+			Vec3 norm;
+			parseVec3(child, &norm);
+			triangle->setNorm1(norm);
+			continue;
+		}
+		if (!std::string(reinterpret_cast<const char*>(child->name)).compare("Norm2"))
+		{
+			Vec3 norm;
+			parseVec3(child, &norm);
+			triangle->setNorm2(norm);
+			continue;
+		}
+		if (!std::string(reinterpret_cast<const char*>(child->name)).compare("Norm3"))
+		{
+			Vec3 norm;
+			parseVec3(child, &norm);
+			triangle->setNorm3(norm);
+			continue;
+		}
+		if (!std::string(reinterpret_cast<const char*>(child->name)).compare("UV1"))
+		{
+			Vec2 uv;
+			parseVec2(child, &uv);
+			triangle->setUV1(uv);
+			continue;
+		}
+		if (!std::string(reinterpret_cast<const char*>(child->name)).compare("UV2"))
+		{
+			Vec2 uv;
+			parseVec2(child, &uv);
+			triangle->setUV2(uv);
+			continue;
+		}
+		if (!std::string(reinterpret_cast<const char*>(child->name)).compare("UV3"))
+		{
+			Vec2 uv;
+			parseVec2(child, &uv);
+			triangle->setUV3(uv);
+			continue;
+		}
 		if (!std::string(reinterpret_cast<const char*>(child->name)).compare("Position"))
 		{
 			Vec3 position;
@@ -1080,14 +1122,30 @@ void Parser::parseVec3(xmlNode *node, Vec3 *vec)
 	}
 }
 
-void Parser::parseVec1(xmlNode *node, float *val)
+void Parser::parseVec2(xmlNode *node, Vec2 *vec)
 {
 	for (xmlAttr *attr = node->properties; attr; attr = attr->next)
 	{
 		if (!std::string(reinterpret_cast<const char*>(attr->name)).compare("x")
-				|| !std::string(reinterpret_cast<const char*>(attr->name)).compare("value")
-				|| !std::string(reinterpret_cast<const char*>(attr->name)).compare("r")
-				|| !std::string(reinterpret_cast<const char*>(attr->name)).compare("red"))
+				|| !std::string(reinterpret_cast<const char*>(attr->name)).compare("u"))
+		{
+			parseAttrFloat(attr, &vec->x);
+			continue;
+		}
+		if (!std::string(reinterpret_cast<const char*>(attr->name)).compare("y")
+				|| !std::string(reinterpret_cast<const char*>(attr->name)).compare("u"))
+		{
+			parseAttrFloat(attr, &vec->y);
+			continue;
+		}
+	}
+}
+
+void Parser::parseVec1(xmlNode *node, float *val)
+{
+	for (xmlAttr *attr = node->properties; attr; attr = attr->next)
+	{
+		if (!std::string(reinterpret_cast<const char*>(attr->name)).compare("value"))
 		{
 			parseAttrFloat(attr, val);
 			continue;
