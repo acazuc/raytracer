@@ -6,8 +6,13 @@
 class Plane : public Object
 {
 
+	private:
+		Vec3 normal;
+
 	public:
-		bool collide(Ray &ray, CollisionContext &collision);
+		Plane(Vec3 normal);
+		Plane();
+		void collide(Ray &ray, CollisionContext &collision);
 		Vec2 getUVAt(CollisionContext &collision);
 		Vec3 getNormAt(CollisionContext &collision);
 

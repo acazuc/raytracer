@@ -1,6 +1,6 @@
 #include "Glow.h"
 
-Glow::Glow(size_t radius, float threshold, float intensity)
+Glow::Glow(float radius, float threshold, float intensity)
 : threshold(threshold)
 , intensity(intensity)
 , radius(radius)

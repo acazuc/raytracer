@@ -1,26 +1,36 @@
 #include "Plane.h"
 #include "Raytracer.h"
 #include "Material.h"
+#include "Texture.h"
 #include "Consts.h"
-#include "Image.h"
 #include "Ray.h"
 #include <cmath>
 
-bool Plane::collide(Ray &ray, CollisionContext &collision)
+Plane::Plane(Vec3 normal)
+: normal(normal)
 {
-	Vec3 norm(this->mat * Vec3(0, 1, 0));
+}
+
+Plane::Plane()
+: normal(0, 1, 0)
+{
+}
+
+void Plane::collide(Ray &ray, CollisionContext &collision)
+{
+	Vec3 norm(this->mat * this->normal);
 	float d = dot(norm, ray.dir);
 	if (d == 0)
-		return false;
+		return;
 	Vec3 delta(this->position - ray.pos);
 	float t = dot(norm, delta) / d;
 	if (t < EPSILON)
-		return false;
+		return;
 	if (t > collision.t)
-		return false;
+		return;
 	collision.object = this;
 	collision.t = t;
-	return true;
+	return;
 }
 
 Vec2 Plane::getUVAt(CollisionContext &collision)
@@ -31,7 +41,7 @@ Vec2 Plane::getUVAt(CollisionContext &collision)
 
 Vec3 Plane::getNormAt(CollisionContext &collision)
 {
-	Vec3 norm(0, 1, 0);
+	Vec3 norm(this->normal);
 	if (this->material->normalTexture)
 	{
 		Vec4 bump(this->material->normalTexture->getDataAt(collision.UV));

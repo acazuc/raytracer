@@ -2,10 +2,16 @@
 #include "Raytracer.h"
 #include "Quadratic.h"
 #include "Material.h"
+#include "Texture.h"
 #include "Consts.h"
-#include "Image.h"
 #include "Ray.h"
 #include <cmath>
+
+Cone::Cone(float size)
+: sizeSq(size * size)
+, size(size)
+{
+}
 
 Cone::Cone()
 : sizeSq(0)
@@ -13,7 +19,7 @@ Cone::Cone()
 {
 }
 
-bool Cone::collide(Ray &ray, CollisionContext &collision)
+void Cone::collide(Ray &ray, CollisionContext &collision)
 {
 	Vec3 delta(this->invMat * (ray.pos - this->position));
 	Vec3 delta2(delta);
@@ -26,15 +32,14 @@ bool Cone::collide(Ray &ray, CollisionContext &collision)
 	quadratic.b = dot(rdir2, delta) * 2.f;
 	quadratic.c = dot(delta2, delta) - this->sizeSq;
 	if (!quadratic.solve())
-		return false;
+		return;
 	float t = quadratic.getMinPosT();
 	if (t < EPSILON)
-		return false;
+		return;
 	if (t > collision.t)
-		return false;
+		return;
 	collision.object = this;
 	collision.t = t;
-	return true;
 }
 
 Vec2 Cone::getUVAt(CollisionContext &collision)

@@ -1,24 +1,26 @@
-#include "Image.h"
+#include "Texture.h"
 #include "Debug.h"
 #include <algorithm>
 #include <cmath>
 
-Image::Image(size_t width, size_t height)
-: filtering(IMAGE_FILTERING_NEAREST)
-, wrap(IMAGE_WRAP_REPEAT)
+Texture::Texture(size_t width, size_t height)
+: filtering(TEXTURE_FILTERING_NEAREST)
+, wrapS(TEXTURE_WRAP_REPEAT)
+, wrapT(TEXTURE_WRAP_REPEAT)
 , data(width * height)
 {
 }
 
-Image::Image()
-: filtering(IMAGE_FILTERING_NEAREST)
-, wrap(IMAGE_WRAP_REPEAT)
+Texture::Texture()
+: filtering(TEXTURE_FILTERING_NEAREST)
+, wrapS(TEXTURE_WRAP_REPEAT)
+, wrapT(TEXTURE_WRAP_REPEAT)
 , height(0)
 , width(0)
 {
 }
 
-void Image::setData(size_t width, size_t height, const uint8_t *data)
+void Texture::setData(size_t width, size_t height, const uint8_t *data)
 {
 	this->width = width;
 	this->height = height;
@@ -33,23 +35,19 @@ void Image::setData(size_t width, size_t height, const uint8_t *data)
 	}
 }
 
-Vec4 Image::getTexelAt(ssize_t x, ssize_t y)
+Vec4 Texture::getTexelAt(ssize_t x, ssize_t y)
 {
-	switch (this->wrap)
+	switch (this->wrapS)
 	{
-		case IMAGE_WRAP_CLAMP:
+		case TEXTURE_WRAP_CLAMP:
 		{
 			if (x >= ssize_t(this->width))
 				x = this->width - 1;
 			else if (x < 0)
 				x = 0;
-			if (y >= ssize_t(this->height))
-				y = this->height - 1;
-			else if (y < 0)
-				y = 0;
 			break;
 		}
-		case IMAGE_WRAP_MIRRORED_REPEAT:
+		case TEXTURE_WRAP_MIRRORED_REPEAT:
 		{
 			ssize_t width2 = this->width * 2;
 			x %= width2;
@@ -57,6 +55,29 @@ Vec4 Image::getTexelAt(ssize_t x, ssize_t y)
 				x += width2;
 			if (x >= ssize_t(this->width))
 				x = this->width - 1 - (x - ssize_t(this->width));
+			break;
+		}
+		default:
+		case TEXTURE_WRAP_REPEAT:
+		{
+			x %= ssize_t(this->width);
+			if (x < 0)
+				x += ssize_t(this->width);
+			break;
+		}
+	}
+	switch (this->wrapT)
+	{
+		case TEXTURE_WRAP_CLAMP:
+		{
+			if (y >= ssize_t(this->height))
+				y = this->height - 1;
+			else if (y < 0)
+				y = 0;
+			break;
+		}
+		case TEXTURE_WRAP_MIRRORED_REPEAT:
+		{
 			ssize_t height2 = this->height * 2;
 			y %= height2;
 			if (y < 0)
@@ -66,11 +87,8 @@ Vec4 Image::getTexelAt(ssize_t x, ssize_t y)
 			break;
 		}
 		default:
-		case IMAGE_WRAP_REPEAT:
+		case TEXTURE_WRAP_REPEAT:
 		{
-			x %= ssize_t(this->width);
-			if (x < 0)
-				x += ssize_t(this->width);
 			y %= ssize_t(this->height);
 			if (y < 0)
 				y += ssize_t(this->height);
@@ -89,13 +107,13 @@ static Vec4 cubicInterpolate(Vec4 *values, float x)
 	return v1 + (v2 - v0 + (v0 * 2.f - v1 * 5.f + v2 * 4.f - v3 + ((v1 - v2) * 3.f + v3 - v0) * x) * x) * x * .5f;
 }
 
-Vec4 Image::getDataAt(Vec2 uv)
+Vec4 Texture::getDataAt(Vec2 uv)
 {
 	if (!this->data.size())
 		return 0;
 	switch (filtering)
 	{
-		case IMAGE_FILTERING_CUBIC:
+		case TEXTURE_FILTERING_CUBIC:
 		{
 			ssize_t x0 = std::floor(uv.x * this->width);
 			ssize_t y0 = std::floor(uv.y * this->height);
@@ -117,7 +135,7 @@ Vec4 Image::getDataAt(Vec2 uv)
 			}
 			return cubicInterpolate(p, py);
 		}
-		case IMAGE_FILTERING_LINEAR:
+		case TEXTURE_FILTERING_LINEAR:
 		{
 			ssize_t x0 = std::floor(uv.x * this->width);
 			ssize_t x1 = x0 + 1;
@@ -137,8 +155,29 @@ Vec4 Image::getDataAt(Vec2 uv)
 			Vec4 p1(p10 + (p11 - p10) * py);
 			return p0 + (p1 - p0) * px;
 		}
-		case IMAGE_FILTERING_NEAREST:
+		case TEXTURE_FILTERING_NEAREST:
 		default:
 			return getTexelAt(uv.x * this->width, uv.y * this->height);
 	}
+}
+
+void Texture::setFiltering(enum TextureFilteringMode filtering)
+{
+	this->filtering = filtering;
+}
+
+void Texture::setWrapS(enum TextureWrapMode wrap)
+{
+	this->wrapS = wrap;
+}
+
+void Texture::setWrapT(enum TextureWrapMode wrap)
+{
+	this->wrapT = wrap;
+}
+
+void Texture::setWrap(enum TextureWrapMode wrap)
+{
+	setWrapS(wrap);
+	setWrapT(wrap);
 }

@@ -2,10 +2,16 @@
 #include "Raytracer.h"
 #include "Quadratic.h"
 #include "Material.h"
+#include "Texture.h"
 #include "Consts.h"
-#include "Image.h"
 #include "Ray.h"
 #include <cmath>
+
+Sphere::Sphere(float size)
+: sizeSq(size * size)
+, size(size)
+{
+}
 
 Sphere::Sphere()
 : sizeSq(0)
@@ -13,7 +19,7 @@ Sphere::Sphere()
 {
 }
 
-bool Sphere::collide(Ray &ray, CollisionContext &collision)
+void Sphere::collide(Ray &ray, CollisionContext &collision)
 {
 	Vec3 delta(this->invMat * (ray.pos - this->position));
 	Vec3 rdir(this->invMat * ray.dir);
@@ -22,15 +28,14 @@ bool Sphere::collide(Ray &ray, CollisionContext &collision)
 	quadratic.b = dot(rdir, delta) * 2.f;
 	quadratic.c = dot(delta, delta) - this->sizeSq;
 	if (!quadratic.solve())
-		return false;
+		return;
 	float t = quadratic.getMinPosT();
 	if (t < EPSILON)
-		return false;
+		return;
 	if (t > collision.t)
-		return false;
+		return;
 	collision.object = this;
 	collision.t = t;
-	return true;
 }
 
 Vec2 Sphere::getUVAt(CollisionContext &collision)

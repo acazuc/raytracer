@@ -4,8 +4,8 @@
 #include "Utils/System.h"
 #include "Lights/Light.h"
 #include "Material.h"
+#include "Texture.h"
 #include "Consts.h"
-#include "Image.h"
 #include "Debug.h"
 #include "Ray.h"
 #include <cstring>
@@ -146,7 +146,7 @@ void Raytracer::getDiffuseSpecularLight(Ray &ray, CollisionContext &collision, V
 		Vec3 tmp(newRay.dir);
 		float tmpLength = length(tmp);
 		newRay.dir = normalize(newRay.dir);
-		Vec3 lightColorIntensity = light->color * light->intensity;
+		Vec3 lightColorIntensity(light->color);
 		CollisionContext newCollision;
 		if (trace(newRay, newCollision, collision.object))
 		{
@@ -164,7 +164,6 @@ next:
 		diffuse += lightColorIntensity * std::max(0.f, dot(newRay.dir, collision.norm));
 		specular += lightColorIntensity * float(pow(std::max(0.f, dot(refl, newRay.dir)), collision.object->material->specularFactor));
 	}
-	specular *= collision.object->material->specularColor;
 }
 
 Vec4 Raytracer::getReflectionColor(FragmentContext &context, Ray &ray, CollisionContext &collision)
@@ -210,6 +209,7 @@ Vec4 Raytracer::getRayColor(FragmentContext &context, Ray &ray, Object *avoid, f
 	CollisionContext collision;
 	if (!trace(ray, collision, avoid))
 		return Vec4(0);
+	//return Vec4(collision.object->material->diffuseColor, 1);
 	if (zIndex)
 		*zIndex = collision.t;
 	collision.UV = collision.object->getUVAt(collision);
@@ -231,6 +231,7 @@ Vec4 Raytracer::getRayColor(FragmentContext &context, Ray &ray, Object *avoid, f
 	if (this->shading)
 	{
 		getDiffuseSpecularLight(ray, collision, diffuse, specular);
+		specular *= collision.object->material->specularColor;
 	}
 	else
 	{
@@ -419,11 +420,11 @@ void Raytracer::runThreadCalculation()
 						this->imgData[idx].a = col.a * 0xff;
 					}
 					size_t base = x + y * this->width;
-					for (size_t yy = 0; yy < i; ++yy)
+					for (size_t yy = y; yy < y + i && yy < this->height; ++yy)
 					{
-						for (size_t xx = 0; xx < i; ++xx)
+						for (size_t xx = x; xx < x + i && xx << this->width; ++xx)
 						{
-							size_t idx = x + xx + (y + yy) * this->width;
+							size_t idx = xx + yy * this->width;
 							if (!idx)
 								continue;
 							this->imgData[idx] = this->imgData[base];
@@ -471,11 +472,9 @@ void Raytracer::render()
 	this->threadsAction = THREAD_CALCULATION;
 	this->threadsFinished = 0;
 	this->threads.resize(this->threadsCount);
+	lock.lock(); //avoid race condition
 	for (uint8_t i = 0; i < this->threadsCount; ++i)
-	{
 		this->threads[i] = new std::thread(&Raytracer::runThread, this);
-	}
-	lock.lock();
 	this->finishedCondition.wait(lock, [this]{return this->threadsFinished == this->threadsCount;});
 	lock.unlock();
 	ended = System::nanotime();
@@ -517,6 +516,11 @@ void Raytracer::render()
 		delete (this->threads[i]);
 	}
 	this->threads.clear();
+}
+
+void Raytracer::addMaterial(Material *material)
+{
+	this->materials.push_back(material);
 }
 
 void Raytracer::addFilter(Filter *filter)

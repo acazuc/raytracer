@@ -4,16 +4,16 @@
 # include "Vec/Vec4.h"
 # include "Vec/Vec3.h"
 
-class Image;
+class Texture;
 
 class Material
 {
 
 	public:
-		Image *specularTexture;
-		Image *emissiveTexture;
-		Image *diffuseTexture;
-		Image *normalTexture;
+		Texture *specularTexture;
+		Texture *emissiveTexture;
+		Texture *diffuseTexture;
+		Texture *normalTexture;
 		Vec3 emissiveColor;
 		Vec3 specularColor;
 		Vec3 diffuseColor;

@@ -11,8 +11,9 @@ class Sphere : public Object
 		float size;
 
 	public:
+		Sphere(float size);
 		Sphere();
-		bool collide(Ray &ray, CollisionContext &collision);
+		void collide(Ray &ray, CollisionContext &collision);
 		Vec2 getUVAt(CollisionContext &collision);
 		Vec3 getNormAt(CollisionContext &collision);
 		void setSize(float size);

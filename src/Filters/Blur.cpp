@@ -1,6 +1,6 @@
 #include "Blur.h"
 
-Blur::Blur(size_t radius)
+Blur::Blur(float radius)
 : radius(radius)
 {
 }

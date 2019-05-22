@@ -11,8 +11,10 @@
 # include <vector>
 # include <thread>
 # include <random>
+# include <atomic>
 # include <mutex>
 
+class Material;
 class Filter;
 class Object;
 class Light;
@@ -57,6 +59,8 @@ class Raytracer
 		std::vector<std::vector<enum BatchState>> batches;
 		std::vector<TVec4<uint8_t>> imgData;
 		std::vector<std::thread*> threads;
+		std::vector<Material*> materials;
+		std::atomic<uint8_t> threadsFinished;
 		std::vector<Filter*> filters;
 		std::vector<Object*> objects;
 		std::vector<Light*> lights;
@@ -73,7 +77,6 @@ class Raytracer
 		Mat3 invMat;
 		Mat3 mat;
 		enum ThreadAction threadsAction;
-		uint8_t threadsFinished;
 		uint8_t threadsCount;
 		uint8_t samples;
 		size_t height;
@@ -107,6 +110,7 @@ class Raytracer
 		Raytracer(size_t width, size_t height);
 		~Raytracer();
 		void render();
+		void addMaterial(Material *material);
 		void addFilter(Filter *filter);
 		void addObject(Object *object);
 		void addLight(Light *light);

@@ -9,10 +9,10 @@ class Glow : public Filter
 	private:
 		float threshold;
 		float intensity;
-		size_t radius;
+		float radius;
 
 	public:
-		Glow(size_t radius, float threshold, float intensity);
+		Glow(float radius, float threshold, float intensity);
 		Vec4 operator()(Vec4 *colorBuffer, float *zBuffer, size_t x, size_t y, size_t width, size_t height);
 
 };

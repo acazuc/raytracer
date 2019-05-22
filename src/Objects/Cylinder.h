@@ -11,8 +11,9 @@ class Cylinder : public Object
 		float size;
 
 	public:
+		Cylinder(float size);
 		Cylinder();
-		bool collide(Ray &ray, CollisionContext &collision);
+		void collide(Ray &ray, CollisionContext &collision);
 		Vec2 getUVAt(CollisionContext &collision);
 		Vec3 getNormAt(CollisionContext &collision);
 		void setSize(float size);

@@ -12,9 +12,8 @@ SRCS_PATH = src/
 SRCS_NAME = Main.cpp \
 	    Raytracer.cpp \
 	    Quadratic.cpp \
-	    Image.cpp \
+	    Texture.cpp \
 	    PNG.cpp \
-	    Parser.cpp \
 	    Material.cpp \
 	    Objects/Object.cpp \
 	    Objects/Sphere.cpp \
@@ -43,6 +42,13 @@ SRCS_NAME = Main.cpp \
 	    Filters/Color/Contrast.cpp \
 	    Filters/Color/Saturation.cpp \
 	    Utils/System.cpp \
+	    Parser/Parser.cpp \
+	    Parser/FileParser.cpp \
+	    Parser/ObjectsParser.cpp \
+	    Parser/LightsParser.cpp \
+	    Parser/GroupParser.cpp \
+	    Parser/MaterialParser.cpp \
+	    Parser/FiltersParser.cpp \
 
 SRCS = $(addprefix $(SRCS_PATH), $(SRCS_NAME))
 
@@ -85,8 +91,8 @@ odir:
 	@mkdir -p $(OBJS_PATH)Filters
 	@mkdir -p $(OBJS_PATH)Filters/Color
 	@mkdir -p $(OBJS_PATH)Utils
-	@mkdir -p $(OBJS_PATH)Vec
-	@mkdir -p $(OBJS_PATH)Mat
+	@mkdir -p $(OBJS_PATH)Models
+	@mkdir -p $(OBJS_PATH)Parser
 
 clean:
 	@rm -f $(OBJS)

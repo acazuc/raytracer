@@ -1,8 +1,8 @@
 #include "Triangle.h"
 #include "Raytracer.h"
 #include "Material.h"
+#include "Texture.h"
 #include "Consts.h"
-#include "Image.h"
 #include "Ray.h"
 #include <cmath>
 
@@ -11,33 +11,32 @@ Triangle::Triangle()
 {
 }
 
-bool Triangle::collide(Ray &ray, CollisionContext &collision)
+void Triangle::collide(Ray &ray, CollisionContext &collision)
 {
 	Vec3 rdir(this->invMat * ray.dir);
 	Vec3 p(cross(rdir, this->e2));
 	float det = dot(this->e1, p);
 	if (det > -EPSILON && det < EPSILON)
-		return false;
+		return;
 	det = 1. / det;
 	Vec3 rpos(this->invMat * (ray.pos - this->position));
 	Vec3 tt(rpos - this->p1);
 	float u = dot(tt, p) * det;
 	if (u < 0 || u > 1)
-		return false;
+		return;
 	Vec3 q(cross(tt, this->e1));
 	float v = dot(rdir, q) * det;
 	if (v < 0 || u + v > 1)
-		return false;
+		return;
 	float t = dot(this->e2, q) * det;
 	if (t < EPSILON)
-		return false;
+		return;
 	if (t > collision.t)
-		return false;
+		return;
 	collision.tmpData[0] = u;
 	collision.tmpData[1] = v;
 	collision.object = this;
 	collision.t = t;
-	return true;
 }
 
 Vec2 Triangle::getUVAt(CollisionContext &collision)

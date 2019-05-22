@@ -1,4 +1,4 @@
-<Scene samples="1" ambientOcclusion="false" ambientOcclusionSamples="10" ambientOcclusionFactor="1.5" ambientOcclusionDistance="5" globalIllumination="false" globalIlluminationSamples="10" globalIlluminationFactor="1" globalIlluminationDistance="100000000000" threads="8" shading="true">
+<Scene samples="1" ambientOcclusion="false" ambientOcclusionSamples="10" ambientOcclusionFactor="1.5" ambientOcclusionDistance="5" globalIllumination="true" globalIlluminationSamples="10" globalIlluminationFactor="1" globalIlluminationDistance="100000000000" threads="8" shading="true">
 	<Camera width="1920" height="1060" fov="40">
 		<Position x="3" y="0" z="-20"/>
 		<Rotation x="0.05" y="-0.3" z="0"/>
@@ -121,17 +121,20 @@
 			<Position x="0" y="0" z="-20"/>
 			<Rotation x="1.57" y="0" z="0"/>
 		</Plane>
-		<Triangle material="triangle_1">
+		<!--<Triangle material="triangle_1">
 			<Point1 x="0" y="0" z="0"/>
 			<Point2 x="1" y="0" z="2"/>
 			<Point3 x="1" y="1" z="2"/>
 			<Position x="-3" y="0" z="-5"/>
 			<Scale x="5" y="5" z="5"/>
-			<!--<Rotation x="0" y="0.78" z="0"/>-->
 			<UV1 x="0" y="0"/>
 			<UV2 x="1" y="0"/>
 			<UV3 x="1" y="1"/>
-		</Triangle>
+		</Triangle>-->
+		<Model file="assets/untitled.obj">
+			<Position x="0" y="0" z="10"/>
+			<Rotation x="0" y="0" z="0"/>
+		</Model>
 	</Objects>
 	<Lights>
 		<PunctualLight power=".8">

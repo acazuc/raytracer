@@ -11,8 +11,9 @@ class Cone : public Object
 		float size;
 
 	public:
+		Cone(float size);
 		Cone();
-		bool collide(Ray &ray, CollisionContext &collision);
+		void collide(Ray &ray, CollisionContext &collision);
 		Vec2 getUVAt(CollisionContext &collision);
 		Vec3 getNormAt(CollisionContext &collision);
 		void setSize(float size);

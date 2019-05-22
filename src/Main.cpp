@@ -1,13 +1,7 @@
 #include "Main.h"
-#include "Lights/DirectionalLight.h"
-#include "Lights/PunctualLight.h"
-#include "Objects/Cylinder.h"
-#include "Objects/Triangle.h"
-#include "Objects/Sphere.h"
-#include "Objects/Plane.h"
-#include "Objects/Cone.h"
+#include "Parser/FileParser.h"
+#include "Utils/System.h"
 #include "Raytracer.h"
-#include "Parser.h"
 #include "Debug.h"
 #include "PNG.h"
 #include <GLFW/glfw3.h>
@@ -210,10 +204,20 @@ int main(int ac, char **av)
 		ERROR("Can't init glfw");
 	if (ac < 2)
 		ERROR("raytracer <filename>");
-	Parser *parser = new Parser(av[1]);
-	if (!parser->parse())
-		return EXIT_FAILURE;
-	raytracer = parser->createRaytracer();
+	FileParser *parser = new FileParser(av[1]);
+	{
+		int64_t started = System::nanotime();
+		if (!parser->parse())
+			return EXIT_FAILURE;
+		int64_t ended = System::nanotime();
+		LOG("Parsed scene in " << (ended - started) / 1000000 << " ms");
+	}
+	{
+		int64_t started = System::nanotime();
+		raytracer = parser->createRaytracer();
+		int64_t ended = System::nanotime();
+		LOG("Created raytracer in " << (ended - started) / 1000000 << " ms");
+	}
 	createWindow(raytracer->getWidth(), raytracer->getHeight());
 	std::thread *thread = new std::thread(run);
 	(void)thread;
