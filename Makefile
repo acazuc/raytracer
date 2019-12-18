@@ -16,6 +16,7 @@ SRCS_NAME = Main.cpp \
 	    PNG.cpp \
 	    Material.cpp \
 	    Octree.cpp \
+	    Verbose.cpp \
 	    Objects/Object.cpp \
 	    Objects/Sphere.cpp \
 	    Objects/Cylinder.cpp \

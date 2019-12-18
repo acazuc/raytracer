@@ -2,7 +2,7 @@
 #include "Objects/Triangle.h"
 #include "../FileParser.h"
 #include "Raytracer.h"
-#include "Debug.h"
+#include "Verbose.h"
 #include <fstream>
 
 ObjParser::ObjParser(FileParser &file)

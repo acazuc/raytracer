@@ -1,4 +1,4 @@
-<Scene samples="1">
+<Scene samples="8" threads="4">
 	<Camera width="1280" height="720" fov="40">
 		<Position x="0" y="3" z="-20"/>
 		<Rotation x="0" y="0" z="0"/>

@@ -1,5 +1,4 @@
 #include "Texture.h"
-#include "Debug.h"
 #include <algorithm>
 #include <cmath>
 

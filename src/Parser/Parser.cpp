@@ -1,7 +1,7 @@
 #include "Parser.h"
 #include "Texture.h"
+#include "Verbose.h"
 #include "PNG.h"
-#include <iostream>
 
 Parser::Parser()
 {
@@ -27,7 +27,7 @@ void Parser::parseAttributes(xmlNode *node)
 	{
 		if (parseAttribute(attr))
 			goto nextAttr;
-		std::cerr << "Unknown <" << node->name << "> attribute: " << attr->name << std::endl;
+		VERBOSE_ERROR("Unknown <" << node->name << "> attribute: " << attr->name);
 nextAttr:
 		continue;
 	}
@@ -55,7 +55,7 @@ void Parser::parseChilds(xmlNode *node)
 			goto nextChild;
 		if (child->type == XML_TEXT_NODE || child->type == XML_COMMENT_NODE)
 			goto nextChild;
-		std::cerr << "Unknown <" << node->name << "> child: <" << child->name << ">" << std::endl;
+		VERBOSE_ERROR("Unknown <" << node->name << "> child: <" << child->name << ">");
 nextChild:
 		continue;
 	}
@@ -275,7 +275,7 @@ void Parser::parseTexture(xmlNode *node, Texture **texture)
 			else if (!filtering.compare("cubic"))
 				(*texture)->setFiltering(TEXTURE_FILTERING_CUBIC);
 			else
-				std::cerr << "Unknown texture filtering: " << filtering << std::endl;
+				VERBOSE_WARN("Unknown texture filtering: " << filtering);
 			continue;
 		}
 		if (!std::string(reinterpret_cast<const char*>(attr->name)).compare("wrapS"))
@@ -289,7 +289,7 @@ void Parser::parseTexture(xmlNode *node, Texture **texture)
 			else if (!wrap.compare("mirrored_repeat"))
 				(*texture)->setWrapS(TEXTURE_WRAP_MIRRORED_REPEAT);
 			else
-				std::cerr << "Unknown texture wrap: " << wrap << std::endl;
+				VERBOSE_WARN("Unknown texture wrap: " << wrap);
 			continue;
 		}
 		if (!std::string(reinterpret_cast<const char*>(attr->name)).compare("wrapT"))
@@ -303,7 +303,7 @@ void Parser::parseTexture(xmlNode *node, Texture **texture)
 			else if (!wrap.compare("mirrored_repeat"))
 				(*texture)->setWrapT(TEXTURE_WRAP_MIRRORED_REPEAT);
 			else
-				std::cerr << "Unknown texture wrap: " << wrap << std::endl;
+				VERBOSE_WARN("Unknown texture wrap: " << wrap);
 			continue;
 		}
 		if (!std::string(reinterpret_cast<const char*>(attr->name)).compare("wrap"))
@@ -317,7 +317,7 @@ void Parser::parseTexture(xmlNode *node, Texture **texture)
 			else if (!wrap.compare("mirrored_repeat"))
 				(*texture)->setWrap(TEXTURE_WRAP_MIRRORED_REPEAT);
 			else
-				std::cerr << "Unknown texture wrap: " << wrap << std::endl;
+				VERBOSE_WARN("Unknown texture wrap: " << wrap);
 			continue;
 		}
 	}

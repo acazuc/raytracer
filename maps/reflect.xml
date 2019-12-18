@@ -4,21 +4,21 @@
 		<Rotation x="0.78" y="0" z="0"/>
 	</Camera>
 	<Filters>
-		<Gamma value="0.45"/>
+		<!--<Gamma value="0.45"/>-->
 		<!--<Brightness value="0.1"/>-->
-		<!--<Contrast value="1.1"/>-->
-		<Saturation value="2"/>
+		<!--<Contrast value="2"/>-->
+		<!--<Saturation value="2"/>-->
 		<!--<Sobel/>-->
-		<!--<CelShading cels="20"/>-->
-		<!--<Fisheye aperture="178"/>-->
+		<!--<CelShading cels="10"/>-->
+		<!--<Fisheye aperture="90"/>-->
 		<!--<Blur radius="10"/>-->
-		<!--<Glow radius="50" threshold="0.75" intensity="5"/>-->
-		<DepthOfField focal="30" aperture="1"/>
+		<!--<Glow radius="100" threshold="0.75" intensity="5"/>-->
+		<!--<DepthOfField focal="30" aperture="1"/>-->
 	</Filters>
 	<Materials>
 		<Material name="sphere_1" reflection="1">
 		</Material>
-		<Material name="sphere_2" transparency="0.5">
+		<Material name="sphere_2" transparency="0.9">
 			<DiffuseColor r="1" g="1" b="1"/>
 		</Material>
 	</Materials>

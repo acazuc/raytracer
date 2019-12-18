@@ -3,7 +3,7 @@
 #include "Math/Quaternion.h"
 #include "Utils/System.h"
 #include "Raytracer.h"
-#include "Debug.h"
+#include "Verbose.h"
 #include "PNG.h"
 #include <GLFW/glfw3.h>
 #include <cstring>
@@ -25,16 +25,20 @@ static double prevOffsetY = 0;
 static double offsetX = 0;
 static double offsetY = 0;
 
-static void createWindow(size_t width, size_t height)
+static bool createWindow(size_t width, size_t height)
 {
 	if (!(window = glfwCreateWindow(width, height, "Raytracer", NULL, NULL)))
-		ERROR("Window: can't create window");
+	{
+		VERBOSE_ERROR("Window: can't create window");
+		return false;
+	}
 	glfwMakeContextCurrent(window);
 	glfwSwapInterval(1);
 	glEnable(GL_TEXTURE_2D);
 	glDisable(GL_BLEND);
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
+	return true;
 }
 
 static void updateTexture()
@@ -204,28 +208,34 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
 
 int main(int ac, char **av)
 {
-	Quaternion quat(Vec3(10.f, 45.f, 45.f));
-	LOG("x: " << quat.x << ", y: " << quat.y << ", z: " << quat.z << ", w: " << quat.w);
+	Verbose::init();
 	srand(time(nullptr));
 	if (!glfwInit())
-		ERROR("Can't init glfw");
+	{
+		VERBOSE_ERROR("Can't init glfw");
+		return EXIT_FAILURE;
+	}
 	if (ac < 2)
-		ERROR("raytracer <filename>");
+	{
+		VERBOSE_ERROR("raytracer <filename>");
+		return EXIT_FAILURE;
+	}
 	FileParser *parser = new FileParser(av[1]);
 	{
 		int64_t started = System::nanotime();
 		if (!parser->parse())
 			return EXIT_FAILURE;
 		int64_t ended = System::nanotime();
-		LOG("Parsed scene in " << (ended - started) / 1000000 << " ms");
+		VERBOSE_INFO("Parsed scene in " << (ended - started) / 1000000 << " ms");
 	}
 	{
 		int64_t started = System::nanotime();
 		raytracer = parser->createRaytracer();
 		int64_t ended = System::nanotime();
-		LOG("Created raytracer in " << (ended - started) / 1000000 << " ms");
+		VERBOSE_INFO("Created raytracer in " << (ended - started) / 1000000 << " ms");
 	}
-	createWindow(raytracer->getWidth(), raytracer->getHeight());
+	if (!createWindow(raytracer->getWidth(), raytracer->getHeight()))
+		return EXIT_FAILURE;
 	std::thread *thread = new std::thread(run);
 	(void)thread;
 	glClearColor(.1, .1, .1, 1);

@@ -5,8 +5,8 @@
 #include "Lights/Light.h"
 #include "Material.h"
 #include "Texture.h"
+#include "Verbose.h"
 #include "Consts.h"
-#include "Debug.h"
 #include "Ray.h"
 #include <cstring>
 #include <random>
@@ -25,7 +25,7 @@ Raytracer::Raytracer(size_t width, size_t height)
 	this->globalIlluminationSamples = 50;
 	this->globalIlluminationFactor = 1;
 	this->globalIllumination = false;
-	this->maxReflection = 10;
+	this->maxReflection = 1;
 }
 
 Raytracer::~Raytracer()
@@ -445,7 +445,7 @@ void Raytracer::render()
 	this->finishedCondition.wait(lock, [this]{return this->threadsFinished == this->threadsCount;});
 	lock.unlock();
 	ended = System::nanotime();
-	LOG("Draw: " << (ended - started) / 1000000 << " ms");
+	VERBOSE_INFO("Draw: " << (ended - started) / 1000000 << " ms");
 	if (this->filters.size())
 	{
 		this->threadsAction = THREAD_FILTERING;
@@ -471,7 +471,7 @@ void Raytracer::render()
 		if (this->filterSrc != &this->colorBuffer)
 			std::copy(std::begin(*this->filterSrc), std::end(*this->filterSrc), std::begin(this->colorBuffer));
 		ended = System::nanotime();
-		LOG("Filters: " << (ended - started) / 1000000 << " ms");
+		VERBOSE_INFO("Filters: " << (ended - started) / 1000000 << " ms");
 	}
 	this->threadsStopped = true;
 	lock.lock();

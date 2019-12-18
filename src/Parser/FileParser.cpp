@@ -18,8 +18,8 @@
 #include "Filters/Cel.h"
 #include "Raytracer.h"
 #include "Material.h"
+#include "Verbose.h"
 #include "Texture.h"
-#include "Debug.h"
 #include "PNG.h"
 #include <algorithm>
 
@@ -167,23 +167,23 @@ bool FileParser::parse()
 	xmlDoc *doc = xmlReadFile(this->filename.c_str(), "utf8", 0);
 	if (!doc)
 	{
-		std::cerr << "Failed to parse XML file: " << this->filename << std::endl;
+		VERBOSE_ERROR("Failed to parse XML file: " << this->filename);
 		return false;
 	}
 	xmlNode *root = xmlDocGetRootElement(doc);
 	if (!root)
 	{
-		std::cerr << "Failed to get XML root node in " << this->filename << std::endl;
+		VERBOSE_ERROR("Failed to get XML root node in " << this->filename);
 		return false;
 	}
 	if (root->type != XML_ELEMENT_NODE)
 	{
-		std::cerr << "Root node isn't a node in " << this->filename << std::endl;
+		VERBOSE_ERROR("Root node isn't a node in " << this->filename);
 		return false;
 	}
 	if (std::string(reinterpret_cast<const char*>(root->name)).compare("Scene"))
 	{
-		std::cerr << "Root node isn't a <Scene> node in " << this->filename << std::endl;
+		VERBOSE_ERROR("Root node isn't a <Scene> node in " << this->filename);
 		return false;
 	}
 	parseScene(root);
