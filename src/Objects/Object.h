@@ -1,10 +1,11 @@
 #ifndef OBJECT_H
 # define OBJECT_H
 
-# include "Mat/Mat3.h"
-# include "Vec/Vec4.h"
-# include "Vec/Vec3.h"
-# include "Vec/Vec2.h"
+# include "Math/Quaternion.h"
+# include "Math/Mat3.h"
+# include "Math/Vec4.h"
+# include "Math/Vec3.h"
+# include "Math/Vec2.h"
 # include <string>
 
 class CollisionContext;
@@ -22,6 +23,7 @@ class Object
 		Material *material;
 		Vec3 position;
 		Vec3 rotation;
+		Vec3 invScale;
 		Vec3 scale;
 		Mat3 invMat;
 		Mat3 mat;

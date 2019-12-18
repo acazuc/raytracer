@@ -1,8 +1,8 @@
 #ifndef MATERIAL_H
 # define MATERIAL_H
 
-# include "Vec/Vec4.h"
-# include "Vec/Vec3.h"
+# include "Math/Vec4.h"
+# include "Math/Vec3.h"
 
 class Texture;
 

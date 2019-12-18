@@ -1,7 +1,7 @@
 #ifndef FILTER_H
 # define FILTER_H
 
-# include "Vec/Vec4.h"
+# include "Math/Vec4.h"
 # include <cstdint>
 
 class Filter

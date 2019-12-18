@@ -1,5 +1,6 @@
 #include "Main.h"
 #include "Parser/FileParser.h"
+#include "Math/Quaternion.h"
 #include "Utils/System.h"
 #include "Raytracer.h"
 #include "Debug.h"
@@ -191,7 +192,11 @@ static void cursor_position_callback(GLFWwindow* window, double xpos, double ypo
 static void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
 {
 	if (key == GLFW_KEY_0 && action == GLFW_PRESS)
+	{
 		setZoom(1);
+		offsetX = 0;
+		offsetY = 0;
+	}
 	(void)mods;
 	(void)window;
 	(void)scancode;
@@ -199,6 +204,8 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
 
 int main(int ac, char **av)
 {
+	Quaternion quat(Vec3(10.f, 45.f, 45.f));
+	LOG("x: " << quat.x << ", y: " << quat.y << ", z: " << quat.z << ", w: " << quat.w);
 	srand(time(nullptr));
 	if (!glfwInit())
 		ERROR("Can't init glfw");

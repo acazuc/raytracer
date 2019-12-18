@@ -1,5 +1,5 @@
 #include "Fisheye.h"
-#include "Vec/Vec2.h"
+#include "Math/Vec2.h"
 #include <cmath>
 
 Fisheye::Fisheye(float aperture)

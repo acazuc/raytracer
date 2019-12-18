@@ -1,4 +1,4 @@
-<Scene samples="3" threads="8" ambientOcclusion="false" globalIllumination="false">
+<Scene samples="3" threads="8" globalIllumination="false">
 	<Camera width="1280" height="720" fov="60">
 		<Position x="0" y="20" z="-20"/>
 		<Rotation x="0.78" y="0" z="0"/>
@@ -12,7 +12,8 @@
 		<!--<CelShading cels="20"/>-->
 		<!--<Fisheye aperture="178"/>-->
 		<!--<Blur radius="10"/>-->
-		<Glow radius="100" threshold="0.75" intensity="5"/>
+		<!--<Glow radius="50" threshold="0.75" intensity="5"/>-->
+		<DepthOfField focal="30" aperture="1"/>
 	</Filters>
 	<Materials>
 		<Material name="sphere_1" reflection="1">

@@ -1,9 +1,9 @@
 #ifndef PARSER_H
 # define PARSER_H
 
-# include "Vec/Vec4.h"
-# include "Vec/Vec3.h"
-# include "Vec/Vec2.h"
+# include "Math/Vec4.h"
+# include "Math/Vec3.h"
+# include "Math/Vec2.h"
 # include <unordered_map>
 # include <libxml/tree.h>
 # include <string>

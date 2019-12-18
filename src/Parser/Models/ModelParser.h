@@ -1,25 +1,27 @@
 #ifndef MODEL_PARSER_H
 # define MODEL_PARSER_H
 
-# include "Vec/Vec3.h"
-# include <string>
+# include "../Parser.h"
+# include "Math/Vec3.h"
 
-class ModelParser
+class FileParser;
+class Raytracer;
+
+class ModelParser : public Parser
 {
 
 	protected:
-		std::string filename;
+		FileParser &file;
 		Vec3 position;
 		Vec3 rotation;
 		Vec3 scale;
+		void parsePosition(xmlNode *node);
+		void parseRotation(xmlNode *node);
+		void parseScale(xmlNode *node);
 
 	public:
-		ModelParser(std::string filename);
-		virtual ~ModelParser() {};
-		virtual void parse() = 0;
-		void setPosition(Vec3 position);
-		void setRotation(Vec3 rotation);
-		void setScale(Vec3 scale);
+		ModelParser(FileParser &file);
+		virtual void addToRaytracer(Raytracer *raytracer) = 0;
 
 };
 

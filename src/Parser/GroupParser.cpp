@@ -1,4 +1,5 @@
 #include "GroupParser.h"
+#include "./Models/ObjParser.h"
 #include "./MaterialParser.h"
 #include "./ObjectsParser.h"
 #include "./LightsParser.h"
@@ -86,15 +87,13 @@ void GroupParser::parseObjects(xmlNode *node)
 			this->objects.push_back(triangle);
 			continue;
 		}
-		/*if (!std::string(reinterpret_cast<const char*>(child->name)).compare("Model"))
+		if (!std::string(reinterpret_cast<const char*>(child->name)).compare("ObjModel"))
 		{
-			ModelParser *model;
-			if (parseModel(child, model))
-			{
-				//TODO
-			}
+			ObjParser *model = new ObjParser(this->file);
+			model->parse(child);
+			this->models.push_back(model);
 			continue;
-		}*/
+		}
 	}
 }
 
@@ -149,7 +148,9 @@ void GroupParser::addObjects(Raytracer *raytracer)
 	for (GroupParser *group : this->groups)
 		group->addObjects(raytracer);
 	for (ObjectParser *object : this->objects)
-		raytracer->addObject(object->toObject());
+		object->addToRaytracer(raytracer);
+	for (ModelParser *model : this->models)
+		model->addToRaytracer(raytracer);
 }
 
 void GroupParser::addLights(Raytracer *raytracer)
@@ -157,5 +158,5 @@ void GroupParser::addLights(Raytracer *raytracer)
 	for (GroupParser *group : this->groups)
 		group->addObjects(raytracer);
 	for (LightParser *light : this->lights)
-		raytracer->addLight(light->toLight());
+		light->addToRaytracer(raytracer);
 }

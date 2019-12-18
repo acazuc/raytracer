@@ -36,27 +36,18 @@ FileParser::FileParser(std::string filename)
 	this->shading = true;
 	this->width = 640;
 	this->height = 480;
-	this->globalIlluminationDistance = 1000;
 	this->globalIlluminationSamples = 50;
 	this->globalIlluminationFactor = 1;
 	this->globalIllumination = false;
-	this->ambientOcclusionDistance = 10;
-	this->ambientOcclusionSamples = 50;
-	this->ambientOcclusionFactor = 1;
-	this->ambientOcclusion = false;
+	this->maxReflection = 10;
 }
 
 Raytracer *FileParser::createRaytracer()
 {
 	Raytracer *raytracer = new Raytracer(this->width, this->height);
-	raytracer->setGlobalIlluminationDistance(this->globalIlluminationDistance);
 	raytracer->setGlobalIlluminationSamples(this->globalIlluminationSamples);
 	raytracer->setGlobalIlluminationFactor(this->globalIlluminationFactor);
 	raytracer->setGlobalIllumination(this->globalIllumination);
-	raytracer->setAmbientOcclusionDistance(this->ambientOcclusionDistance);
-	raytracer->setAmbientOcclusionSamples(this->ambientOcclusionSamples);
-	raytracer->setAmbientOcclusionFactor(this->ambientOcclusionFactor);
-	raytracer->setAmbientOcclusion(this->ambientOcclusion);
 	raytracer->setThreads(this->threads);
 	raytracer->setSamples(this->samples);
 	raytracer->setShading(this->shading);
@@ -138,11 +129,6 @@ void FileParser::parseScene(xmlNode *node)
 			parseAttrUInt(attr, &this->globalIlluminationSamples);
 			continue;
 		}
-		if (!std::string(reinterpret_cast<const char*>(attr->name)).compare("globalIlluminationDistamce"))
-		{
-			parseAttrFloat(attr, &this->globalIlluminationDistance);
-			continue;
-		}
 		if (!std::string(reinterpret_cast<const char*>(attr->name)).compare("globalIlluminationFactor"))
 		{
 			parseAttrFloat(attr, &this->globalIlluminationFactor);
@@ -153,24 +139,9 @@ void FileParser::parseScene(xmlNode *node)
 			parseAttrBool(attr, &this->globalIllumination);
 			continue;
 		}
-		if (!std::string(reinterpret_cast<const char*>(attr->name)).compare("ambientOcclusionSamples"))
+		if (!std::string(reinterpret_cast<const char*>(attr->name)).compare("maxReflection"))
 		{
-			parseAttrUInt(attr, &this->ambientOcclusionSamples);
-			continue;
-		}
-		if (!std::string(reinterpret_cast<const char*>(attr->name)).compare("ambientOcclusionDistance"))
-		{
-			parseAttrFloat(attr, &this->ambientOcclusionDistance);
-			continue;
-		}
-		if (!std::string(reinterpret_cast<const char*>(attr->name)).compare("ambientOcclusionFactor"))
-		{
-			parseAttrFloat(attr, &this->ambientOcclusionFactor);
-			continue;
-		}
-		if (!std::string(reinterpret_cast<const char*>(attr->name)).compare("ambientOcclusion"))
-		{
-			parseAttrBool(attr, &this->ambientOcclusion);
+			parseAttrUInt(attr, &this->maxReflection);
 			continue;
 		}
 	}

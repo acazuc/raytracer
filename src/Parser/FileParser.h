@@ -27,6 +27,7 @@ class FileParser : public Parser
 		GroupParser *group;
 		Vec3 cameraPosition;
 		Vec3 cameraRotation;
+		size_t maxReflection;
 		float cameraFov;
 		uint8_t threads;
 		uint8_t samples;
@@ -34,15 +35,8 @@ class FileParser : public Parser
 		size_t width;
 		size_t height;
 		size_t globalIlluminationSamples;
-		float globalIlluminationDistance;
 		float globalIlluminationFactor;
-		size_t ambientOcclusionSamples;
-		float ambientOcclusionDistance;
-		float ambientOcclusionFactor;
-		float depthOfFieldAperture;
-		float depthOfFieldFocal;
 		bool globalIllumination;
-		bool ambientOcclusion;
 		void parseFilters(xmlNode *node);
 		void parseCamera(xmlNode *node);
 		void parseScene(xmlNode *node);
@@ -53,6 +47,7 @@ class FileParser : public Parser
 		Material *getMaterial(std::string name);
 		bool parse();
 		Raytracer *createRaytracer();
+		inline Material *getDefaultMaterial() {return this->defaultMaterial;};
 
 };
 

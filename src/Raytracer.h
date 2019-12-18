@@ -3,9 +3,9 @@
 
 # define BATCH_SIZE 32
 
-# include "Vec/Vec4.h"
-# include "Vec/Vec3.h"
-# include "Mat/Mat3.h"
+# include "Math/Vec4.h"
+# include "Math/Vec3.h"
+# include "Math/Mat3.h"
 # include <condition_variable>
 # include <cstdint>
 # include <vector>
@@ -38,8 +38,8 @@ enum ThreadAction
 struct FragmentContext
 {
 	std::minstd_rand rnd;
-	int reflectionRecursion;
-	int globalIlluminationRecursion;
+	size_t reflectionRecursion;
+	size_t globalIlluminationRecursion;
 };
 
 struct CollisionContext
@@ -79,17 +79,13 @@ class Raytracer
 		enum ThreadAction threadsAction;
 		uint8_t threadsCount;
 		uint8_t samples;
+		size_t maxReflection;
 		size_t height;
 		size_t width;
 		float fov;
 		size_t globalIlluminationSamples;
-		float globalIlluminationDistance;
 		float globalIlluminationFactor;
-		size_t ambientOcclusionSamples;
-		float ambientOcclusionDistance;
-		float ambientOcclusionFactor;
 		bool globalIllumination;
-		bool ambientOcclusion;
 		bool threadsStopped;
 		bool shading;
 		static void runThread(Raytracer *raytracer);
@@ -103,7 +99,6 @@ class Raytracer
 		Vec4 getReflectionColor(FragmentContext &context, Ray &ray, CollisionContext &collision);
 		Vec4 getTransparencyColor(FragmentContext &context, Ray &ray, CollisionContext &collision, bool normRev);
 		Vec4 getDiffuseSpecularTransparencyLight(Light *light, CollisionContext &collision);
-		float getAmbientOcclusion(FragmentContext &context, CollisionContext &collision);
 		Vec3 getGlobalIllumination(FragmentContext &context, CollisionContext &collision);
 
 	public:
@@ -120,14 +115,10 @@ class Raytracer
 		void setSamples(uint8_t samples);
 		void setThreads(uint8_t threads);
 		void setShading(bool shading);
-		void setAmbientOcclusionDistance(float distance);
-		void setAmbientOcclusionSamples(size_t samples);
-		void setAmbientOcclusionFactor(float factor);
-		void setAmbientOcclusion(bool ambientOcclusion);
-		void setGlobalIlluminationDistance(float distance);
 		void setGlobalIlluminationSamples(size_t samples);
 		void setGlobalIlluminationFactor(float factor);
 		void setGlobalIllumination(bool globalIllumination);
+		void setMaxReflection(size_t maxReflection);
 		inline std::vector<TVec4<uint8_t>> &getImgData() {return this->imgData;};
 		inline std::vector<std::vector<enum BatchState>> &getBatches() {return this->batches;};
 		inline std::mutex &getBatchesMutex() {return this->batchesMutex;};

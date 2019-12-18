@@ -7,6 +7,7 @@
 class MaterialParser;
 class ObjectParser;
 class LightParser;
+class ModelParser;
 class FileParser;
 class Raytracer;
 
@@ -18,6 +19,7 @@ class GroupParser : public Parser
 		std::vector<ObjectParser*> objects;
 		std::vector<LightParser*> lights;
 		std::vector<GroupParser*> groups;
+		std::vector<ModelParser*> models;
 		GroupParser *parent;
 		FileParser &file;
 		Vec3 position;

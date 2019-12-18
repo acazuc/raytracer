@@ -1,6 +1,7 @@
 #include "LightsParser.h"
 #include "Lights/DirectionalLight.h"
 #include "Lights/PunctualLight.h"
+#include "Raytracer.h"
 
 LightParser::LightParser(FileParser &file, GroupParser &parent)
 : parent(parent)
@@ -34,12 +35,12 @@ void PunctualLightParser::parsePosition(xmlNode *node)
 	parseVec3(node, &this->position);
 }
 
-Light *PunctualLightParser::toLight()
+void PunctualLightParser::addToRaytracer(Raytracer *raytracer)
 {
 	PunctualLight *light = new PunctualLight();
 	light->setColor(this->color * this->intensity);
 	light->setPosition(this->position);
-	return light;
+	raytracer->addLight(light);
 }
 
 DirectionalLightParser::DirectionalLightParser(FileParser &file, GroupParser &parent)
@@ -54,10 +55,10 @@ void DirectionalLightParser::parseDirection(xmlNode *node)
 	parseVec3(node, &this->direction);
 }
 
-Light *DirectionalLightParser::toLight()
+void DirectionalLightParser::addToRaytracer(Raytracer *raytracer)
 {
 	DirectionalLight *light = new DirectionalLight();
 	light->setColor(this->color * this->intensity);
 	light->setDirection(this->direction);
-	return light;
+	raytracer->addLight(light);
 }

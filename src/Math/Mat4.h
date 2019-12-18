@@ -1,8 +1,8 @@
 #ifndef MAT4_H
 # define MAT4_H
 
-# include "../Vec/Vec4.h"
-# include "../Vec/Vec3.h"
+# include "./Vec4.h"
+# include "./Vec3.h"
 # include "./Mat3.h"
 
 template <typename T> class TMat4

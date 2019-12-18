@@ -23,13 +23,9 @@ Raytracer::Raytracer(size_t width, size_t height)
 	this->zBuffer.resize(width * height);
 	this->imgData.resize(width * height);
 	this->globalIlluminationSamples = 50;
-	this->globalIlluminationDistance = 1000;
 	this->globalIlluminationFactor = 1;
 	this->globalIllumination = false;
-	this->ambientOcclusionSamples = 50;
-	this->ambientOcclusionDistance = 10;
-	this->ambientOcclusionFactor = 1;
-	this->ambientOcclusion = false;
+	this->maxReflection = 10;
 }
 
 Raytracer::~Raytracer()
@@ -67,42 +63,11 @@ Vec3 Raytracer::getGlobalIllumination(FragmentContext &context, CollisionContext
 			continue;
 		}
 		Ray newRay(collision.pos, dir);
-		CollisionContext newCollision;
-		if (!trace(newRay, newCollision, collision.object))
-			continue;
-		float len = newCollision.t / this->globalIlluminationDistance;
-		Vec4 color(getRayColor(context, newRay, collision.object));
-		result += color.rgb() * color.a * d / (1 + len);
+		Vec4 color(getRayColor(context, newRay, collision.object, nullptr));
+		result += color.rgb() * color.a * d;
 	}
 	context.globalIlluminationRecursion--;
 	return result / float(this->globalIlluminationSamples) * this->globalIlluminationFactor;
-}
-
-float Raytracer::getAmbientOcclusion(FragmentContext &context, CollisionContext &collision)
-{
-	if (!this->ambientOcclusion)
-		return 1;
-	if (context.globalIlluminationRecursion >= 1)
-		return 1;
-	float result = 0;
-	float max = context.rnd.max();
-	for (size_t i = 0; i < this->ambientOcclusionSamples; ++i)
-	{
-		Vec3 dir(normalize(Vec3(context.rnd() / max, context.rnd() / max, context.rnd() / max) - .5f));
-		float d = dot(dir, collision.norm);
-		if (d <= EPSILON)
-		{
-			i--;
-			continue;
-		}
-		Ray newRay(collision.pos, dir);
-		CollisionContext newCollision;
-		if (!trace(newRay, newCollision, collision.object))
-			continue;
-		float len = newCollision.t / this->ambientOcclusionDistance;
-		result += 1. / (1 + len) * newCollision.object->material->opacity;// * (1 - newCollision.object->Ir);
-	}
-	return 1 - result / float(this->ambientOcclusionSamples) * this->ambientOcclusionFactor;
 }
 
 Vec4 Raytracer::getDiffuseSpecularTransparencyLight(Light *light, CollisionContext &collision)
@@ -168,7 +133,7 @@ next:
 
 Vec4 Raytracer::getReflectionColor(FragmentContext &context, Ray &ray, CollisionContext &collision)
 {
-	if (context.reflectionRecursion > 100)
+	if (context.reflectionRecursion > this->maxReflection)
 		return Vec4(0);
 	Ray newRay;
 	newRay.pos = collision.pos;
@@ -226,40 +191,40 @@ Vec4 Raytracer::getRayColor(FragmentContext &context, Ray &ray, Object *avoid, f
 		normRev = false;
 	}
 	//return Vec4(collision.norm, 1);
-	Vec3 diffuse;
-	Vec3 specular;
+	Vec3 diffuseFactor;
+	Vec3 specularFactor;
 	if (this->shading)
 	{
-		getDiffuseSpecularLight(ray, collision, diffuse, specular);
-		specular *= collision.object->material->specularColor;
+		getDiffuseSpecularLight(ray, collision, diffuseFactor, specularFactor);
 	}
 	else
 	{
-		diffuse = Vec3(1);
-		specular = Vec3(0);
+		diffuseFactor = Vec3(1);
+		specularFactor = Vec3(0);
 	}
-	Vec4 texColor;
+	Vec4 diffuseTexColor;
 	if (collision.object->material->diffuseTexture)
-		texColor = collision.object->material->diffuseTexture->getDataAt(collision.UV);
+		diffuseTexColor = collision.object->material->diffuseTexture->getDataAt(collision.UV);
 	else
-		texColor = Vec4(1);
-	Vec3 emi(collision.object->material->emissiveColor);
+		diffuseTexColor = Vec4(1);
+	Vec3 emissive(collision.object->material->emissiveColor);
 	if (collision.object->material->emissiveTexture)
 	{
-		Vec4 emiTex(collision.object->material->emissiveTexture->getDataAt(collision.UV));
-		emi *= emiTex.rgb() * emiTex.a;
+		Vec4 emissiveTex(collision.object->material->emissiveTexture->getDataAt(collision.UV));
+		emissive *= emissiveTex.rgb() * emissiveTex.a;
 	}
-	Vec3 col = diffuse;
-	col *= getAmbientOcclusion(context, collision);
+	Vec3 globalIllumination(getGlobalIllumination(context, collision));
+	diffuseFactor += globalIllumination;
+	Vec3 diffuse(diffuseFactor + emissive);
 	float transparency;
 	if (this->shading)
 	{
-		transparency = collision.object->material->opacity * texColor.a;
+		transparency = collision.object->material->opacity * diffuseTexColor.a;
 		if (transparency < 1)
 		{
 			Vec4 transparencyColor(getTransparencyColor(context, ray, collision, normRev));
 			float transFactor = transparencyColor.a * (1 - transparency);
-			col = col * transparency + transparencyColor.rgb() * transFactor;
+			diffuse = diffuse * transparency + transparencyColor.rgb() * transFactor;
 			transparency += transFactor;
 		}
 	}
@@ -267,21 +232,23 @@ Vec4 Raytracer::getRayColor(FragmentContext &context, Ray &ray, Object *avoid, f
 	{
 		transparency = 1;
 	}
-	col *= collision.object->material->diffuseColor;
-	col *= texColor.rgb();
-	Vec3 spec(collision.object->material->specularColor);
+	Vec3 objectDiffuseColor(collision.object->material->diffuseColor * diffuseTexColor.rgb());
+	diffuse *= objectDiffuseColor;
+	Vec3 specular(specularFactor + globalIllumination);
 	if (collision.object->material->specularTexture)
 	{
-		Vec4 texSpec(collision.object->material->specularTexture->getDataAt(collision.UV));
-		spec *= texSpec.rgb() * texSpec.a;
+		Vec4 specularTex(collision.object->material->specularTexture->getDataAt(collision.UV));
+		specular *= specularTex.rgb() * specularTex.a;
 	}
-	col += spec * (specular + getGlobalIllumination(context, collision));
+	specular *= collision.object->material->specularColor;
+	Vec3 result(diffuse + specular);
 	if (this->shading && collision.object->material->reflection > 0)
 	{
 		Vec4 reflectionColor(getReflectionColor(context, ray, collision));
-		col = col * (1 - collision.object->material->reflection) + reflectionColor.rgb() * reflectionColor.a * collision.object->material->diffuseColor * texColor.rgb() * collision.object->material->reflection;
+		Vec3 reflectionResult(reflectionColor.rgb() * reflectionColor.a * objectDiffuseColor);
+		result = result + (reflectionResult - result) * collision.object->material->reflection * collision.object->material->opacity;
 	}
-	return Vec4(col, transparency);
+	return Vec4(result, transparency);
 }
 
 Vec4 Raytracer::calculatePixel(size_t x, size_t y)
@@ -575,11 +542,6 @@ void Raytracer::setShading(bool shading)
 	this->shading = shading;
 }
 
-void Raytracer::setGlobalIlluminationDistance(float distance)
-{
-	this->globalIlluminationDistance = distance;
-}
-
 void Raytracer::setGlobalIlluminationSamples(size_t samples)
 {
 	this->globalIlluminationSamples = samples;
@@ -595,22 +557,7 @@ void Raytracer::setGlobalIllumination(bool globalIllumination)
 	this->globalIllumination = globalIllumination;
 }
 
-void Raytracer::setAmbientOcclusionDistance(float distance)
+void Raytracer::setMaxReflection(size_t maxReflection)
 {
-	this->ambientOcclusionDistance = distance;
-}
-
-void Raytracer::setAmbientOcclusionSamples(size_t samples)
-{
-	this->ambientOcclusionSamples = samples;
-}
-
-void Raytracer::setAmbientOcclusionFactor(float factor)
-{
-	this->ambientOcclusionFactor = factor;
-}
-
-void Raytracer::setAmbientOcclusion(bool ambientOcclusion)
-{
-	this->ambientOcclusion = ambientOcclusion;
+	this->maxReflection = maxReflection;
 }

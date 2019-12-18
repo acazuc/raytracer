@@ -7,7 +7,7 @@
 
 class GroupParser;
 class FileParser;
-class Object;
+class Raytracer;
 
 class ObjectParser : public Parser
 {
@@ -27,7 +27,7 @@ class ObjectParser : public Parser
 	public:
 		ObjectParser(FileParser &file, GroupParser &parent);
 		virtual ~ObjectParser();
-		virtual Object *toObject() = 0;
+		virtual void addToRaytracer(Raytracer *raytracer) = 0;
 
 };
 
@@ -40,7 +40,7 @@ class SphereParser : public ObjectParser
 
 	public:
 		SphereParser(FileParser &file, GroupParser &parent);
-		Object *toObject();
+		void addToRaytracer(Raytracer *raytracer);
 
 };
 
@@ -53,7 +53,7 @@ class CylinderParser : public ObjectParser
 
 	public:
 		CylinderParser(FileParser &file, GroupParser &parent);
-		Object *toObject();
+		void addToRaytracer(Raytracer *raytracer);
 
 };
 
@@ -66,7 +66,7 @@ class ConeParser : public ObjectParser
 
 	public:
 		ConeParser(FileParser &file, GroupParser &parent);
-		Object *toObject();
+		void addToRaytracer(Raytracer *raytracer);
 
 };
 
@@ -79,7 +79,7 @@ class PlaneParser : public ObjectParser
 
 	public:
 		PlaneParser(FileParser &file, GroupParser &parent);
-		Object *toObject();
+		void addToRaytracer(Raytracer *raytracer);
 
 };
 
@@ -87,11 +87,28 @@ class TriangleParser : public ObjectParser
 {
 
 	private:
-		//TODO
+		Vec3 point1;
+		Vec3 point2;
+		Vec3 point3;
+		Vec3 norm1;
+		Vec3 norm2;
+		Vec3 norm3;
+		Vec2 UV1;
+		Vec2 UV2;
+		Vec2 UV3;
+		void parsePoint1(xmlNode *node);
+		void parsePoint2(xmlNode *node);
+		void parsePoint3(xmlNode *node);
+		void parseNorm1(xmlNode *node);
+		void parseNorm2(xmlNode *node);
+		void parseNorm3(xmlNode *node);
+		void parseUV1(xmlNode *node);
+		void parseUV2(xmlNode *node);
+		void parseUV3(xmlNode *node);
 
 	public:
 		TriangleParser(FileParser &file, GroupParser &parent);
-		Object *toObject();
+		void addToRaytracer(Raytracer *raytracer);
 
 };
 

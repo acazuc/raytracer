@@ -15,6 +15,7 @@ SRCS_NAME = Main.cpp \
 	    Texture.cpp \
 	    PNG.cpp \
 	    Material.cpp \
+	    Octree.cpp \
 	    Objects/Object.cpp \
 	    Objects/Sphere.cpp \
 	    Objects/Cylinder.cpp \
@@ -49,6 +50,8 @@ SRCS_NAME = Main.cpp \
 	    Parser/GroupParser.cpp \
 	    Parser/MaterialParser.cpp \
 	    Parser/FiltersParser.cpp \
+	    Parser/Models/ModelParser.cpp \
+	    Parser/Models/ObjParser.cpp \
 
 SRCS = $(addprefix $(SRCS_PATH), $(SRCS_NAME))
 
@@ -91,8 +94,8 @@ odir:
 	@mkdir -p $(OBJS_PATH)Filters
 	@mkdir -p $(OBJS_PATH)Filters/Color
 	@mkdir -p $(OBJS_PATH)Utils
-	@mkdir -p $(OBJS_PATH)Models
 	@mkdir -p $(OBJS_PATH)Parser
+	@mkdir -p $(OBJS_PATH)Parser/Models
 
 clean:
 	@rm -f $(OBJS)

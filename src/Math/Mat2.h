@@ -1,7 +1,7 @@
 #ifndef MAT2_H
 # define MAT2_H
 
-# include "../Vec/Vec2.h"
+# include "./Vec2.h"
 
 template <typename T> class TMat2
 {

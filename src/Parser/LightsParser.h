@@ -5,6 +5,7 @@
 
 class GroupParser;
 class FileParser;
+class Raytracer;
 class Light;
 
 class LightParser : public Parser
@@ -20,7 +21,7 @@ class LightParser : public Parser
 
 	public:
 		LightParser(FileParser &file, GroupParser &parent);
-		virtual Light *toLight() = 0;
+		virtual void addToRaytracer(Raytracer *raytracer) = 0;
 
 };
 
@@ -33,7 +34,7 @@ class PunctualLightParser : public LightParser
 
 	public:
 		PunctualLightParser(FileParser &file, GroupParser &parent);
-		Light *toLight();
+		void addToRaytracer(Raytracer *raytracer);
 
 };
 
@@ -46,7 +47,7 @@ class DirectionalLightParser : public LightParser
 
 	public:
 		DirectionalLightParser(FileParser &file, GroupParser &parent);
-		Light *toLight();
+		void addToRaytracer(Raytracer *raytracer);
 
 };
 

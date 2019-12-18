@@ -1,8 +1,8 @@
 #ifndef TEXTURE_H
 # define TEXTURE_H
 
-# include "Vec/Vec4.h"
-# include "Vec/Vec2.h"
+# include "Math/Vec4.h"
+# include "Math/Vec2.h"
 # include <cstdint>
 # include <vector>
 

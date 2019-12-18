@@ -1,7 +1,7 @@
 #ifndef MAT3_H
 # define MAT3_H
 
-# include "../Vec/Vec3.h"
+# include "./Vec3.h"
 
 template <typename T> class TMat3
 {
