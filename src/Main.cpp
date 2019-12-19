@@ -49,9 +49,13 @@ static void updateTexture()
 
 static void draw()
 {
-	static int i = 0;
-	if ((++i) & 1)
+	static uint64_t lastUpdate = 0;
+	uint64_t currentTime = std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::time_point_cast<std::chrono::nanoseconds>(std::chrono::system_clock::now()).time_since_epoch()).count();
+	if (lastUpdate - currentTime > 50'000'000)
+	{
 		updateTexture();
+		lastUpdate = currentTime;
+	}
 	glViewport(0, 0, windowWidth, windowHeight);
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
@@ -65,24 +69,8 @@ static void draw()
 	float x1 = (float(windowWidth) + displayWidth) / 2 + offsetX * zoom;
 	float y0 = (float(windowHeight) - displayHeight) / 2 + offsetY * zoom;
 	float y1 = (float(windowHeight) + displayHeight) / 2 + offsetY * zoom;
-	float coords[4 * 2];
-	float vertex[4 * 2];
-	coords[0] = 0;
-	coords[1] = 0;
-	coords[2] = 1;
-	coords[3] = 0;
-	coords[4] = 1;
-	coords[5] = 1;
-	coords[6] = 0;
-	coords[7] = 1;
-	vertex[0] = x0;
-	vertex[1] = y0;
-	vertex[2] = x1;
-	vertex[3] = y0;
-	vertex[4] = x1;
-	vertex[5] = y1;
-	vertex[6] = x0;
-	vertex[7] = y1;
+	float coords[4 * 2] = {0, 0, 1, 0, 1, 1, 0, 1};
+	float vertex[4 * 2] = {x0, y0, x1, y0, x1, y1, x0, y1};
 	glVertexPointer(2, GL_FLOAT, 0, vertex);
 	glTexCoordPointer(2, GL_FLOAT, 0, coords);
 	glBindTexture(GL_TEXTURE_2D, texture);
@@ -124,6 +112,21 @@ static void draw()
 		glVertex2f(x0 - 1.5, y0 - 1.5);
 	}
 	glEnd();
+	if (raytracer->isPaused())
+	{
+		glColor3f(1, 0, 0);
+		glLineWidth(2);
+		glBegin(GL_LINES);
+		glVertex2f(10, 10);
+		glVertex2f(20, 10);
+		glVertex2f(20, 10);
+		glVertex2f(20, 20);
+		glVertex2f(20, 20);
+		glVertex2f(10, 20);
+		glVertex2f(10, 30);
+		glVertex2f(10, 10);
+		glEnd();
+	}
 }
 
 static void run()
@@ -200,6 +203,13 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
 		setZoom(1);
 		offsetX = 0;
 		offsetY = 0;
+	}
+	if (key == GLFW_KEY_P && action == GLFW_PRESS)
+	{
+		if (raytracer->isPaused())
+			raytracer->resume();
+		else
+			raytracer->pause();
 	}
 	(void)mods;
 	(void)window;

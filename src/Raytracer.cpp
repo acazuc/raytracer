@@ -22,10 +22,12 @@ Raytracer::Raytracer(size_t width, size_t height)
 	this->colorBuffer.resize(width * height);
 	this->zBuffer.resize(width * height);
 	this->imgData.resize(width * height);
+	this->maxGlobalIlluminationRecursion = 1;
 	this->globalIlluminationSamples = 50;
 	this->globalIlluminationFactor = 1;
 	this->globalIllumination = false;
 	this->maxReflection = 1;
+	this->paused = false;
 }
 
 Raytracer::~Raytracer()
@@ -48,7 +50,7 @@ Vec3 Raytracer::getGlobalIllumination(FragmentContext &context, CollisionContext
 {
 	if (!this->globalIllumination)
 		return Vec3(0);
-	if (context.globalIlluminationRecursion >= 1)
+	if (context.globalIlluminationRecursion >= this->maxGlobalIlluminationRecursion)
 		return Vec3(0);
 	Vec3 result(0);
 	context.globalIlluminationRecursion++;
@@ -335,6 +337,8 @@ void Raytracer::runThreadFiltering()
 			{
 				for (size_t x = startX; x < endX; x += i)
 				{
+					while (this->paused)
+						std::this_thread::sleep_for(std::chrono::milliseconds(100));
 					if (calc[(y % BATCH_SIZE) * BATCH_SIZE + (x % BATCH_SIZE)])
 						continue;
 					calc[(y % BATCH_SIZE) * BATCH_SIZE + (x % BATCH_SIZE)] = 1;
@@ -375,6 +379,8 @@ void Raytracer::runThreadCalculation()
 			{
 				for (size_t x = startX; x < endX; x += i)
 				{
+					while (this->paused)
+						std::this_thread::sleep_for(std::chrono::milliseconds(100));
 					if (!calc[(y % BATCH_SIZE) * BATCH_SIZE + (x % BATCH_SIZE)])
 					{
 						calc[(y % BATCH_SIZE) * BATCH_SIZE + (x % BATCH_SIZE)] = 1;

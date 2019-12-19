@@ -79,6 +79,7 @@ class Raytracer
 		enum ThreadAction threadsAction;
 		uint8_t threadsCount;
 		uint8_t samples;
+		size_t maxGlobalIlluminationRecursion;
 		size_t maxReflection;
 		size_t height;
 		size_t width;
@@ -88,6 +89,7 @@ class Raytracer
 		bool globalIllumination;
 		bool threadsStopped;
 		bool shading;
+		bool paused;
 		static void runThread(Raytracer *raytracer);
 		bool findBatch(enum BatchState state, enum BatchState setState, size_t *batchX, size_t *batchY);
 		void runThreadCalculation();
@@ -119,6 +121,9 @@ class Raytracer
 		void setGlobalIlluminationFactor(float factor);
 		void setGlobalIllumination(bool globalIllumination);
 		void setMaxReflection(size_t maxReflection);
+		inline void pause() {this->paused = true;};
+		inline void resume() {this->paused = false;};
+		inline bool isPaused() {return this->paused;};
 		inline std::vector<TVec4<uint8_t>> &getImgData() {return this->imgData;};
 		inline std::vector<std::vector<enum BatchState>> &getBatches() {return this->batches;};
 		inline std::mutex &getBatchesMutex() {return this->batchesMutex;};
